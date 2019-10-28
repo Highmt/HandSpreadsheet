@@ -1,13 +1,14 @@
-import Leap
 import sys
 import openpyxl as px
 import pyautogui
 import numpy as np
 
+from src.Leap import *
+
 DIS_SIZE = pyautogui.size()
 
 
-class handListener(Leap.Listener):
+class handListener(Listener):
     finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
     finger_dis_size = [0, 0]
 
@@ -79,10 +80,10 @@ class handListener(Leap.Listener):
 
 
     def on_caribrationTest(self,controller):
-        dis_ul = Leap.Vector(-120, 215, 0)
-        dis_ll = Leap.Vector(-130, 90, 0)
-        dis_lr = Leap.Vector(130, 90, 0)
-        dis_ur = Leap.Vector(120, 215, 0)
+        dis_ul = Vector(-120, 215, 0)
+        dis_ll = Vector(-130, 90, 0)
+        dis_lr = Vector(130, 90, 0)
+        dis_ur = Vector(120, 215, 0)
 
         handListener.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
         handListener.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
@@ -110,26 +111,37 @@ class handListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         hands = frame.hands
-        frame = controller.frame()
-        fingers = frame.fingers
-        if not fingers.is_empty:
-            print("display size: ", end="")
-            print(handListener.finger_dis_size)
-            f_finger = fingers.frontmost
-            finger_pos = f_finger.joint_position(f_finger.JOINT_TIP)
-            print("finger_pos: ", end="")
-            print(finger_pos)
 
-            move_pos = [
-                (finger_pos.x - handListener.finger_dis_dim["left"]) / handListener.finger_dis_size[0] * DIS_SIZE[0],
-                (finger_pos.y - handListener.finger_dis_dim["up"]) / handListener.finger_dis_size[1] * DIS_SIZE[1]]
 
-            #マウス動かす
-            pyautogui.moveTo(move_pos[0], move_pos[1])
+
+        if not hands.is_empty:
+            fingers = hands[0].fingers
+            # palm  open
+            if(hands[0].grab_strength == 0) :
+                  print("open")
+
+            if not fingers.is_empty:
+
+                if(hands[0].pinch_strength == 1):
+                    print("pinch")
+
+
+            #   self.mouse_move(self, fingers)
+
 
             #ウインドウ内でターゲットマーカーを動かす
-            
+    def mouse_move(self,fingers):
+        print("display size: ", handListener.finger_dis_size)
+        f_finger = fingers.frontmost
+        finger_pos = f_finger.joint_position(f_finger.JOINT_TIP)
+        print("finger_pos: ", finger_pos)
 
+        move_pos = [
+            (finger_pos.x - handListener.finger_dis_dim["left"]) / handListener.finger_dis_size[0] * DIS_SIZE[0],
+            (finger_pos.y - handListener.finger_dis_dim["up"]) / handListener.finger_dis_size[1] * DIS_SIZE[1]]
+
+        # マウス動かす
+        pyautogui.moveTo(move_pos[0], move_pos[1])
 
         # print("Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d" % ( frame.id, frame.timestamp, numHands, len(frame.fingers), len(frame.tools)))
 
@@ -142,7 +154,7 @@ class handListener(Leap.Listener):
         #     numFingers = len(fingers)
         #     if numFingers >= 1:
         #         # Calculate the hand's average finger tip position
-        #         pos = Leap.Vector()
+        #         pos = Vector()
         #         for finger in fingers:
         #             pos += finger.tip_position
         #
@@ -159,9 +171,9 @@ class handListener(Leap.Listener):
         #
         #     # Calculate the hand's pitch, roll, and yaw angles
         #     print("Pitch: %f degrees,  Roll: %f degrees,  Yaw: %f degrees" % (
-        #         direction.pitch * Leap.RAD_TO_DEG,
-        #         normal.roll * Leap.RAD_TO_DEG,
-        #         direction.yaw * Leap.RAD_TO_DEG))
+        #         direction.pitch * RAD_TO_DEG,
+        #         normal.roll * RAD_TO_DEG,
+        #         direction.yaw * RAD_TO_DEG))
         #
         #     print("Hand curvature radius: %f mm" % hand.sphere_radius)
 
@@ -169,7 +181,7 @@ class handListener(Leap.Listener):
 def main():
     # Create a sample listener and controller
     listener = handListener()
-    controller = Leap.Controller()
+    controller = Controller()
 
     # Have the sample listener receive events from the controller
     controller.add_listener(listener)

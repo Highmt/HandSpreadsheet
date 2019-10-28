@@ -43,16 +43,28 @@
 from PyQt5.QtCore import QDate, QPoint, Qt
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
-        QComboBox, QDialog, QFontDialog, QGroupBox, QHBoxLayout, QLabel,
-        QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
-        QTableWidgetItem, QToolBar, QVBoxLayout)
+                             QComboBox, QDialog, QFontDialog, QGroupBox, QHBoxLayout, QLabel,
+                             QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
+                             QTableWidgetItem, QToolBar, QVBoxLayout, QWidget, QDockWidget)
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 
+from src import Leap
+from src.leapMotionmain import handListener
 from src.spreadsheetdelegate import SpreadSheetDelegate
 from src.spreadsheetitem import SpreadSheetItem
 from src.printview import PrintView
 from src.util import decode_pos, encode_pos
 
+
+class circleWidget(QWidget):
+    def __init__(self, parent = None):
+        super(circleWidget, self).__init__(parent)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setPen(Qt.red)
+        painter.setBrush(Qt.yellow)
+        painter.drawEllipse(10, 10, 100, 100)
 
 class SpreadSheet(QMainWindow):
 
@@ -91,6 +103,9 @@ class SpreadSheet(QMainWindow):
         self.formulaInput.returnPressed.connect(self.returnPressed)
         self.table.itemChanged.connect(self.updateLineEdit)
         self.setWindowTitle("Spreadsheet")
+        self.circle_widget = QDockWidget(self)
+        self.circle_widget.setWidget(circleWidget(self))
+        self.addDockWidget(Qt.AllDockWidgetAreas, self.circle_widget)
 
     def createActions(self):
         self.cell_sumAction = QAction("Sum", self)
@@ -459,7 +474,7 @@ class SpreadSheet(QMainWindow):
         self.table.item(9, 2).setBackground(Qt.lightGray)
         # column 3
         self.table.setItem(0, 3, SpreadSheetItem("Currency"))
-        # self.table.item(0, 3).setBackgroundColor(titleBackground)
+        self.table.item(0, 3).setBackground(titleBackground)
         self.table.item(0, 3).setToolTip("This column shows the currency")
         self.table.item(0, 3).setFont(titleFont)
         self.table.setItem(1, 3, SpreadSheetItem("NOK"))
@@ -533,9 +548,21 @@ if __name__ == '__main__':
 
     import sys
 
+    # Create a sample listener and controller
+    # listener = handListener()
+    # controller = Leap.Controller()
+    #
+    # # Have the sample listener receive events from the controller
+    # controller.add_listener(listener)
+
+
     app = QApplication(sys.argv)
     sheet = SpreadSheet(10, 6)
     sheet.setWindowIcon(QIcon(QPixmap(":/images/interview.png")))
-    sheet.resize(640, 420)
+    sheet.resize(1000, 600)
     sheet.show()
     sys.exit(app.exec_())
+
+    # Remove the sample listener when done
+    #controller.remove_listener(listener)
+
