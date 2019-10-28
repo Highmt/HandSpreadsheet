@@ -48,12 +48,10 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
         QTableWidgetItem, QToolBar, QVBoxLayout)
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 
-import spreadsheet_rc
-
-from spreadsheetdelegate import SpreadSheetDelegate
-from spreadsheetitem import SpreadSheetItem
-from printview import PrintView
-from util import decode_pos, encode_pos
+from src.spreadsheetdelegate import SpreadSheetDelegate
+from src.spreadsheetitem import SpreadSheetItem
+from src.printview import PrintView
+from src.util import decode_pos, encode_pos
 
 
 class SpreadSheet(QMainWindow):

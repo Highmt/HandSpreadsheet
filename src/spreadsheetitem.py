@@ -41,7 +41,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidgetItem
 
-from util import decode_pos
+from src.util import decode_pos
 
 
 class SpreadSheetItem(QTableWidgetItem):
