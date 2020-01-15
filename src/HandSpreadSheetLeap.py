@@ -1,16 +1,18 @@
 import sys
-import openpyxl as px
 import pyautogui
-import numpy as np
 
-from src.Leap import *
+from src.LeapMotion.Leap import *
 
 DIS_SIZE = pyautogui.size()
 
 
 class handListener(Listener):
-    finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
-    finger_dis_size = [0, 0]
+    def __init__(self, app):
+        super(handListener, self).__init__()
+        self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
+        self.finger_dis_size = [0, 0]
+        self.app = app
+
 
     def on_caribration(self, controller):
         print("Do caribration")
@@ -67,13 +69,13 @@ class handListener(Listener):
         print(dis_ur)
 
         # 四隅の値の平均を上下左右の値とする
-        handListener.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
-        handListener.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
-        handListener.finger_dis_dim["left"] = (dis_ul.x + dis_ll.x) / 2
-        handListener.finger_dis_dim["right"] = (dis_ur.x + dis_lr.x) / 2
-        handListener.finger_dis_size[0] = handListener.finger_dis_dim["right"] - handListener.finger_dis_dim["left"]
-        handListener.finger_dis_size[1] = handListener.finger_dis_dim["low"] - handListener.finger_dis_dim["up"]
-        print(handListener.finger_dis_size)
+        self.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
+        self.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
+        self.finger_dis_dim["left"] = (dis_ul.x + dis_ll.x) / 2
+        self.finger_dis_dim["right"] = (dis_ur.x + dis_lr.x) / 2
+        self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
+        self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
+        print(self.finger_dis_size)
 
         print("\nComplete caribration\nPush ENTER-key to start")
         sys.stdin.readline()
@@ -85,27 +87,31 @@ class handListener(Listener):
         dis_lr = Vector(130, 90, 0)
         dis_ur = Vector(120, 215, 0)
 
-        handListener.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
-        handListener.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
-        handListener.finger_dis_dim["left"] = (dis_ul.x + dis_ll.x) / 2
-        handListener.finger_dis_dim["right"] = (dis_ur.x + dis_lr.x) / 2
-        handListener.finger_dis_size[0] = handListener.finger_dis_dim["right"] - handListener.finger_dis_dim["left"]
-        handListener.finger_dis_size[1] = handListener.finger_dis_dim["low"] - handListener.finger_dis_dim["up"]
-        print(handListener.finger_dis_size)
+        self.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
+        self.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
+        self.finger_dis_dim["left"] = (dis_ul.x + dis_ll.x) / 2
+        self.finger_dis_dim["right"] = (dis_ur.x + dis_lr.x) / 2
+        self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
+        self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
+        print(self.finger_dis_size)
         print("test caribration\nPush ENTER-key to start")
+
+        self.app.changeLeap(True)
 
     def on_init(self, controller):
         print("Initialized")
-        self.on_caribrationTest(controller)
+
 
     def on_connect(self, controller):
         print("Connected")
+        self.on_caribrationTest(controller)
 
     def on_disconnect(self, controller):
         print("Disconnected")
 
     def on_exit(self, controller):
         print("Exited")
+        self.app.changeLeap(False)
 
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
@@ -131,14 +137,14 @@ class handListener(Listener):
 
             #ウインドウ内でターゲットマーカーを動かす
     def mouse_move(self,fingers):
-        print("display size: ", handListener.finger_dis_size)
+        print("display size: ", self.finger_dis_size)
         f_finger = fingers.frontmost
         finger_pos = f_finger.joint_position(f_finger.JOINT_TIP)
         print("finger_pos: ", finger_pos)
 
         move_pos = [
-            (finger_pos.x - handListener.finger_dis_dim["left"]) / handListener.finger_dis_size[0] * DIS_SIZE[0],
-            (finger_pos.y - handListener.finger_dis_dim["up"]) / handListener.finger_dis_size[1] * DIS_SIZE[1]]
+            (finger_pos.x - self.finger_dis_dim["left"]) / self.finger_dis_size[0] * DIS_SIZE[0],
+            (finger_pos.y - self.finger_dis_dim["up"]) / self.finger_dis_size[1] * DIS_SIZE[1]]
 
         # マウス動かす
         pyautogui.moveTo(move_pos[0], move_pos[1])

@@ -41,11 +41,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidgetItem
 
-from src.util import decode_pos
+from src.study.util import decode_pos
 
 
 class SpreadSheetItem(QTableWidgetItem):
-
     def __init__(self, text=None):
         if text is not None:
             super(SpreadSheetItem, self).__init__(text)

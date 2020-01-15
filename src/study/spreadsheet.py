@@ -45,26 +45,26 @@ from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
                              QComboBox, QDialog, QFontDialog, QGroupBox, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
-                             QTableWidgetItem, QToolBar, QVBoxLayout, QWidget, QDockWidget)
+                             QTableWidgetItem, QToolBar, QVBoxLayout)
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 
-from src import Leap
-from src.leapMotionmain import handListener
-from src.spreadsheetdelegate import SpreadSheetDelegate
-from src.spreadsheetitem import SpreadSheetItem
-from src.printview import PrintView
-from src.util import decode_pos, encode_pos
+from src.LeapMotion import Leap
+from src.LeapMotion.leapMotionmain import handListener
+from src.study.spreadsheetdelegate import SpreadSheetDelegate
+from src.study.spreadsheetitem import SpreadSheetItem
+from src.study.printview import PrintView
+from src.study.util import decode_pos, encode_pos
 
 
-class circleWidget(QWidget):
-    def __init__(self, parent = None):
-        super(circleWidget, self).__init__(parent)
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setPen(Qt.red)
-        painter.setBrush(Qt.yellow)
-        painter.drawEllipse(10, 10, 100, 100)
+# class circleWidget(QWidget):
+#     def __init__(self, parent = None):
+#         super(circleWidget, self).__init__(parent)
+#
+#     def paintEvent(self, event):
+#         painter = QPainter(self)
+#         painter.setPen(Qt.red)
+#         painter.setBrush(Qt.yellow)
+#         painter.drawEllipse(10, 10, 100, 100)
 
 class SpreadSheet(QMainWindow):
 
@@ -103,11 +103,27 @@ class SpreadSheet(QMainWindow):
         self.formulaInput.returnPressed.connect(self.returnPressed)
         self.table.itemChanged.connect(self.updateLineEdit)
         self.setWindowTitle("Spreadsheet")
-        self.circle_widget = QDockWidget(self)
-        self.circle_widget.setWidget(circleWidget(self))
-        self.addDockWidget(Qt.AllDockWidgetAreas, self.circle_widget)
+        # self.circle_widget = QDockWidget(self)
+        # self.circle_widget.setWidget(circleWidget(self))
+        # self.addDockWidget(Qt.AllDockWidgetAreas, self.circle_widget)
+        # Create a sample listener and controller
+        self.listener = handListener()
+        self.controller = Leap.Controller()
+
+
+
+    # def paintEvent(self, event):
+    #     self.painterIncetance = QPainter(self)
+    #     self.penCircle = QPen(Qt.red)
+    #     self.penCircle.setWidth(3)
+    #     self.painterIncetance.setPen(self.penCircle)
+    #     self.painterIncetance.setBrush(Qt.green)
+    #     self.painterIncetance.drawRect(20, 20, 100, 100)
 
     def createActions(self):
+        self.cell_leapAction = QAction("Leap", self)
+        self.cell_leapAction.triggered.connect(self.actionLeap)
+
         self.cell_sumAction = QAction("Sum", self)
         self.cell_sumAction.triggered.connect(self.actionSum)
 
@@ -175,6 +191,7 @@ class SpreadSheet(QMainWindow):
         self.cellMenu.addAction(self.cell_mulAction)
         self.cellMenu.addAction(self.cell_divAction)
         self.cellMenu.addAction(self.cell_sumAction)
+        self.cellMenu.addAction(self.cell_leapAction)
         self.cellMenu.addSeparator()
         self.cellMenu.addAction(self.colorAction)
         self.cellMenu.addAction(self.fontAction)
@@ -409,7 +426,13 @@ class SpreadSheet(QMainWindow):
         for i in self.table.selectedItems():
             i.setText("")
 
+    def actionLeap(self):
+        # Have the sample listener receive events from the controller
+        self.controller.add_listener(self.listener)
+
+
     def setupContextMenu(self):
+        self.addAction(self.cell_leapAction)
         self.addAction(self.cell_addAction)
         self.addAction(self.cell_subAction)
         self.addAction(self.cell_mulAction)
@@ -544,25 +567,24 @@ class SpreadSheet(QMainWindow):
         dlg.exec_()
 
 
+
+
+
 if __name__ == '__main__':
 
     import sys
 
-    # Create a sample listener and controller
-    # listener = handListener()
-    # controller = Leap.Controller()
-    #
-    # # Have the sample listener receive events from the controller
-    # controller.add_listener(listener)
+
 
 
     app = QApplication(sys.argv)
-    sheet = SpreadSheet(10, 6)
+    sheet = SpreadSheet(50, 60)
     sheet.setWindowIcon(QIcon(QPixmap(":/images/interview.png")))
     sheet.resize(1000, 600)
     sheet.show()
     sys.exit(app.exec_())
 
     # Remove the sample listener when done
-    #controller.remove_listener(listener)
+    # controller.remove_listener(listener)
+
 
