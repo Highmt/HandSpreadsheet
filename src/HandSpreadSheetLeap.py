@@ -12,6 +12,9 @@ class handListener(Listener):
         self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
         self.finger_dis_size = [0, 0]
         self.app = app
+        self.overlayGraphics = self.app.getOverlayGrahics()
+        self.overlayGraphics.test()
+        self.isPointingMode = False
 
 
     def on_caribration(self, controller):
@@ -183,6 +186,8 @@ class handListener(Listener):
         #
         #     print("Hand curvature radius: %f mm" % hand.sphere_radius)
 
+    def setPointingMode(self, isMode):
+        self.isPointingMode = isMode
 
 def main():
     # Create a sample listener and controller

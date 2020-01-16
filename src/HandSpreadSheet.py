@@ -46,15 +46,14 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
                              QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
                              QTableWidgetItem, QToolBar, QVBoxLayout, QGraphicsView, QGraphicsPixmapItem,
                              QGraphicsScene, QGraphicsEllipseItem)
-from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 
-from src.DrawTable import DrawTable
 from src.LeapMotion import Leap
 from src.HandSpreadSheetLeap import handListener
-from src.study.spreadsheetdelegate import SpreadSheetDelegate
-from src.study.spreadsheetitem import SpreadSheetItem
-from src.study.printview import PrintView
-from src.study.util import decode_pos, encode_pos
+from src.OverlayGraphics import OverlayGraphics
+from src.myTable import myTable
+from src.spreadsheetdelegate import SpreadSheetDelegate
+from src.spreadsheetitem import SpreadSheetItem
+from src.util import decode_pos, encode_pos
 
 
 # class circleWidget(QWidget):
@@ -79,6 +78,7 @@ class SpreadSheet(QMainWindow):
         self.toolBar.addWidget(self.cellLabel)
         self.toolBar.addWidget(self.formulaInput)
         self.table = QTableWidget(rows, cols, self)  # テーブルウィジットの初期化
+        # self.table = myTable(rows, cols, self)
         # ヘッダーのアルファベット設定
         for c in range(cols):
             character = chr(ord('A') + c)
@@ -102,34 +102,27 @@ class SpreadSheet(QMainWindow):
         self.table.itemChanged.connect(self.updateLineEdit)
         self.setWindowTitle("HandSpreadSheet")
 
+        # Create a overlay layer
+        self.overlayLayout = QHBoxLayout(self.table)
+        self.overlayLayout.setContentsMargins(0, 0, 0, 0)
+        self.overlayGraphics = OverlayGraphics() # 描画するGraphicsView
+        self.overlayLayout.addWidget(self.overlayGraphics)
+
         # Create a sample listener and controller
         self.listener = handListener(self)
         self.controller = Leap.Controller()
 
-        self.overlayLayout = QHBoxLayout(self.table)
-        self.overlayLayout.setContentsMargins(0, 0, 0, 0)
-
-        # self.overlayWidget = DrawTable()
-
-        self.overlayWidget = QGraphicsView()
-        self.overlayWidget.setStyleSheet("background:transparent")
-
-        self._ellipse_item = QGraphicsEllipseItem(QtCore.QRectF(50, 50, 20, 20))
-        self._ellipse_item.setBrush(QBrush(Qt.red))
-        self._ellipse_item.setPen(QPen(Qt.black))
-        self.scene = QGraphicsScene()
-        self.scene.addItem(self._ellipse_item)
-        self.overlayWidget.setScene(self.scene)
-        self.overlayLayout.addWidget(self.overlayWidget)
-        self._ellipse_item.setPos(QPointF(80.0, 80.0))   #　ターゲットの位置変更可能
-        self.overlayWidget.hide()
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")
         self.leapLabel.setAlignment(Qt.AlignLeft)
         self.leapLabel.setMinimumSize(self.leapLabel.sizeHint())
 
+        self.pointingLabel = QLabel("")
+        self.pointingLabel.setAlignment(Qt.AlignLeft)
+
         self.statusBar().addWidget(self.leapLabel)
+        self.statusBar().addPermanentWidget(self.pointingLabel)
 
 
     def createActions(self):
@@ -140,6 +133,13 @@ class SpreadSheet(QMainWindow):
         self.end_Leap.triggered.connect(self.endLeap)
         self.end_Leap.setEnabled(False)
 
+        self.active_Point = QAction("active", self)
+        self.active_Point.triggered.connect(self.activePointing)
+        self.active_Point.setEnabled(False)
+
+        self.negative_Point = QAction("negative", self)
+        self.negative_Point.triggered.connect(self.negativePointing)
+        self.negative_Point.setEnabled(False)
 
         self.firstSeparator = QAction(self)
         self.firstSeparator.setSeparator(True)
@@ -151,6 +151,11 @@ class SpreadSheet(QMainWindow):
         self.leapMenu = self.menuBar().addMenu("&LeapMotion")
         self.leapMenu.addAction(self.start_Leap)
         self.leapMenu.addAction(self.end_Leap)
+
+        self.pointMode = self.leapMenu.addMenu("&PointMode")
+        self.pointMode.addAction(self.active_Point)
+        self.pointMode.addAction(self.negative_Point)
+        self.pointMode.setEnabled(False)
 
     def updateStatus(self, item):
         if item and item == self.table.currentItem():
@@ -199,13 +204,23 @@ class SpreadSheet(QMainWindow):
     def startLeap(self):
         # Have the sample listener receive events from the controller
         self.controller.add_listener(self.listener)
-        self._ellipse_item.setPos(QPointF(20.0, 20.0))
-
+        self.active_Point.setEnabled(True)
 
     def endLeap(self):
         self.controller.remove_listener(self.listener)
-        self.overlayWidget.hide()
+        self.overlayGraphics.hide()
 
+    def activePointing(self):
+        self.listener.setPointingMode(True)
+        self.active_Point.setEnabled(False)
+        self.negative_Point.setEnabled(True)
+        self.pointingLabel.setText("Pointing mode: active")
+
+    def negativePointing(self):
+        self.listener.setPointingMode(False)
+        self.negative_Point.setEnabled(False)
+        self.active_Point.setEnabled(True)
+        self.pointingLabel.setText("Pointing mode: negative")
 
     def setupContextMenu(self):
         # self.addAction((self.start_Leap))
@@ -308,22 +323,76 @@ class SpreadSheet(QMainWindow):
         self.table.setItem(9, 5, SpreadSheetItem("sum F2 F9"))
         self.table.item(9, 5).setBackground(Qt.lightGray)
 
-    def changeLeap(self, isConnect):
-        if isConnect:
+    def changeLeap(self, toConnect):
+        if toConnect:
             self.start_Leap.setEnabled(False)
             self.end_Leap.setEnabled(True)
-            self.leapLabel.setText("LeapMotion is connecting")
+            self.pointMode.setEnabled(True)
+            self.active_Point.setEnabled(True)
+            self.leapLabel.setText("LeapMotion: connecting")
+            self.pointingLabel.setText("Pointing mode: negative")
         else:
             self.end_Leap.setEnabled(False)
             self.start_Leap.setEnabled(True)
-            self.leapLabel.setText("LeapMotion is disconnecting")
+            self.pointMode.setEnabled(False)
+            self.negative_Point.setEnabled(False)
+            self.leapLabel.setText("LeapMotion: disconnecting")
+            self.pointingLabel.setText("")
+
+
+
+    def deleteCell(self):
+        #TODO　セル削除関数
+        pass
+
+    def deleteRow(self):
+        #TODO　行削除関数
+        pass
+
+    def deleteCol(self):
+        #TODO　列削除関数
+        pass
+
+    def insertCell(self):
+        #TODO　セル挿入関数
+        pass
+
+    def insertRow(self):
+        #TODO　行挿入関数
+        pass
+
+    def insertCol(self):
+        #TODO　列挿入関数
+        pass
+
+    def sortUp(self):
+        #TODO　昇順ソート関数
+        pass
+
+    def sortDown(self):
+        #TODO　降順ソート関数
+
+        # self.table.sortByColumn()
+        pass
+
+    def copyCells(self):
+        #TODO　コピー関数
+        pass
+
+    def cutCells(self):
+        #TODO　カット関数
+        pass
+
+    def getOverlayGrahics(self):
+        return self.overlayGraphics
+
 
 if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)
     sheet = SpreadSheet(50, 60)
-    sheet.setWindowIcon(QIcon(QPixmap("images/interview.png")))
+    sheet.setWindowIcon(QIcon(QPixmap("images/target.png")))
     sheet.resize(1000, 600)
     sheet.show()
     sys.exit(app.exec_())
