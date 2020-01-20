@@ -39,7 +39,7 @@
 ##
 #############################################################################
 from PyQt5 import QtCore
-from PyQt5.QtCore import QDate, QPoint, Qt, QPointF
+from PyQt5.QtCore import QDate, QPoint, Qt, QPointF, QRectF
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap, QPen, QBrush, QImage, QPalette
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
                              QComboBox, QDialog, QFontDialog, QGroupBox, QHBoxLayout, QLabel,
@@ -51,7 +51,6 @@ from src.LeapMotion import Leap
 from src.HandSpreadSheetLeap import handListener
 from src.OverlayGraphics import OverlayGraphics
 from src.myTable import myTable
-from src.spreadsheetdelegate import SpreadSheetDelegate
 from src.spreadsheetitem import SpreadSheetItem
 from src.util import decode_pos, encode_pos
 
@@ -77,19 +76,12 @@ class SpreadSheet(QMainWindow):
         self.cellLabel.setMinimumSize(80, 0)
         self.toolBar.addWidget(self.cellLabel)
         self.toolBar.addWidget(self.formulaInput)
-        self.table = QTableWidget(rows, cols, self)  # テーブルウィジットの初期化
-        # self.table = myTable(rows, cols, self)
-        # ヘッダーのアルファベット設定
-        for c in range(cols):
-            character = chr(ord('A') + c)
-            self.table.setHorizontalHeaderItem(c, QTableWidgetItem(character))
+        self.table = myTable(rows, cols, self)
 
-        self.table.setItemPrototype(self.table.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
-        self.table.setItemDelegate(SpreadSheetDelegate(self))   #デリゲート
         self.createActions()   # アクションの追加
         self.updateColor(0)
         self.setupMenuBar()
-        self.setupContents()
+
         self.setupContextMenu()
         self.setCentralWidget(self.table)
         self.statusBar()
@@ -105,13 +97,15 @@ class SpreadSheet(QMainWindow):
         # Create a overlay layer
         self.overlayLayout = QHBoxLayout(self.table)
         self.overlayLayout.setContentsMargins(0, 0, 0, 0)
-        self.overlayGraphics = OverlayGraphics() # 描画するGraphicsView
+        self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
+        # self.overlayGraphics.hide()  # 描画を非表示
 
         # Create a sample listener and controller
         self.listener = handListener(self)
         self.controller = Leap.Controller()
 
+        # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")
@@ -197,6 +191,7 @@ class SpreadSheet(QMainWindow):
         item = self.table.item(row, col)
         if not item:
             self.table.setItem(row, col, SpreadSheetItem(text))
+
         else:
             item.setData(Qt.EditRole, text)
         self.table.viewport().update()
@@ -204,7 +199,7 @@ class SpreadSheet(QMainWindow):
     def startLeap(self):
         # Have the sample listener receive events from the controller
         self.controller.add_listener(self.listener)
-        self.active_Point.setEnabled(True)
+
 
     def endLeap(self):
         self.controller.remove_listener(self.listener)
@@ -227,102 +222,6 @@ class SpreadSheet(QMainWindow):
         # self.addAction(self.end_Leap)
         self.setContextMenuPolicy(Qt.ActionsContextMenu)
 
-    def setupContents(self):
-        titleBackground = QColor(Qt.lightGray)
-        titleFont = self.table.font()
-        titleFont.setBold(True)
-        # column 0
-        self.table.setItem(0, 0, SpreadSheetItem("Item"))
-        self.table.item(0, 0).setBackground(titleBackground)
-        self.table.item(0, 0).setToolTip("This column shows the purchased item/service")
-        self.table.item(0, 0).setFont(titleFont)
-        self.table.setItem(1, 0, SpreadSheetItem("AirportBus"))
-        self.table.setItem(2, 0, SpreadSheetItem("Flight (Munich)"))
-        self.table.setItem(3, 0, SpreadSheetItem("Lunch"))
-        self.table.setItem(4, 0, SpreadSheetItem("Flight (LA)"))
-        self.table.setItem(5, 0, SpreadSheetItem("Taxi"))
-        self.table.setItem(6, 0, SpreadSheetItem("Dinner"))
-        self.table.setItem(7, 0, SpreadSheetItem("Hotel"))
-        self.table.setItem(8, 0, SpreadSheetItem("Flight (Oslo)"))
-        self.table.setItem(9, 0, SpreadSheetItem("Total:"))
-        self.table.item(9, 0).setFont(titleFont)
-        self.table.item(9, 0).setBackground(Qt.lightGray)
-        # column 1
-        self.table.setItem(0, 1, SpreadSheetItem("Date"))
-        self.table.item(0, 1).setBackground(titleBackground)
-        self.table.item(0, 1).setToolTip("This column shows the purchase date, double click to change")
-        self.table.item(0, 1).setFont(titleFont)
-        self.table.setItem(1, 1, SpreadSheetItem("15/6/2006"))
-        self.table.setItem(2, 1, SpreadSheetItem("15/6/2006"))
-        self.table.setItem(3, 1, SpreadSheetItem("15/6/2006"))
-        self.table.setItem(4, 1, SpreadSheetItem("21/5/2006"))
-        self.table.setItem(5, 1, SpreadSheetItem("16/6/2006"))
-        self.table.setItem(6, 1, SpreadSheetItem("16/6/2006"))
-        self.table.setItem(7, 1, SpreadSheetItem("16/6/2006"))
-        self.table.setItem(8, 1, SpreadSheetItem("18/6/2006"))
-        self.table.setItem(9, 1, SpreadSheetItem())
-        self.table.item(9, 1).setBackground(Qt.lightGray)
-        # column 2
-        self.table.setItem(0, 2, SpreadSheetItem("Price"))
-        self.table.item(0, 2).setBackground(titleBackground)
-        self.table.item(0, 2).setToolTip("This column shows the price of the purchase")
-        self.table.item(0, 2).setFont(titleFont)
-        self.table.setItem(1, 2, SpreadSheetItem("150"))
-        self.table.setItem(2, 2, SpreadSheetItem("2350"))
-        self.table.setItem(3, 2, SpreadSheetItem("-14"))
-        self.table.setItem(4, 2, SpreadSheetItem("980"))
-        self.table.setItem(5, 2, SpreadSheetItem("5"))
-        self.table.setItem(6, 2, SpreadSheetItem("120"))
-        self.table.setItem(7, 2, SpreadSheetItem("300"))
-        self.table.setItem(8, 2, SpreadSheetItem("1240"))
-        self.table.setItem(9, 2, SpreadSheetItem())
-        self.table.item(9, 2).setBackground(Qt.lightGray)
-        # column 3
-        self.table.setItem(0, 3, SpreadSheetItem("Currency"))
-        self.table.item(0, 3).setBackground(titleBackground)
-        self.table.item(0, 3).setToolTip("This column shows the currency")
-        self.table.item(0, 3).setFont(titleFont)
-        self.table.setItem(1, 3, SpreadSheetItem("NOK"))
-        self.table.setItem(2, 3, SpreadSheetItem("NOK"))
-        self.table.setItem(3, 3, SpreadSheetItem("EUR"))
-        self.table.setItem(4, 3, SpreadSheetItem("EUR"))
-        self.table.setItem(5, 3, SpreadSheetItem("USD"))
-        self.table.setItem(6, 3, SpreadSheetItem("USD"))
-        self.table.setItem(7, 3, SpreadSheetItem("USD"))
-        self.table.setItem(8, 3, SpreadSheetItem("USD"))
-        self.table.setItem(9, 3, SpreadSheetItem())
-        self.table.item(9, 3).setBackground(Qt.lightGray)
-        # column 4
-        self.table.setItem(0, 4, SpreadSheetItem("Ex. Rate"))
-        self.table.item(0, 4).setBackground(titleBackground)
-        self.table.item(0, 4).setToolTip("This column shows the exchange rate to NOK")
-        self.table.item(0, 4).setFont(titleFont)
-        self.table.setItem(1, 4, SpreadSheetItem("1"))
-        self.table.setItem(2, 4, SpreadSheetItem("1"))
-        self.table.setItem(3, 4, SpreadSheetItem("8"))
-        self.table.setItem(4, 4, SpreadSheetItem("8"))
-        self.table.setItem(5, 4, SpreadSheetItem("7"))
-        self.table.setItem(6, 4, SpreadSheetItem("7"))
-        self.table.setItem(7, 4, SpreadSheetItem("7"))
-        self.table.setItem(8, 4, SpreadSheetItem("7"))
-        self.table.setItem(9, 4, SpreadSheetItem())
-        self.table.item(9, 4).setBackground(Qt.lightGray)
-        # column 5
-        self.table.setItem(0, 5, SpreadSheetItem("NOK"))
-        self.table.item(0, 5).setBackground(titleBackground)
-        self.table.item(0, 5).setToolTip("This column shows the expenses in NOK")
-        self.table.item(0, 5).setFont(titleFont)
-        self.table.setItem(1, 5, SpreadSheetItem("* C2 E2"))
-        self.table.setItem(2, 5, SpreadSheetItem("* C3 E3"))
-        self.table.setItem(3, 5, SpreadSheetItem("* C4 E4"))
-        self.table.setItem(4, 5, SpreadSheetItem("* C5 E5"))
-        self.table.setItem(5, 5, SpreadSheetItem("* C6 E6"))
-        self.table.setItem(6, 5, SpreadSheetItem("* C7 E7"))
-        self.table.setItem(7, 5, SpreadSheetItem("* C8 E8"))
-        self.table.setItem(8, 5, SpreadSheetItem("* C9 E9"))
-        self.table.setItem(9, 5, SpreadSheetItem("sum F2 F9"))
-        self.table.item(9, 5).setBackground(Qt.lightGray)
-
     def changeLeap(self, toConnect):
         if toConnect:
             self.start_Leap.setEnabled(False)
@@ -339,59 +238,21 @@ class SpreadSheet(QMainWindow):
             self.leapLabel.setText("LeapMotion: disconnecting")
             self.pointingLabel.setText("")
 
-
-
-    def deleteCell(self):
-        #TODO　セル削除関数
-        pass
-
-    def deleteRow(self):
-        #TODO　行削除関数
-        pass
-
-    def deleteCol(self):
-        #TODO　列削除関数
-        pass
-
-    def insertCell(self):
-        #TODO　セル挿入関数
-        pass
-
-    def insertRow(self):
-        #TODO　行挿入関数
-        pass
-
-    def insertCol(self):
-        #TODO　列挿入関数
-        pass
-
-    def sortUp(self):
-        #TODO　昇順ソート関数
-        pass
-
-    def sortDown(self):
-        #TODO　降順ソート関数
-
-        # self.table.sortByColumn()
-        pass
-
-    def copyCells(self):
-        #TODO　コピー関数
-        pass
-
-    def cutCells(self):
-        #TODO　カット関数
-        pass
-
     def getOverlayGrahics(self):
         return self.overlayGraphics
+
+    # def resizeEvent(self, event):
+    #     self.overlayGraphics.overlayScene.setSceneRect(self.overlayGraphics.rect())
+
+    def closeEvent(self, event):
+        self.controller.remove_listener(self.listener)
 
 
 if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)
-    sheet = SpreadSheet(50, 60)
+    sheet = SpreadSheet(50, 50)
     sheet.setWindowIcon(QIcon(QPixmap("images/target.png")))
     sheet.resize(1000, 600)
     sheet.show()

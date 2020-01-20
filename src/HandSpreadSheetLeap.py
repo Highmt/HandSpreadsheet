@@ -13,7 +13,6 @@ class handListener(Listener):
         self.finger_dis_size = [0, 0]
         self.app = app
         self.overlayGraphics = self.app.getOverlayGrahics()
-        self.overlayGraphics.test()
         self.isPointingMode = False
 
 
@@ -80,7 +79,7 @@ class handListener(Listener):
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
 
-        print("\nComplete caribration\nPush ENTER-key to start")
+        print("\nComplete caribration")
         sys.stdin.readline()
 
 
@@ -97,9 +96,9 @@ class handListener(Listener):
         self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
-        print("test caribration\nPush ENTER-key to start")
+        print("Complete test caribration")
 
-        self.app.changeLeap(True)
+
 
     def on_init(self, controller):
         print("Initialized")
@@ -108,6 +107,8 @@ class handListener(Listener):
     def on_connect(self, controller):
         print("Connected")
         self.on_caribrationTest(controller)
+        self.setPointingMode(False)
+        self.app.changeLeap(True)
 
     def on_disconnect(self, controller):
         print("Disconnected")
@@ -135,7 +136,7 @@ class handListener(Listener):
                     print("pinch")
 
 
-            #   self.mouse_move(self, fingers)
+            self.mouse_move(self, fingers)
 
 
             #ウインドウ内でターゲットマーカーを動かす
@@ -188,6 +189,14 @@ class handListener(Listener):
 
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode
+
+    def singleJesture(self):
+        # TODO 片手ジェスチャ認識
+        pass
+
+    def bothJesture(self):
+        # TODO 両手ジェスチャ認識
+        pass
 
 def main():
     # Create a sample listener and controller
