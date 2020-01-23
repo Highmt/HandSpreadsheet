@@ -65,6 +65,7 @@ class TestListener(Listener):
             print("\n\n\n\n\n\nPush Enter to Finish")
         frame = controller.frame()
 
+
         # Get hands
         for hand in frame.hands:
             data_count = data_count + 1
@@ -313,9 +314,9 @@ def main():
     labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB"]
     # Keep this process running until Enter is pressed
     for true_label in range(0, labels.__len__()):
-        aaaaaaa = true_label
+        true = true_label
         print("Press Enter to start scensing hand")
-        print("Please make {} hand".format(labels.__getitem__(true_label)))
+        print("Please make {} hand".format(labels.__getitem__(true)))
         print("Press Enter again to next when stop")
         sys.stdin.readline()
         data_count = 0
