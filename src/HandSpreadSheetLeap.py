@@ -112,6 +112,7 @@ class handListener(Listener):
 
     def on_disconnect(self, controller):
         print("Disconnected")
+        self.app.changeLeap(False)
 
     def on_exit(self, controller):
         print("Exited")
@@ -122,7 +123,7 @@ class handListener(Listener):
         frame = controller.frame()
         hands = frame.hands
 
-
+        # TODO ジェスチャ識別によるself.app.関数の立ち上げを実装
 
         if not hands.is_empty:
             fingers = hands[0].fingers
@@ -137,8 +138,6 @@ class handListener(Listener):
 
 
             self.mouse_move(self, fingers)
-
-
             #ウインドウ内でターゲットマーカーを動かす
     def mouse_move(self,fingers):
         print("display size: ", self.finger_dis_size)
@@ -197,22 +196,3 @@ class handListener(Listener):
     def bothJesture(self):
         # TODO 両手ジェスチャ認識
         pass
-
-def main():
-    # Create a sample listener and controller
-    listener = handListener()
-    controller = Controller()
-
-    # Have the sample listener receive events from the controller
-    controller.add_listener(listener)
-
-    # Keep this process running until Enter is pressed
-    print("Press Enter to quit...")
-    sys.stdin.readline()
-
-    # Remove the sample listener when done
-    controller.remove_listener(listener)
-
-
-if __name__ == "__main__":
-    main()

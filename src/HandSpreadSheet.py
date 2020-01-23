@@ -92,6 +92,7 @@ class SpreadSheet(QMainWindow):
         self.table.itemChanged.connect(self.updateStatus)
         self.formulaInput.returnPressed.connect(self.returnPressed)
         self.table.itemChanged.connect(self.updateLineEdit)
+        self.table.itemSelectionChanged.connect(self.cellSelect)
         self.setWindowTitle("HandSpreadSheet")
 
         # Create a overlay layer
@@ -99,7 +100,7 @@ class SpreadSheet(QMainWindow):
         self.overlayLayout.setContentsMargins(0, 0, 0, 0)
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
-        # self.overlayGraphics.hide()  # 描画を非表示
+        self.overlayGraphics.hide()  # 描画を非表示
 
         # Create a sample listener and controller
         self.listener = handListener(self)
@@ -118,12 +119,11 @@ class SpreadSheet(QMainWindow):
         self.statusBar().addWidget(self.leapLabel)
         self.statusBar().addPermanentWidget(self.pointingLabel)
 
-
     def createActions(self):
-        self.start_Leap = QAction("startLeap", self)
+        self.start_Leap = QAction("StartLeap", self)
         self.start_Leap.triggered.connect(self.startLeap)
 
-        self.end_Leap = QAction("endLeap", self)
+        self.end_Leap = QAction("EndLeap", self)
         self.end_Leap.triggered.connect(self.endLeap)
         self.end_Leap.setEnabled(False)
 
@@ -145,6 +145,8 @@ class SpreadSheet(QMainWindow):
         self.leapMenu = self.menuBar().addMenu("&LeapMotion")
         self.leapMenu.addAction(self.start_Leap)
         self.leapMenu.addAction(self.end_Leap)
+
+        self.leapMenu.addSeparator()
 
         self.pointMode = self.leapMenu.addMenu("&PointMode")
         self.pointMode.addAction(self.active_Point)
@@ -209,12 +211,14 @@ class SpreadSheet(QMainWindow):
         self.listener.setPointingMode(True)
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
+        self.overlayGraphics.targetVisible(True)
         self.pointingLabel.setText("Pointing mode: active")
 
     def negativePointing(self):
         self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
+        self.overlayGraphics.targetVisible(False)
         self.pointingLabel.setText("Pointing mode: negative")
 
     def setupContextMenu(self):
@@ -241,11 +245,11 @@ class SpreadSheet(QMainWindow):
     def getOverlayGrahics(self):
         return self.overlayGraphics
 
-    # def resizeEvent(self, event):
-    #     self.overlayGraphics.overlayScene.setSceneRect(self.overlayGraphics.rect())
-
     def closeEvent(self, event):
         self.controller.remove_listener(self.listener)
+
+    def cellSelect(self):
+        self.table.getItemCoordinate()
 
 
 if __name__ == '__main__':

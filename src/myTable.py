@@ -157,3 +157,13 @@ class myTable(QTableWidget):
     def cutCells(self):
         #TODO　カット関数
         pass
+
+    def getItemCoordinate(self):
+        self.itemlist = self.selectedItems()
+        if self.itemlist.__len__() is not 0:
+            self.first_item = self.itemlist[0]
+            self.last_item = self.itemlist[-1]
+
+        print(self.visualItemRect(self.currentItem()))
+
+

@@ -90,9 +90,7 @@ class handListener(Listener):
         self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
-        print("test caribration\nPush ENTER-key to start")
-
-        self.app.actionLeap()
+        print("test caribration\n")
 
     def on_init(self, controller):
         print("Initialized")
