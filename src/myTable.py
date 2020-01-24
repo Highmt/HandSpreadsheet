@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 
@@ -17,6 +17,7 @@ class myTable(QTableWidget):
         self.setItemDelegate(SpreadSheetDelegate(self))   #デリゲート
         self.initContents()
         self.setupContents()
+
 
     def setupHeader(self, cols):
         for c in range(cols):

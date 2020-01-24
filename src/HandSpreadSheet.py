@@ -67,9 +67,9 @@ from src.util import decode_pos, encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-class SpreadSheet(QMainWindow):
+class HandSpreadSheet(QMainWindow):
     def __init__(self, rows, cols, parent=None):
-        super(SpreadSheet, self).__init__(parent)
+        super(HandSpreadSheet, self).__init__(parent)
 
         self.toolBar = QToolBar()
         self.addToolBar(self.toolBar)  #　ツールバーの追加
@@ -304,28 +304,14 @@ class SpreadSheet(QMainWindow):
         self.controller.remove_listener(self.listener)
 
     def cellSelect(self):
-        self.first_item, self.last_item = self.table.getItemCoordinate()
+        self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
 
 
     def setFeedback(self, text, option, direction):
         self.overlayGraphics.feedbackShow(
-            self.table.visualItemRect(self.first_item),
-            self.table.visualItemRect(self.last_item),
             text,
             option,
             direction
         )
 
 
-if __name__ == '__main__':
-    import sys
-
-    app = QApplication(sys.argv)
-    sheet = SpreadSheet(50, 50)
-    sheet.setWindowIcon(QIcon(QPixmap("images/target.png")))
-    sheet.resize(1000, 600)
-    sheet.show()
-    sys.exit(app.exec_())
-
-    # Remove the sample listener when done
-    # controller.remove_listener(listener)

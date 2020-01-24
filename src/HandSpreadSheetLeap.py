@@ -130,9 +130,6 @@ class handListener(Listener):
                 del self.memoryHands[handid]
                 del self.preHands[handid]
 
-
-
-        
         if frame.hands.is_empty:
             self.overlayGraphics.hide()
         else:
@@ -168,10 +165,10 @@ class handListener(Listener):
         elif next == HandEnum.PINCH_IN.value:
             if pre == HandEnum.PINCH_OUT.value:
                 print("削除関数呼び出し")
-                self.app.setFeedback("test", "testtesttest", DirectionEnum.HORIZON.value)
 
             else:
                 print("挿入ステータス呼び出し")
+                self.overlayGraphics.feedbackShow("test", "testtesttest", DirectionEnum.HORIZON.value)
 
             
         elif next == HandEnum.PINCH_OUT.value:

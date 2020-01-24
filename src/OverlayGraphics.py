@@ -14,9 +14,8 @@ class OverlayGraphics(QGraphicsView):
         self.overlayScene = QGraphicsScene()
         self.setScene(self.overlayScene)
         self.overlayScene.setSceneRect(QRectF(self.rect()))
-        self.modal_pos = DirectionEnum.VERTICAL.value
         self.createItem()
-        self.setTargetMode(True)
+
 
     def createItem(self):
         # 　ターゲットマーカの作成
@@ -36,9 +35,11 @@ class OverlayGraphics(QGraphicsView):
         self.operate_option = QGraphicsSimpleTextItem("上詰め", self.modal_rect)
         self.operate_option.setPos(32.5, 40)
         self.setTargetPos(440, 200, DirectionEnum.VERTICAL.value)
-        print(self.overlayScene.sceneRect())
+        self.setTargetMode(True)
+        self.luRect = QRect()
+        self.rbRect = QRect()
 
-    # オーバレイヤのサイズが変わると呼び出される．シーンのサイズをビューの大きさに固定(-5 はマージン)
+    # オーバレイヤのサイズが変わると呼び出される．シーンのサイズをビューの大きさに追従(-5 はマージン)
     def resizeEvent(self, event):
         self.overlayScene.setSceneRect(QRectF(0, 0, self.size().width() - 5, self.size().height() - 5))
 
@@ -76,16 +77,17 @@ class OverlayGraphics(QGraphicsView):
         else:
             self.target_circle.setRect(0, 0, 0, 0)
 
-    def feedbackShow(self, lu_item_Rect, rb_item_Rect, text, option, direction):
+    def feedbackShow(self, text, option, direction):
         self.operate_text.setText(text)
         self.operate_option.setText(option)
+        # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
         if not self.targetMode:
             if direction == DirectionEnum.VERTICAL.value:
-                x_pos = (lu_item_Rect.left() + rb_item_Rect.right())/2
-                y_pos = rb_item_Rect.bottom() - rb_item_Rect.height/2
+                x_pos = (self.luRect.left() + self.rbRect.right())/2
+                y_pos = self.rbRect.bottom() - self.rbRect.height()/2
             else:
-                x_pos = rb_item_Rect.right() - rb_item_Rect.width/2
-                y_pos = (lu_item_Rect.top() + rb_item_Rect.bottom)/2
+                x_pos = self.rbRect.right() - self.rbRect.width()/2
+                y_pos = (self.luRect.top() + self.rbRect.bottom())/2
 
             self.setTargetPos(x_pos, y_pos, direction)
         self.show()
