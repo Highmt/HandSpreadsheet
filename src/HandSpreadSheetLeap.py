@@ -4,10 +4,10 @@ import pyautogui
 
 from src.LeapMotion.Leap import *
 from src.Predictor import Predictor
-from src.SSEnum import SSEnum, HandEnum
+from src.SSEnum import HandEnum, DirectionEnum
 
 DIS_SIZE = pyautogui.size()
-memorySize = 20
+memorySize = 2
 
 class handListener(Listener):
     def __init__(self, app):
@@ -130,6 +130,8 @@ class handListener(Listener):
                 del self.memoryHands[handid]
                 del self.preHands[handid]
 
+
+
         
         if frame.hands.is_empty:
             self.overlayGraphics.hide()
@@ -143,6 +145,7 @@ class handListener(Listener):
                 if len(handlist) == memorySize:   # 記憶サイズいっぱいだったらFirst out
                     handlist.pop(0)
                 hand_state = self.predictor.handPredict(hand)
+                print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
                 # 判定手形状を識別
                 try:
@@ -159,54 +162,58 @@ class handListener(Listener):
     def action(self, pre, next):
         # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
         if next == HandEnum.FREE.value:
-            self.overlayGraphics.hide()
+            if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):
+                self.overlayGraphics.hide()
         
-        if next == HandEnum.PINCH_IN.value:
+        elif next == HandEnum.PINCH_IN.value:
             if pre == HandEnum.PINCH_OUT.value:
                 print("削除関数呼び出し")
-                pass
+                self.app.setFeedback("test", "testtesttest", DirectionEnum.HORIZON.value)
+
             else:
                 print("挿入ステータス呼び出し")
-                pass
+
             
-        if next == HandEnum.PINCH_OUT.value:
+        elif next == HandEnum.PINCH_OUT.value:
             if pre == HandEnum.PINCH_IN.value:
                 print("挿入関数呼び出し")
-                pass
+
             elif pre == HandEnum.PINCH_OUT_R.value:
                 print("降順ソート関数呼び出し")
-                pass
+
             else:
                 print("削除ステータス呼び出し")
-                pass
-        
-        if next == HandEnum.PALM_OPEN.value:
-            if pre == HandEnum.GRAB.value:
-                print("ペースト関数呼び出し")
-                pass
-            else:
-                print("コピー，カットステータス呼び出し")
-                pass
-        
-        if next == HandEnum.GRAB.value:
-            if pre == HandEnum.PALM_OPEN.value:
-                if list(self.preHands.values()).count(HandEnum.PALM_OPEN.value) > 1:
-                    print("コピー関数呼び出し")
-                    pass
-                else:
-                    print("カット関数呼び出し")
-                    pass
-            else:
-                print("ペーストステータス呼び出し")
-                pass
 
         elif next == HandEnum.PINCH_OUT_R.value:
             if pre == HandEnum.PINCH_OUT.value:
                 print("昇順ソート関数呼び出し")
-                pass
+
             else:
                 print("降順ソート呼び出し")
-                pass
+
+        
+        elif next == HandEnum.PALM_OPEN.value:
+            if pre == HandEnum.GRAB.value:
+                print("ペースト関数呼び出し")
+
+            else:
+                print("コピー，カットステータス呼び出し")
+
+        
+        elif next == HandEnum.GRAB.value:
+            if pre == HandEnum.PALM_OPEN.value:
+                if list(self.preHands.values()).count(HandEnum.PALM_OPEN.value) > 1:
+                    print("コピー関数呼び出し")
+
+                else:
+                    print("カット関数呼び出し")
+
+            else:
+                print("ペーストステータス呼び出し")
+
+
+
+
 
 
     def setPointingMode(self, isMode):

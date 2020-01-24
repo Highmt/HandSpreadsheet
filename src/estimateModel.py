@@ -75,7 +75,7 @@ def main():
 
     # Have the sample listener receive events from the controller
 
-    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB", "REVERSE_PINCH_OUT"]
+    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM_OPEN", "GRAB"]
     # Keep this process running until Enter is pressed
     for true_label in range(0, len(labels)):
         listener.true_label = true_label

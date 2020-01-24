@@ -41,7 +41,7 @@
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDate, QPoint, Qt, QPointF, QRectF
-from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap, QPen, QBrush, QImage, QPalette
+from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap, QPen, QBrush, QImage, QPalette, QMouseEvent
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
                              QComboBox, QDialog, QFontDialog, QGroupBox, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
@@ -51,6 +51,7 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QColorDialog,
 from src.LeapMotion import Leap
 from src.HandSpreadSheetLeap import handListener
 from src.OverlayGraphics import OverlayGraphics
+from src.SSEnum import DirectionEnum
 from src.myTable import myTable
 from src.spreadsheetitem import SpreadSheetItem
 from src.util import decode_pos, encode_pos
@@ -103,6 +104,7 @@ class SpreadSheet(QMainWindow):
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
         self.overlayGraphics.hide()  # 描画を非表示
+        # self.overlayGraphics.show()
 
         # Create a sample listener and controller
         self.listener = handListener(self)
@@ -143,8 +145,8 @@ class SpreadSheet(QMainWindow):
         self.secondSeparator = QAction(self)
         self.secondSeparator.setSeparator(True)
 
-        self.insert_Action = QAction("insert", self)
-        self.insert_Action.triggered.connect(self.actionInsert)
+        self.inser_Action = QAction("insert", self)
+        self.inser_Action.triggered.connect(self.action)
 
         self.delete_Action = QAction("delete", self)
         self.delete_Action.triggered.connect(self.actionDelete)
@@ -161,7 +163,7 @@ class SpreadSheet(QMainWindow):
         self.paste_Action = QAction("paste", self)
         self.paste_Action.triggered.connect(self.actionPaste)
 
-    def actionInsert(self):
+    def action(self):
         pass
 
     def actionDelete(self):
@@ -192,7 +194,7 @@ class SpreadSheet(QMainWindow):
         self.pointMode.setEnabled(False)
 
         self.cellMenu = self.menuBar().addMenu("&Cell")
-        self.cellMenu.addAction(self.insert_Action)
+        self.cellMenu.addAction(self.inser_Action)
         self.cellMenu.addAction(self.delete_Action)
         self.cellMenu.addAction(self.sort_Action)
         self.cellMenu.addAction(self.copy_Action)
@@ -200,7 +202,7 @@ class SpreadSheet(QMainWindow):
         self.cellMenu.addAction(self.paste_Action)
 
     def setupContextMenu(self):
-        self.addAction(self.insert_Action)
+        self.addAction(self.inser_Action)
         self.addAction(self.delete_Action)
         self.addAction(self.sort_Action)
         self.addAction(self.copy_Action)
@@ -264,18 +266,19 @@ class SpreadSheet(QMainWindow):
 
 
     def activePointing(self):
-        self.listener.setPointingMode(True)
+        # self.listener.setPointingMode(True)
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
-        self.overlayGraphics.targetVisible(True)
-        self.pointStatusLabel.setText("Pointing mode: active")
+        # self.overlayGraphics.setTargetMode(True)
+        # self.pointStatusLabel.setText("Pointing mode: active")
+
 
     def negativePointing(self):
-        self.listener.setPointingMode(False)
+        # self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
-        self.overlayGraphics.targetVisible(False)
-        self.pointStatusLabel.setText("Pointing mode: negative")
+        # self.overlayGraphics.setTargetMode(False)
+        # self.pointStatusLabel.setText("Pointing mode: negative")
 
     def setupContextMenu(self):
         # self.addAction((self.start_Leap))
@@ -306,7 +309,18 @@ class SpreadSheet(QMainWindow):
         self.controller.remove_listener(self.listener)
 
     def cellSelect(self):
-        self.table.getItemCoordinate()
+        self.first_item, self.last_item = self.table.getItemCoordinate()
+
+
+    def setFeedback(self, text, option, direction):
+        self.overlayGraphics.feedbackShow(
+            self.table.visualItemRect(self.first_item),
+            self.table.visualItemRect(self.last_item),
+            text,
+            option,
+            direction
+        )
+
 
 if __name__ == '__main__':
     import sys
