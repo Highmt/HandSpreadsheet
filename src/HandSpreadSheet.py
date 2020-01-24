@@ -280,11 +280,6 @@ class SpreadSheet(QMainWindow):
         # self.overlayGraphics.setTargetMode(False)
         # self.pointStatusLabel.setText("Pointing mode: negative")
 
-    def setupContextMenu(self):
-        # self.addAction((self.start_Leap))
-        # self.addAction(self.end_Leap)
-        self.setContextMenuPolicy(Qt.ActionsContextMenu)
-
     def changeLeap(self, toConnect):
         if toConnect:
             self.start_Leap.setEnabled(False)
