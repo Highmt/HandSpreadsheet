@@ -1,11 +1,13 @@
+import statistics
 import sys
 import pyautogui
 
 from src.LeapMotion.Leap import *
 from src.Predictor import Predictor
+from src.SSEnum import SSEnum
 
 DIS_SIZE = pyautogui.size()
-
+memorySize = 20
 
 class handListener(Listener):
     def __init__(self, app):
@@ -15,7 +17,10 @@ class handListener(Listener):
         self.app = app
         self.overlayGraphics = self.app.getOverlayGrahics()
         self.isPointingMode = False
-        self.predictor = Predictor()
+        self.predictor = Predictor()   # 学習モデル
+        self.memoryHands = {}
+        self.preHands = {}
+
 
 
     def on_caribration(self, controller):
@@ -102,7 +107,6 @@ class handListener(Listener):
     def on_init(self, controller):
         print("Initialized")
 
-
     def on_connect(self, controller):
         print("Connected")
         # self.on_caribrationTest()
@@ -120,16 +124,90 @@ class handListener(Listener):
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
-        hands = frame.hands
+        for handid in list(self.preHands.keys()):
+            if not frame.hand(handid).is_valid:
+                # 現フレームに存在しない手のデータを削除
+                del self.memoryHands[handid]
+                del self.preHands[handid]
 
-        # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
-        # statistics.mode(list)　　#　リストの最頻値を算出
-        if frame.hands.is_empty():
+        
+        if frame.hands.is_empty:
             self.overlayGraphics.hide()
-
         else:
             for hand in frame.hands:
-                hand_stat = self.predictor.handPredict(hand)
+                handlist = self.memoryHands.get(hand.id)
+                prehand = self.preHands.get(hand.id)
+                if handlist is None:   # 新規の手だったら追加
+                    handlist = []
+                    prehand = SSEnum.FREE.value
+                if len(handlist) == memorySize:   # 記憶サイズいっぱいだったらFirst out
+                    handlist.pop(0)
+                hand_state = self.predictor.handPredict(hand)
+                handlist.append(hand_state)   # 手形状のメモリに新規追加
+                # 判定手形状を識別
+                try:
+                    currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
+                except:
+                    currentStatus = hand_state
+                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
+                self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
+                if prehand != currentStatus:
+                    self.action(prehand, currentStatus)
+                    self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
+
+
+    def action(self, pre, next):
+        # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
+        if next == SSEnum.FREE.value:
+            self.overlayGraphics.hide()
+        
+        if next == SSEnum.PINCH_IN.value:
+            if pre == SSEnum.PINCH_OUT.value:
+                print("削除関数呼び出し")
+                pass
+            else:
+                print("挿入ステータス呼び出し")
+                pass
+            
+        if next == SSEnum.PINCH_OUT.value:
+            if pre == SSEnum.PINCH_IN.value:
+                print("挿入関数呼び出し")
+                pass
+            elif pre == SSEnum.PINCH_OUT_R.value:
+                print("降順ソート関数呼び出し")
+                pass
+            else:
+                print("削除ステータス呼び出し")
+                pass
+        
+        if next == SSEnum.PALM_OPEN.value:
+            if pre == SSEnum.GRAB.value:
+                print("ペースト関数呼び出し")
+                pass
+            else:
+                print("コピー，カットステータス呼び出し")
+                pass
+        
+        if next == SSEnum.GRAB.value:
+            if pre == SSEnum.PALM_OPEN.value:
+                if list(self.preHands.values()).count(SSEnum.PALM_OPEN.value) > 1:
+                    print("コピー関数呼び出し")
+                    pass
+                else:
+                    print("カット関数呼び出し")
+                    pass
+            else:
+                print("ペーストステータス呼び出し")
+                pass
+
+        elif next == SSEnum.PINCH_OUT_R.value:
+            if pre == SSEnum.PINCH_OUT.value:
+                print("昇順ソート関数呼び出し")
+                pass
+            else:
+                print("降順ソート呼び出し")
+                pass
+
 
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode

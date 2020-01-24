@@ -16,7 +16,7 @@ from src.SSEnum import SSEnum
 
 current = datetime.now().strftime('%Y%m%d%H%M')
 #　収集する手形状のラベル（）
-label = SSEnum.GRAB.value
+label = SSEnum.PINCH_OUT_R.value
 collect_data_num = 10000
 data_count = 0
 

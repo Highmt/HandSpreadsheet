@@ -38,6 +38,7 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDate, QPoint, Qt, QPointF, QRectF
 from PyQt5.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap, QPen, QBrush, QImage, QPalette
@@ -306,7 +307,6 @@ class SpreadSheet(QMainWindow):
 
     def cellSelect(self):
         self.table.getItemCoordinate()
-
 
 if __name__ == '__main__':
     import sys

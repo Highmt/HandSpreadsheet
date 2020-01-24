@@ -159,11 +159,10 @@ class myTable(QTableWidget):
         pass
 
     def getItemCoordinate(self):
-        self.itemlist = self.selectedItems()
-        if self.itemlist.__len__() is not 0:
-            self.first_item = self.itemlist[0]
-            self.last_item = self.itemlist[-1]
-
-        # print(self.visualItemRect(self.currentItem()))　＃クリック位置のセル
+        itemList = self.selectedItems()
+        if itemList:
+            first_item = itemList[0]
+            last_item = itemList[-1]
+            print(self.visualItemRect(first_item))  # クリック位置のセル
 
 

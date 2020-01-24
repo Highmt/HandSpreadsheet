@@ -22,12 +22,13 @@ np.random.seed(1671)  # for reproducibility
 DROPOUT = 0.2
 
 # data: shuffled and split between train and test sets
-read_data0 = pd.read_csv('./data/FREE_0.csv', sep=',', index_col=0)
-read_data1 = pd.read_csv('./data/PINCH_IN_1.csv', sep=',', index_col=0)
-read_data2 = pd.read_csv('./data/PINCH_OUT_2.csv', sep=',', index_col=0)
-read_data3 = pd.read_csv('./data/PALM_OPEN_3.csv', sep=',', index_col=0)
-read_data4 = pd.read_csv('./data/GRAB_4.csv', sep=',', index_col=0)
-read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4], ignore_index=True)
+read_data0 = pd.read_csv('./data/0_FREE.csv', sep=',', index_col=0)
+read_data1 = pd.read_csv('./data/1_PINCH_IN.csv', sep=',', index_col=0)
+read_data2 = pd.read_csv('./data/2_PINCH_OUT.csv', sep=',', index_col=0)
+read_data3 = pd.read_csv('./data/3_PALM_OPEN.csv', sep=',', index_col=0)
+read_data4 = pd.read_csv('./data/4_GRAB.csv', sep=',', index_col=0)
+read_data5 = pd.read_csv('./data/5_PINCH_OUT_R.csv', sep=',', index_col=0)
+read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
 data = read_data.drop("label", axis=1).values
 label = read_data["label"].values
 
@@ -54,13 +55,12 @@ clf.fit(train_data, train_label)
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
 nowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
-joblib.dump(clf, './learnModel/HandDitectModel.pkl')
+joblib.dump(clf, './learningModel/HandDitectModel.pkl')
 
 # モデルを読み込む --- (*4)
-
 pred = clf.predict(test_data)
 touch_true = test_label.tolist()
-labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB"]
+labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB", "PINCH_OUT_R"]
 
 c_matrix = confusion_matrix(touch_true, pred)
 print(c_matrix)

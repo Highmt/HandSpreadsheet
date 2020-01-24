@@ -76,9 +76,9 @@ def main():
 
     # Have the sample listener receive events from the controller
 
-    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB"]
+    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB", "REVERSE_PINCH_OUT"]
     # Keep this process running until Enter is pressed
-    for true_label in range(0, labels.__len__()):
+    for true_label in range(0, len(labels)):
         listener.true_label = true_label
         print("Press Enter to start scensing hand")
         print("Please make {} hand".format(labels.__getitem__(true_label)))

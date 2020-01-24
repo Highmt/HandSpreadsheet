@@ -6,9 +6,10 @@ from src.LeapMotion.Leap import RAD_TO_DEG
 
 class Predictor():
     def __init__(self):
-        self.model = joblib.load('./learnModel/HandDitectModel.pkl')
+        self.model = joblib.load('./learningModel/HandDitectModel.pkl')
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         self.bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
+        self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "PALM_OPEN", "GRAB", "REVERSE_PINCH_OUT"]
 
 
     def handPredict(self, hand):
