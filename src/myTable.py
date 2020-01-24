@@ -164,6 +164,6 @@ class myTable(QTableWidget):
             self.first_item = self.itemlist[0]
             self.last_item = self.itemlist[-1]
 
-        print(self.visualItemRect(self.currentItem()))
+        # print(self.visualItemRect(self.currentItem()))　＃クリック位置のセル
 
 

@@ -82,10 +82,11 @@ class SpreadSheet(QMainWindow):
         self.updateColor(0)
         self.setupMenuBar()
 
-        self.setupContextMenu()
+        self.setupContextMenu()  # コンテクストメニュー設定
         self.setCentralWidget(self.table)
-        self.statusBar()
         self.createStatusBar()
+
+
         self.table.currentItemChanged.connect(self.updateStatus)
         self.table.currentItemChanged.connect(self.updateColor)
         self.table.currentItemChanged.connect(self.updateLineEdit)
@@ -113,11 +114,11 @@ class SpreadSheet(QMainWindow):
         self.leapLabel.setAlignment(Qt.AlignLeft)
         self.leapLabel.setMinimumSize(self.leapLabel.sizeHint())
 
-        self.pointingLabel = QLabel("")
-        self.pointingLabel.setAlignment(Qt.AlignLeft)
+        self.pointStatusLabel = QLabel("")
+        self.pointStatusLabel.setAlignment(Qt.AlignLeft)
 
         self.statusBar().addWidget(self.leapLabel)
-        self.statusBar().addPermanentWidget(self.pointingLabel)
+        self.statusBar().addPermanentWidget(self.pointStatusLabel)
 
     def createActions(self):
         self.start_Leap = QAction("StartLeap", self)
@@ -141,6 +142,42 @@ class SpreadSheet(QMainWindow):
         self.secondSeparator = QAction(self)
         self.secondSeparator.setSeparator(True)
 
+        self.insert_Action = QAction("insert", self)
+        self.insert_Action.triggered.connect(self.actionInsert)
+
+        self.delete_Action = QAction("delete", self)
+        self.delete_Action.triggered.connect(self.actionDelete)
+
+        self.sort_Action = QAction("sort", self)
+        self.sort_Action.triggered.connect(self.actionSort)
+
+        self.copy_Action = QAction("copy", self)
+        self.copy_Action.triggered.connect(self.actionCopy)
+
+        self.cut_Action = QAction("cut", self)
+        self.cut_Action.triggered.connect(self.actionCut)
+
+        self.paste_Action = QAction("paste", self)
+        self.paste_Action.triggered.connect(self.actionPaste)
+
+    def actionInsert(self):
+        pass
+
+    def actionDelete(self):
+        pass
+
+    def actionSort(self):
+        pass
+
+    def actionCopy(self):
+        pass
+
+    def actionCut(self):
+        pass
+
+    def actionPaste(self):
+        pass
+
     def setupMenuBar(self):
         self.leapMenu = self.menuBar().addMenu("&LeapMotion")
         self.leapMenu.addAction(self.start_Leap)
@@ -152,6 +189,24 @@ class SpreadSheet(QMainWindow):
         self.pointMode.addAction(self.active_Point)
         self.pointMode.addAction(self.negative_Point)
         self.pointMode.setEnabled(False)
+
+        self.cellMenu = self.menuBar().addMenu("&Cell")
+        self.cellMenu.addAction(self.insert_Action)
+        self.cellMenu.addAction(self.delete_Action)
+        self.cellMenu.addAction(self.sort_Action)
+        self.cellMenu.addAction(self.copy_Action)
+        self.cellMenu.addAction(self.cut_Action)
+        self.cellMenu.addAction(self.paste_Action)
+
+    def setupContextMenu(self):
+        self.addAction(self.insert_Action)
+        self.addAction(self.delete_Action)
+        self.addAction(self.sort_Action)
+        self.addAction(self.copy_Action)
+        self.addAction(self.cut_Action)
+        self.addAction(self.paste_Action)
+        self.addAction(self.firstSeparator)
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
 
     def updateStatus(self, item):
         if item and item == self.table.currentItem():
@@ -205,21 +260,21 @@ class SpreadSheet(QMainWindow):
 
     def endLeap(self):
         self.controller.remove_listener(self.listener)
-        self.overlayGraphics.hide()
+
 
     def activePointing(self):
         self.listener.setPointingMode(True)
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
         self.overlayGraphics.targetVisible(True)
-        self.pointingLabel.setText("Pointing mode: active")
+        self.pointStatusLabel.setText("Pointing mode: active")
 
     def negativePointing(self):
         self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
         self.overlayGraphics.targetVisible(False)
-        self.pointingLabel.setText("Pointing mode: negative")
+        self.pointStatusLabel.setText("Pointing mode: negative")
 
     def setupContextMenu(self):
         # self.addAction((self.start_Leap))
@@ -233,14 +288,15 @@ class SpreadSheet(QMainWindow):
             self.pointMode.setEnabled(True)
             self.active_Point.setEnabled(True)
             self.leapLabel.setText("LeapMotion: connecting")
-            self.pointingLabel.setText("Pointing mode: negative")
+            self.pointStatusLabel.setText("Pointing mode: negative")
         else:
             self.end_Leap.setEnabled(False)
             self.start_Leap.setEnabled(True)
             self.pointMode.setEnabled(False)
             self.negative_Point.setEnabled(False)
             self.leapLabel.setText("LeapMotion: disconnecting")
-            self.pointingLabel.setText("")
+            self.overlayGraphics.hide()
+            self.pointStatusLabel.setText("")
 
     def getOverlayGrahics(self):
         return self.overlayGraphics

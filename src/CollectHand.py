@@ -15,7 +15,7 @@ from datetime import datetime
 from src.SSEnum import SSEnum
 
 current = datetime.now().strftime('%Y%m%d%H%M')
-#　収集する手形状のラベル（SSEnum）
+#　収集する手形状のラベル（）
 label = SSEnum.GRAB.value
 collect_data_num = 10000
 data_count = 0
@@ -286,7 +286,7 @@ class CollectListener(Listener):
             label_list.append(label)
 
 
-        # if not frame.hands.is_empty:
+        # if frame.hands.is_empty:
         #     print("no hand")
 
 def data_save_pandas():

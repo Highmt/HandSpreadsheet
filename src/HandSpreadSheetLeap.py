@@ -2,6 +2,7 @@ import sys
 import pyautogui
 
 from src.LeapMotion.Leap import *
+from src.Predictor import Predictor
 
 DIS_SIZE = pyautogui.size()
 
@@ -14,6 +15,7 @@ class handListener(Listener):
         self.app = app
         self.overlayGraphics = self.app.getOverlayGrahics()
         self.isPointingMode = False
+        self.predictor = Predictor()
 
 
     def on_caribration(self, controller):
@@ -82,8 +84,7 @@ class handListener(Listener):
         print("\nComplete caribration")
         sys.stdin.readline()
 
-
-    def on_caribrationTest(self,controller):
+    def on_caribrationTest(self):
         dis_ul = Vector(-120, 215, 0)
         dis_ll = Vector(-130, 90, 0)
         dis_lr = Vector(130, 90, 0)
@@ -98,15 +99,13 @@ class handListener(Listener):
         print(self.finger_dis_size)
         print("Complete test caribration")
 
-
-
     def on_init(self, controller):
         print("Initialized")
 
 
     def on_connect(self, controller):
         print("Connected")
-        self.on_caribrationTest(controller)
+        # self.on_caribrationTest()
         self.setPointingMode(False)
         self.app.changeLeap(True)
 
@@ -123,76 +122,14 @@ class handListener(Listener):
         frame = controller.frame()
         hands = frame.hands
 
-        # TODO ジェスチャ識別によるself.app.関数の立ち上げを実装
+        # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
+        # statistics.mode(list)　　#　リストの最頻値を算出
+        if frame.hands.is_empty():
+            self.overlayGraphics.hide()
 
-        if not hands.is_empty:
-            fingers = hands[0].fingers
-            # palm  open
-            if(hands[0].grab_strength == 0) :
-                  print("open")
-
-            if not fingers.is_empty:
-
-                if(hands[0].pinch_strength == 1):
-                    print("pinch")
-
-
-            self.mouse_move(self, fingers)
-            #ウインドウ内でターゲットマーカーを動かす
-    def mouse_move(self,fingers):
-        print("display size: ", self.finger_dis_size)
-        f_finger = fingers.frontmost
-        finger_pos = f_finger.joint_position(f_finger.JOINT_TIP)
-        print("finger_pos: ", finger_pos)
-
-        move_pos = [
-            (finger_pos.x - self.finger_dis_dim["left"]) / self.finger_dis_size[0] * DIS_SIZE[0],
-            (finger_pos.y - self.finger_dis_dim["up"]) / self.finger_dis_size[1] * DIS_SIZE[1]]
-
-        # マウス動かす
-        pyautogui.moveTo(move_pos[0], move_pos[1])
-
-        # print("Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d" % ( frame.id, frame.timestamp, numHands, len(frame.fingers), len(frame.tools)))
-
-        # if numHands >= 1:
-        #     # Get the first hand
-        #     hand = hands[0]
-        #
-        #     # Check if the hand has any fingers
-        #     fingers = hand.fingers
-        #     numFingers = len(fingers)
-        #     if numFingers >= 1:
-        #         # Calculate the hand's average finger tip position
-        #         pos = Vector()
-        #         for finger in fingers:
-        #             pos += finger.tip_position
-        #
-        #         pos = pos.__div__(numFingers)
-        #         print("Hand has", numFingers, "fingers with average tip position", pos)
-        #
-        #     # Get the palm position
-        #     palm = hand.palm_position
-        #     print("Palm position:", palm)
-        #
-        #     # Get the palm normal vector  and direction
-        #     normal = hand.palm_normal
-        #     direction = hand.direction
-        #
-        #     # Calculate the hand's pitch, roll, and yaw angles
-        #     print("Pitch: %f degrees,  Roll: %f degrees,  Yaw: %f degrees" % (
-        #         direction.pitch * RAD_TO_DEG,
-        #         normal.roll * RAD_TO_DEG,
-        #         direction.yaw * RAD_TO_DEG))
-        #
-        #     print("Hand curvature radius: %f mm" % hand.sphere_radius)
+        else:
+            for hand in frame.hands:
+                hand_stat = self.predictor.handPredict(hand)
 
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode
-
-    def singleJesture(self):
-        # TODO 片手ジェスチャ認識
-        pass
-
-    def bothJesture(self):
-        # TODO 両手ジェスチャ認識
-        pass

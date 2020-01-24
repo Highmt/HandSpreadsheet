@@ -54,7 +54,7 @@ clf.fit(train_data, train_label)
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
 nowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
-joblib.dump(clf, './learnModel/KNN_{}.pkl'.format(nowTime))
+joblib.dump(clf, './learnModel/HandDitectModel.pkl')
 
 # モデルを読み込む --- (*4)
 
