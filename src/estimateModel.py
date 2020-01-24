@@ -70,7 +70,6 @@ class TestListener(Listener):
 
 def main():
     # Create a sample listener and controller
-    nowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
     listener = TestListener()
     controller = Controller()
 
@@ -94,8 +93,8 @@ def main():
     cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
     sum = int(true_list.__len__()) / int(labels.__len__())  # 各ラベルの数
     sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  # 正規化したものを表示
-    plt.savefig('./learningResult/testCM_{}.png'.format(nowTime))
-    with open('./learningResult/testCM_{}.csv'.format(nowTime), 'w') as file:
+    plt.savefig('./learningResult/testCM.png')
+    with open('./learningResult/testCM.csv', 'w') as file:
         writer = csv.writer(file, lineterminator='\n')
         writer.writerows(c_matrix)
     print(classification_report(true_list, pred_list))

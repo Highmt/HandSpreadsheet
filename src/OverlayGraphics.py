@@ -46,7 +46,7 @@ class OverlayGraphics(QGraphicsView):
         self.setModalPos()
 
     def setModalPos(self):
-        if self.modal_pos == SSEnum.HOLIZON:
+        if self.modal_pos == SSEnum.HORIZON:
             # モーダルを右に表示しきれない場合に左に表示
             if self.target_circle.pos().x() > self.overlayScene.width() - self.modal_rect.rect().size().width() * 1.5:
                 self.modal_rect.setPos(-self.modal_rect.rect().size().width() * 1.5,

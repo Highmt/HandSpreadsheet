@@ -14,7 +14,6 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
-from src.SSEnum import SSEnum
 
 np.random.seed(1671)  # for reproducibility
 
@@ -67,8 +66,8 @@ print(c_matrix)
 cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
 sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
 sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  #  正規化したものを表示
-plt.savefig('./learningResult/CM_{}.png'.format(nowTime))
-with open('./learningResult/CM_{}.csv'.format(nowTime), 'w') as file:
+plt.savefig('./learningResult/cvCM.png'.format(nowTime))
+with open('./learningResult/cvCM.csv'.format(nowTime), 'w') as file:
     writer = csv.writer(file, lineterminator='\n')
     writer.writerows(c_matrix)
 print(classification_report(test_label, pred))

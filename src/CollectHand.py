@@ -12,11 +12,11 @@ import sys
 import pandas as pd
 from datetime import datetime
 
-from src.SSEnum import SSEnum
+from src.SSEnum import HandEnum
 
 current = datetime.now().strftime('%Y%m%d%H%M')
 #　収集する手形状のラベル（）
-label = SSEnum.PINCH_OUT_R.value
+label = HandEnum.PINCH_OUT_R.value
 collect_data_num = 10000
 data_count = 0
 

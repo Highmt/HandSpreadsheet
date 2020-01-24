@@ -4,7 +4,7 @@ import pyautogui
 
 from src.LeapMotion.Leap import *
 from src.Predictor import Predictor
-from src.SSEnum import SSEnum
+from src.SSEnum import SSEnum, HandEnum
 
 DIS_SIZE = pyautogui.size()
 memorySize = 20
@@ -139,7 +139,7 @@ class handListener(Listener):
                 prehand = self.preHands.get(hand.id)
                 if handlist is None:   # 新規の手だったら追加
                     handlist = []
-                    prehand = SSEnum.FREE.value
+                    prehand = HandEnum.FREE.value
                 if len(handlist) == memorySize:   # 記憶サイズいっぱいだったらFirst out
                     handlist.pop(0)
                 hand_state = self.predictor.handPredict(hand)
@@ -158,39 +158,39 @@ class handListener(Listener):
 
     def action(self, pre, next):
         # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
-        if next == SSEnum.FREE.value:
+        if next == HandEnum.FREE.value:
             self.overlayGraphics.hide()
         
-        if next == SSEnum.PINCH_IN.value:
-            if pre == SSEnum.PINCH_OUT.value:
+        if next == HandEnum.PINCH_IN.value:
+            if pre == HandEnum.PINCH_OUT.value:
                 print("削除関数呼び出し")
                 pass
             else:
                 print("挿入ステータス呼び出し")
                 pass
             
-        if next == SSEnum.PINCH_OUT.value:
-            if pre == SSEnum.PINCH_IN.value:
+        if next == HandEnum.PINCH_OUT.value:
+            if pre == HandEnum.PINCH_IN.value:
                 print("挿入関数呼び出し")
                 pass
-            elif pre == SSEnum.PINCH_OUT_R.value:
+            elif pre == HandEnum.PINCH_OUT_R.value:
                 print("降順ソート関数呼び出し")
                 pass
             else:
                 print("削除ステータス呼び出し")
                 pass
         
-        if next == SSEnum.PALM_OPEN.value:
-            if pre == SSEnum.GRAB.value:
+        if next == HandEnum.PALM_OPEN.value:
+            if pre == HandEnum.GRAB.value:
                 print("ペースト関数呼び出し")
                 pass
             else:
                 print("コピー，カットステータス呼び出し")
                 pass
         
-        if next == SSEnum.GRAB.value:
-            if pre == SSEnum.PALM_OPEN.value:
-                if list(self.preHands.values()).count(SSEnum.PALM_OPEN.value) > 1:
+        if next == HandEnum.GRAB.value:
+            if pre == HandEnum.PALM_OPEN.value:
+                if list(self.preHands.values()).count(HandEnum.PALM_OPEN.value) > 1:
                     print("コピー関数呼び出し")
                     pass
                 else:
@@ -200,8 +200,8 @@ class handListener(Listener):
                 print("ペーストステータス呼び出し")
                 pass
 
-        elif next == SSEnum.PINCH_OUT_R.value:
-            if pre == SSEnum.PINCH_OUT.value:
+        elif next == HandEnum.PINCH_OUT_R.value:
+            if pre == HandEnum.PINCH_OUT.value:
                 print("昇順ソート関数呼び出し")
                 pass
             else:
