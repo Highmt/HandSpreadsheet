@@ -10,9 +10,9 @@ class HandEnum(Enum):
     FREE = 0
     PINCH_IN = 1
     PINCH_OUT = 2
-    PINCH_OUT_R = 3
-    PALM_OPEN = 4
-    GRAB = 5
+    REVERSE = 3
+    PALM = 4
+    GRIP = 5
 
 
 

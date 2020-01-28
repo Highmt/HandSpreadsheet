@@ -24,8 +24,8 @@ DROPOUT = 0.2
 read_data0 = pd.read_csv('./data/0_FREE.csv', sep=',', index_col=0)
 read_data1 = pd.read_csv('./data/1_PINCH_IN.csv', sep=',', index_col=0)
 read_data2 = pd.read_csv('./data/2_PINCH_OUT.csv', sep=',', index_col=0)
-read_data3 = pd.read_csv('./data/3_PINCH_OUT_R.csv', sep=',', index_col=0)
-read_data4 = pd.read_csv('./data/4_PALM_OPEN.csv', sep=',', index_col=0)
+read_data3 = pd.read_csv('./data/3_REVERSE.csv', sep=',', index_col=0)
+read_data4 = pd.read_csv('./data/4_PALM.csv', sep=',', index_col=0)
 read_data5 = pd.read_csv('./data/5_GRAB.csv', sep=',', index_col=0)
 
 read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
@@ -60,12 +60,13 @@ joblib.dump(clf, './learningModel/HandDitectModel.pkl')
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)
 touch_true = test_label.tolist()
-labels = ["FREE", "PINCH_IN", "PINCH_OUT", "PINCH_OUT_R", "PALM_OPEN", "GRAB", ]
+labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "PALM", "GRIP", ]
 
 c_matrix = confusion_matrix(touch_true, pred)
 print(c_matrix)
 cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
 sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
+fig, ax = plt.subplots(figsize=(9, 8))
 sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  #  正規化したものを表示
 plt.savefig('./learningResult/cvCM.png'.format(nowTime))
 with open('./learningResult/cvCM.csv'.format(nowTime), 'w') as file:

@@ -75,7 +75,7 @@ def main():
 
     # Have the sample listener receive events from the controller
 
-    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM_OPEN", "GRAB"]
+    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
     # Keep this process running until Enter is pressed
     for true_label in range(0, len(labels)):
         listener.true_label = true_label
@@ -92,7 +92,8 @@ def main():
     print(c_matrix)
     cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
     sum = int(true_list.__len__()) / int(labels.__len__())  # 各ラベルの数
-    sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  # 正規化したものを表示
+    fig, ax = plt.subplots(figsize=(9, 8))
+    sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g', ax=ax)  # 正規化したものを表示
     plt.savefig('./learningResult/testCM.png')
     with open('./learningResult/testCM.csv', 'w') as file:
         writer = csv.writer(file, lineterminator='\n')

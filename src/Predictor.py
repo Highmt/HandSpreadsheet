@@ -9,7 +9,7 @@ class Predictor():
         self.model = joblib.load('./learningModel/HandDitectModel.pkl')
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         self.bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
-        self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM_OPEN", "GRAB"]
+        self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
 
 
     def handPredict(self, hand):

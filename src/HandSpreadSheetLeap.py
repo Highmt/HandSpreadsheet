@@ -175,13 +175,13 @@ class handListener(Listener):
             if pre == HandEnum.PINCH_IN.value:
                 print("挿入関数呼び出し")
 
-            elif pre == HandEnum.PINCH_OUT_R.value:
+            elif pre == HandEnum.REVERSE.value:
                 print("降順ソート関数呼び出し")
 
             else:
                 print("削除ステータス呼び出し")
 
-        elif next == HandEnum.PINCH_OUT_R.value:
+        elif next == HandEnum.REVERSE.value:
             if pre == HandEnum.PINCH_OUT.value:
                 print("昇順ソート関数呼び出し")
 
@@ -189,17 +189,17 @@ class handListener(Listener):
                 print("降順ソート呼び出し")
 
         
-        elif next == HandEnum.PALM_OPEN.value:
-            if pre == HandEnum.GRAB.value:
+        elif next == HandEnum.PALM.value:
+            if pre == HandEnum.GRIP.value:
                 print("ペースト関数呼び出し")
 
             else:
                 print("コピー，カットステータス呼び出し")
 
         
-        elif next == HandEnum.GRAB.value:
-            if pre == HandEnum.PALM_OPEN.value:
-                if list(self.preHands.values()).count(HandEnum.PALM_OPEN.value) > 1:
+        elif next == HandEnum.GRIP.value:
+            if pre == HandEnum.PALM.value:
+                if list(self.preHands.values()).count(HandEnum.PALM.value) > 1:
                     print("コピー関数呼び出し")
 
                 else:
