@@ -20,11 +20,11 @@ from src.Predictor import Predictor
 
 np.set_printoptions(suppress=True)
 training_data = np.empty([0, 7])
-predictor = Predictor()
+model = "SVC"
+predictor = Predictor(model)
 collect_data_num = 2000
 pred_list = []
 true_list = []
-
 PORT = 8080
 
 
@@ -94,8 +94,8 @@ def main():
     sum = int(true_list.__len__()) / int(labels.__len__())  # 各ラベルの数
     fig, ax = plt.subplots(figsize=(9, 8))
     sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g', ax=ax)  # 正規化したものを表示
-    plt.savefig('./learningResult/testCM.png')
-    with open('./learningResult/testCM.csv', 'w') as file:
+    plt.savefig('./learningResult/testCM_{}.png'.format(model))
+    with open('./learningResult/testCM_{}.csv'.format(model), 'w') as file:
         writer = csv.writer(file, lineterminator='\n')
         writer.writerows(c_matrix)
     print(classification_report(true_list, pred_list))

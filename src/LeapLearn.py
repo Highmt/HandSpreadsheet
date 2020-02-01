@@ -3,7 +3,7 @@ import datetime
 
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+from sklearn import metrics, svm
 from sklearn.externals import joblib
 from sklearn.metrics import classification_report, confusion_matrix
 
@@ -14,6 +14,7 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 
 np.random.seed(1671)  # for reproducibility
 
@@ -39,26 +40,61 @@ train_data, test_data, train_label, test_label = train_test_split(data, label, t
 print(train_data.shape[0], 'train samples')
 print(test_data.shape[0], 'test samples')
 
-knn_parameters = {'n_neighbors': [7, 11, 19],
-                    'weights': ['uniform', 'distance'],
-                    'metric': ['euclidean', 'manhattan']
-                  }
-scores = ['precision', 'recall', 'f1']
+
+
+
 
 print("train start")
 print("# Tuning hyper-parameters for accuracy")
 
-#  グリッドサーチと交差検証法
-clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
+#  KNN------------------------------------------------
+# knn_parameters = {'n_neighbors': [7, 11, 19],
+#                     'weights': ['uniform', 'distance'],
+#                     'metric': ['euclidean', 'manhattan']
+#                   }
+# scores = ['precision', 'recall', 'f1']
+#
+# clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
+#                    scoring='accuracy', n_jobs=-1)
+# clf.fit(train_data, train_label)
+# model = "KNN"
+# ------------------------------------------------------
+
+
+#   SVC-------------------------------------------------
+# tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+#                      'C': [0.1, 1, 10]},
+#                     {'kernel': ['linear'], 'C': [0.1, 1, 10]}]
+# scores = ['precision', 'recall', 'f1']
+# #  グリッドサーチと交差検証法
+# clf = GridSearchCV(svm.SVC(), tuned_parameters, cv=5,
+#                     scoring='accuracy', n_jobs=-1)
+# clf.fit(train_data, train_label)
+# model = "SVC"
+# ------------------------------------------------------
+
+#   NN-------------------------------------------------
+nn_parameters = [{
+        # 最適化手法
+        "solver": ["lbfgs", "sgd", "adam"],
+        # 隠れ層の層の数と、各層のニューロンの数
+        "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
+}]
+scores = ['precision', 'recall']
+clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
                    scoring='accuracy', n_jobs=-1)
 clf.fit(train_data, train_label)
+model = "NN"
+# ------------------------------------------------------
+
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-nowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
-joblib.dump(clf, './learningModel/HandDitectModel.pkl')
+joblib.dump(clf, './learningModel/HandDitectModel_{}.pkl'.format(model))
 
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)
+print(pred)
+print(clf.predict_proba(test_data))
 touch_true = test_label.tolist()
 labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "PALM", "GRIP", ]
 
@@ -68,8 +104,8 @@ cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
 sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
 fig, ax = plt.subplots(figsize=(9, 8))
 sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  #  正規化したものを表示
-plt.savefig('./learningResult/cvCM.png'.format(nowTime))
-with open('./learningResult/cvCM.csv'.format(nowTime), 'w') as file:
+plt.savefig('./learningResult/cvCM_{}.png'.format(model))
+with open('./learningResult/cvCM_{}.csv'.format(model), 'w') as file:
     writer = csv.writer(file, lineterminator='\n')
     writer.writerows(c_matrix)
 print(classification_report(test_label, pred))

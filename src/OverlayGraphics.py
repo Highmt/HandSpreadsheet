@@ -15,6 +15,8 @@ class OverlayGraphics(QGraphicsView):
         self.setScene(self.overlayScene)
         self.overlayScene.setSceneRect(QRectF(self.rect()))
         self.createItem()
+        self.targetVisible(False)
+
 
 
     def createItem(self):
@@ -29,12 +31,12 @@ class OverlayGraphics(QGraphicsView):
         self.modal_rect.setBrush(QBrush(Qt.gray))
         self.modal_rect.setPen(QPen(Qt.gray))
         self.modal_rect.setOpacity(0.8)  # 透明度を設定
-        self.operate_text = QGraphicsSimpleTextItem("削除", self.modal_rect)
+        self.operate_text = QGraphicsSimpleTextItem("挿入", self.modal_rect)
         self.operate_text.setPos(30, 5)
         self.operate_text.setScale(1.7)
-        self.operate_option = QGraphicsSimpleTextItem("上詰め", self.modal_rect)
-        self.operate_option.setPos(32.5, 40)
-        self.setTargetPos(440, 200, DirectionEnum.VERTICAL.value)
+        self.operate_option = QGraphicsSimpleTextItem("左に寄せる", self.modal_rect)
+        self.operate_option.setPos(20.5, 40)
+        self.setTargetPos(400, 180, DirectionEnum.VERTICAL.value)
         self.setTargetMode(True)
         self.luRect = QRect()
         self.rbRect = QRect()
@@ -46,6 +48,9 @@ class OverlayGraphics(QGraphicsView):
     def setTargetPos(self, x_pos, y_pos, direction):  # ウィンドウ左上からの位置　（画面位置からウインドウ左上の一を引く）
         self.target_circle.setPos(QPointF(x_pos, y_pos))
         self.setModalPos(direction)
+
+    def setMessage(self, text, option):
+        pass
 
     def setModalPos(self, direction):
 
@@ -77,9 +82,11 @@ class OverlayGraphics(QGraphicsView):
         else:
             self.target_circle.setRect(0, 0, 0, 0)
 
+
     def feedbackShow(self, text, option, direction):
         self.operate_text.setText(text)
         self.operate_option.setText(option)
+        print(self.luRect)
         # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
         if not self.targetMode:
             if direction == DirectionEnum.VERTICAL.value:

@@ -17,7 +17,7 @@ class handListener(Listener):
         self.app = app
         self.overlayGraphics = self.app.getOverlayGrahics()
         self.isPointingMode = False
-        self.predictor = Predictor()   # 学習モデル
+        self.predictor = Predictor("KNN")   # 学習モデル
         self.memoryHands = {}
         self.preHands = {}
 
@@ -168,7 +168,7 @@ class handListener(Listener):
 
             else:
                 print("挿入ステータス呼び出し")
-                self.overlayGraphics.feedbackShow("test", "testtesttest", DirectionEnum.HORIZON.value)
+                self.overlayGraphics.feedbackShow("挿入", "下に寄せる", DirectionEnum.HORIZON.value)
 
             
         elif next == HandEnum.PINCH_OUT.value:
@@ -180,6 +180,7 @@ class handListener(Listener):
 
             else:
                 print("削除ステータス呼び出し")
+                self.overlayGraphics.feedbackShow("削除", "縦に寄せる", DirectionEnum.VERTICAL.value)
 
         elif next == HandEnum.REVERSE.value:
             if pre == HandEnum.PINCH_OUT.value:

@@ -104,7 +104,7 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
         self.overlayGraphics.hide()  # 描画を非表示
-        # self.overlayGraphics.show()
+
 
         # Create a sample listener and controller
         self.listener = handListener(self)
