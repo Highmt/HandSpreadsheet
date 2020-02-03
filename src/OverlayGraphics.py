@@ -88,6 +88,7 @@ class OverlayGraphics(QGraphicsView):
         self.operate_option.setText(option)
         print(self.luRect)
         # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
+        # TODO モーダルの表示位置を変更する
         if not self.targetMode:
             if direction == DirectionEnum.VERTICAL.value:
                 x_pos = (self.luRect.left() + self.rbRect.right())/2

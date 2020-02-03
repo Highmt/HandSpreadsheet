@@ -130,33 +130,41 @@ class handListener(QtCore.QThread, Listener):
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
+
         for handid in list(self.preHands.keys()):
             if not frame.hand(handid).is_valid:
                 # 現フレームに存在しない手のデータを削除
                 del self.memoryHands[handid]
                 del self.preHands[handid]
 
+        # 手が認識されない時フィードバックを非表示
         if frame.hands.is_empty:
             self.hide_feedback.emit()
+
+        # 認識した手の形状を識別する
         else:
             for hand in frame.hands:
                 handlist = self.memoryHands.get(hand.id)
                 prehand = self.preHands.get(hand.id)
+
                 if handlist is None:   # 新規の手だったら追加
                     handlist = []
-                    prehand = HandEnum.FREE.value
+                    prehand = HandEnum.FREE.value  # １つ前の手形状にFREE状態をセット
+
                 if len(handlist) == memorySize:   # 記憶サイズいっぱいだったらFirst out
                     handlist.pop(0)
-                hand_state = self.predictor.handPredict(hand)
+
+                hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
                 print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
-                # 判定手形状を識別
+                # 識別手形状とメモリのて形状リストから現在の手形状を決定
                 try:
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
                 except:
                     currentStatus = hand_state
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
+
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
