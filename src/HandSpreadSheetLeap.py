@@ -8,7 +8,7 @@ from src.SSEnum import HandEnum, DirectionEnum
 from PyQt5 import QtCore
 
 DIS_SIZE = pyautogui.size()
-memorySize = 2
+memorySize = 20
 
 class handListener(QtCore.QThread, Listener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -158,11 +158,11 @@ class handListener(QtCore.QThread, Listener):
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
                 if prehand != currentStatus:
-                    self.action(prehand, currentStatus)
+                    self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
 
 
-    def action(self, pre, next):
+    def action(self, pre, next, hand):
         # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
         if next == HandEnum.FREE.value:
             if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):
@@ -174,7 +174,7 @@ class handListener(QtCore.QThread, Listener):
 
             else:
                 print("挿入ステータス呼び出し")
-                self.change_feedback.emit("挿入", "下に寄せる", DirectionEnum.HORIZON.value)
+                self.change_feedback.emit("挿入", "ピンチアウト", DirectionEnum.HORIZON.value)
 
             
         elif next == HandEnum.PINCH_OUT.value:
@@ -186,14 +186,15 @@ class handListener(QtCore.QThread, Listener):
 
             else:
                 print("削除ステータス呼び出し")
-                self.change_feedback.emit("削除", "縦に寄せる", DirectionEnum.VERTICAL.value)
+                self.change_feedback.emit("削除", "ピンチアウト", DirectionEnum.VERTICAL.value)
 
         elif next == HandEnum.REVERSE.value:
             if pre == HandEnum.PINCH_OUT.value:
                 print("昇順ソート関数呼び出し")
 
             else:
-                print("降順ソート呼び出し")
+                print("降順ソートステータス呼び出し")
+                self.change_feedback.emit("降順ソート", "フリック", DirectionEnum.HORIZON.value)
 
         
         elif next == HandEnum.PALM.value:
@@ -202,7 +203,7 @@ class handListener(QtCore.QThread, Listener):
 
             else:
                 print("コピー，カットステータス呼び出し")
-
+                self.change_feedback.emit("コピー，カット", "手を閉じる", DirectionEnum.HORIZON.value)
         
         elif next == HandEnum.GRIP.value:
             if pre == HandEnum.PALM.value:
@@ -214,6 +215,7 @@ class handListener(QtCore.QThread, Listener):
 
             else:
                 print("ペーストステータス呼び出し")
+                self.change_feedback.emit("ペースト", "手を開く", DirectionEnum.HORIZON.value)
 
 
 
