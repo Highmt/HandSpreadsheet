@@ -1,12 +1,14 @@
 import pandas as pd
+import sklearn
 from sklearn.externals import joblib
 
+from src.LeapMotion import Leap
 from src.LeapMotion.Leap import RAD_TO_DEG
 
 
 class Predictor():
-    def __init__(self, model):
-        self.model = joblib.load('./learningModel/HandDitectModel_{}.pkl'.format(model))
+    def __init__(self, alg: str):
+        self.model = joblib.load('./learningModel/HandDitectModel_{}.pkl'.format(alg))
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         self.bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
         self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
@@ -15,7 +17,6 @@ class Predictor():
     def handPredict(self, hand):
         handType = "Left hand" if hand.is_left else "Right hand"
         df = self.create_emptypandas()
-
         # print("  %s, id %d, position: %s" % (
         #     handType, hand.id, hand.palm_position))
 
@@ -160,6 +161,7 @@ class Predictor():
         # df.at[0, "elbow_position_y"] = arm.elbow_position.y
         # df.at[0, "elbow_position_z"] = arm.elbow_position.z
         pred = self.model.predict(df.values)
+        # print(self.model.decision_function(df.values))　# SVCのみ
         return pred[0]
 
     def create_emptypandas(self):

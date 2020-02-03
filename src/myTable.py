@@ -19,6 +19,7 @@ class myTable(QTableWidget):
         self.setupContents()
 
 
+
     def setupHeader(self, cols):
         for c in range(cols):
             character = chr(ord('A') + c)

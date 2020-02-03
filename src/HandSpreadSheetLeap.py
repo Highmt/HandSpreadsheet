@@ -2,24 +2,30 @@ import statistics
 import sys
 import pyautogui
 
-from src.LeapMotion.Leap import *
+from src.LeapMotion.Leap import Listener, Vector
 from src.Predictor import Predictor
 from src.SSEnum import HandEnum, DirectionEnum
+from PyQt5 import QtCore
 
 DIS_SIZE = pyautogui.size()
 memorySize = 2
 
-class handListener(Listener):
-    def __init__(self, app):
+class handListener(QtCore.QThread, Listener):
+    show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
+    hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
+    change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
+    action_operation = QtCore.pyqtSignal()   # 操作実行シグナル
+    startorend_leap = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
+
+    def __init__(self):
         super(handListener, self).__init__()
         self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
         self.finger_dis_size = [0, 0]
-        self.app = app
-        self.overlayGraphics = self.app.getOverlayGrahics()
         self.isPointingMode = False
         self.predictor = Predictor("KNN")   # 学習モデル
         self.memoryHands = {}
         self.preHands = {}
+
 
 
 
@@ -111,15 +117,15 @@ class handListener(Listener):
         print("Connected")
         # self.on_caribrationTest()
         self.setPointingMode(False)
-        self.app.changeLeap(True)
+        self.startorend_leap.emit(True)
 
     def on_disconnect(self, controller):
         print("Disconnected")
-        self.app.changeLeap(False)
+        self.startorend_leap.emit(False)
 
     def on_exit(self, controller):
         print("Exited")
-        self.app.changeLeap(False)
+        self.startorend_leap.emit(False)
 
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
@@ -131,7 +137,7 @@ class handListener(Listener):
                 del self.preHands[handid]
 
         if frame.hands.is_empty:
-            self.overlayGraphics.hide()
+            self.hide_feedback.emit()
         else:
             for hand in frame.hands:
                 handlist = self.memoryHands.get(hand.id)
@@ -160,7 +166,7 @@ class handListener(Listener):
         # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
         if next == HandEnum.FREE.value:
             if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):
-                self.overlayGraphics.hide()
+                self.hide_feedback.emit()
         
         elif next == HandEnum.PINCH_IN.value:
             if pre == HandEnum.PINCH_OUT.value:
@@ -168,7 +174,7 @@ class handListener(Listener):
 
             else:
                 print("挿入ステータス呼び出し")
-                self.overlayGraphics.feedbackShow("挿入", "下に寄せる", DirectionEnum.HORIZON.value)
+                self.change_feedback.emit("挿入", "下に寄せる", DirectionEnum.HORIZON.value)
 
             
         elif next == HandEnum.PINCH_OUT.value:
@@ -180,7 +186,7 @@ class handListener(Listener):
 
             else:
                 print("削除ステータス呼び出し")
-                self.overlayGraphics.feedbackShow("削除", "縦に寄せる", DirectionEnum.VERTICAL.value)
+                self.change_feedback.emit("削除", "縦に寄せる", DirectionEnum.VERTICAL.value)
 
         elif next == HandEnum.REVERSE.value:
             if pre == HandEnum.PINCH_OUT.value:

@@ -72,7 +72,7 @@ class HandSpreadSheet(QMainWindow):
         super(HandSpreadSheet, self).__init__(parent)
 
         self.toolBar = QToolBar()
-        self.addToolBar(self.toolBar)  #　ツールバーの追加
+        self.addToolBar(self.toolBar)  # ツールバーの追加
         self.formulaInput = QLineEdit()
         self.cellLabel = QLabel(self.toolBar)
         self.cellLabel.setMinimumSize(80, 0)
@@ -80,14 +80,13 @@ class HandSpreadSheet(QMainWindow):
         self.toolBar.addWidget(self.formulaInput)
         self.table = myTable(rows, cols, self)
 
-        self.createActions()   # アクションの追加
+        self.createActions()  # アクションの追加
         self.updateColor(0)
         self.setupMenuBar()
 
         self.setupContextMenu()  # コンテクストメニュー設定
         self.setCentralWidget(self.table)
         self.createStatusBar()
-
 
         self.table.currentItemChanged.connect(self.updateStatus)
         self.table.currentItemChanged.connect(self.updateColor)
@@ -103,12 +102,12 @@ class HandSpreadSheet(QMainWindow):
         self.overlayLayout.setContentsMargins(0, 0, 0, 0)
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
-        self.overlayGraphics.hide()  # 描画を非表示
-
+        # self.overlayGraphics.hide()  # 描画を非表示
 
         # Create a sample listener and controller
-        self.listener = handListener(self)
+        self.listener = handListener()
         self.controller = Leap.Controller()
+        self.setLeapSignal()
 
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
@@ -260,25 +259,22 @@ class HandSpreadSheet(QMainWindow):
         # Have the sample listener receive events from the controller
         self.controller.add_listener(self.listener)
 
-
     def endLeap(self):
         self.controller.remove_listener(self.listener)
 
-
     def activePointing(self):
-        # self.listener.setPointingMode(True)
+        self.listener.setPointingMode(True)
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
-        # self.overlayGraphics.setTargetMode(True)
-        # self.pointStatusLabel.setText("Pointing mode: active")
-
+        self.overlayGraphics.setTargetMode(True)
+        self.pointStatusLabel.setText("Pointing mode: active")
 
     def negativePointing(self):
-        # self.listener.setPointingMode(False)
+        self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
-        # self.overlayGraphics.setTargetMode(False)
-        # self.pointStatusLabel.setText("Pointing mode: negative")
+        self.overlayGraphics.setTargetMode(False)
+        self.pointStatusLabel.setText("Pointing mode: negative")
 
     def changeLeap(self, toConnect):
         if toConnect:
@@ -297,21 +293,23 @@ class HandSpreadSheet(QMainWindow):
             self.overlayGraphics.hide()
             self.pointStatusLabel.setText("")
 
-    def getOverlayGrahics(self):
-        return self.overlayGraphics
-
     def closeEvent(self, event):
         self.controller.remove_listener(self.listener)
 
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
 
-
-    def setFeedback(self, text, option, direction):
+    def changeFeedback(self, text, option, direction):
         self.overlayGraphics.feedbackShow(
             text,
             option,
             direction
         )
+
+    def setLeapSignal(self):
+        self.listener.hide_feedback.connect(self.overlayGraphics.hide)
+        self.listener.show_feedback.connect(self.overlayGraphics.show)
+        self.listener.change_feedback.connect(self.changeFeedback)
+        self.listener.startorend_leap.connect(self.changeLeap)
 
 

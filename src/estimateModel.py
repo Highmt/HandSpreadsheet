@@ -20,7 +20,7 @@ from src.Predictor import Predictor
 
 np.set_printoptions(suppress=True)
 training_data = np.empty([0, 7])
-model = "SVC"
+model = "KNN"
 predictor = Predictor(model)
 collect_data_num = 2000
 pred_list = []
