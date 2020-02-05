@@ -4,6 +4,8 @@ from enum import Enum
 class DirectionEnum(Enum):
     HORIZON = 0
     VERTICAL = 1
+    FRONT = 2
+    BACK = 3
 
 
 class HandEnum(Enum):

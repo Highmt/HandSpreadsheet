@@ -15,7 +15,7 @@ class OverlayGraphics(QGraphicsView):
         self.setScene(self.overlayScene)
         self.overlayScene.setSceneRect(QRectF(self.rect()))
         self.createItem()
-        self.targetVisible(False)
+        self.setTargetMode(False)
 
 
 
@@ -86,16 +86,15 @@ class OverlayGraphics(QGraphicsView):
     def feedbackShow(self, text, option, direction):
         self.operate_text.setText(text)
         self.operate_option.setText(option)
-        print(self.luRect)
         # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
         # TODO モーダルの表示位置を変更する
         if not self.targetMode:
             if direction == DirectionEnum.VERTICAL.value:
-                x_pos = (self.luRect.left() + self.rbRect.right())/2
-                y_pos = self.rbRect.bottom() - self.rbRect.height()/2
+                x_pos = (self.luRect.left() + self.rbRect.right())/2 + 20
+                y_pos = self.rbRect.bottom() - self.rbRect.height()/2 + 20
             else:
-                x_pos = self.rbRect.right() - self.rbRect.width()/2
-                y_pos = (self.luRect.top() + self.rbRect.bottom())/2
+                x_pos = self.rbRect.right() - self.rbRect.width()/2 + 20
+                y_pos = (self.luRect.top() + self.rbRect.bottom())/2 + 20
 
             self.setTargetPos(x_pos, y_pos, direction)
         self.show()

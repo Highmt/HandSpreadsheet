@@ -110,6 +110,7 @@ class HandSpreadSheet(QMainWindow):
         self.setLeapSignal()
 
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
+        self.start_Leap.triggered.emit()
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")
@@ -144,8 +145,8 @@ class HandSpreadSheet(QMainWindow):
         self.secondSeparator = QAction(self)
         self.secondSeparator.setSeparator(True)
 
-        self.inser_Action = QAction("insert", self)
-        self.inser_Action.triggered.connect(self.action)
+        self.insert_Action = QAction("insert", self)
+        self.insert_Action.triggered.connect(self.actionInsert)
 
         self.delete_Action = QAction("delete", self)
         self.delete_Action.triggered.connect(self.actionDelete)
@@ -162,8 +163,8 @@ class HandSpreadSheet(QMainWindow):
         self.paste_Action = QAction("paste", self)
         self.paste_Action.triggered.connect(self.actionPaste)
 
-    def action(self):
-        pass
+    def actionInsert(self):
+        self.table.insertRow(2)
 
     def actionDelete(self):
         pass
@@ -192,16 +193,16 @@ class HandSpreadSheet(QMainWindow):
         self.pointMode.addAction(self.negative_Point)
         self.pointMode.setEnabled(False)
 
-        self.cellMenu = self.menuBar().addMenu("&Cell")
-        self.cellMenu.addAction(self.inser_Action)
-        self.cellMenu.addAction(self.delete_Action)
-        self.cellMenu.addAction(self.sort_Action)
-        self.cellMenu.addAction(self.copy_Action)
-        self.cellMenu.addAction(self.cut_Action)
-        self.cellMenu.addAction(self.paste_Action)
+        # self.cellMenu = self.menuBar().addMenu("&Cell")
+        # self.cellMenu.addAction(self.insert_Action)
+        # self.cellMenu.addAction(self.delete_Action)
+        # self.cellMenu.addAction(self.sort_Action)
+        # self.cellMenu.addAction(self.copy_Action)
+        # self.cellMenu.addAction(self.cut_Action)
+        # self.cellMenu.addAction(self.paste_Action)
 
     def setupContextMenu(self):
-        self.addAction(self.inser_Action)
+        self.addAction(self.insert_Action)
         self.addAction(self.delete_Action)
         self.addAction(self.sort_Action)
         self.addAction(self.copy_Action)
@@ -299,17 +300,18 @@ class HandSpreadSheet(QMainWindow):
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
 
-    def changeFeedback(self, text, option, direction):
-        self.overlayGraphics.feedbackShow(
-            text,
-            option,
-            direction
-        )
+    # def changeFeedback(self, text, option, direction):
+    #     self.overlayGraphics.feedbackShow(
+    #         text,
+    #         option,
+    #         direction
+    #     )
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
         self.listener.show_feedback.connect(self.overlayGraphics.show)
-        self.listener.change_feedback.connect(self.changeFeedback)
+        self.listener.change_feedback.connect(self.overlayGraphics.feedbackShow)
+        self.listener.action_operation.connect(self.table.actionOperate)
         self.listener.startorend_leap.connect(self.changeLeap)
 
 

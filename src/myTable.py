@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 
+from src.SSEnum import ActionEnum
 from src.spreadsheetdelegate import SpreadSheetDelegate
 from src.spreadsheetitem import SpreadSheetItem
 
@@ -110,28 +111,12 @@ class myTable(QTableWidget):
         self.item(9, 4).setBackground(Qt.lightGray)
 
 
-    def deleteCell(self):
+    def removeCell(self):
         #TODO　セル削除関数
-        pass
-
-    def deleteRow(self):
-        #TODO　行削除関数
-        pass
-
-    def deleteCol(self):
-        #TODO　列削除関数
         pass
 
     def insertCell(self):
         #TODO　セル挿入関数
-        pass
-
-    def insertRow(self):
-        #TODO　行挿入関数
-        pass
-
-    def insert(self):
-        #TODO　列挿入関数
         pass
 
     def sortUp(self):
@@ -152,10 +137,33 @@ class myTable(QTableWidget):
         #TODO　カット関数
         pass
 
+    def pasteCells(self):
+        # TODO　ペースト関数
+        pass
+
+    def actionOperate(self, act, direction):
+        if act == ActionEnum.INSERT.value:
+            self.parent().statusBar().showMessage("insert", 1000)
+
+        elif act == ActionEnum.DELETE.value:
+            pass
+
+        elif act == ActionEnum.SORT.value:
+            pass
+
+        elif act == ActionEnum.COPY.value:
+            pass
+
+        elif act == ActionEnum.CUT.value:
+            pass
+
+        else:
+            pass
+
     def getItemCoordinate(self):
         itemList = self.selectedItems()
         if itemList:
-            return itemList[0], itemList[-1]
+            return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]
             # self.last_item = itemList[-1]
 

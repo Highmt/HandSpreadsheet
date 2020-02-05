@@ -2,9 +2,10 @@ import statistics
 import sys
 import pyautogui
 
-from src.LeapMotion.Leap import Listener, Vector
+from src.LeapMotion import Leap
+from src.LeapMotion.Leap import Listener, Vector, Finger
 from src.Predictor import Predictor
-from src.SSEnum import HandEnum, DirectionEnum
+from src.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
 DIS_SIZE = pyautogui.size()
@@ -14,7 +15,7 @@ class handListener(QtCore.QThread, Listener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
     change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
-    action_operation = QtCore.pyqtSignal()   # 操作実行シグナル
+    action_operation = QtCore.pyqtSignal(int, int)   # 操作実行シグナル
     startorend_leap = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
 
     def __init__(self):
@@ -25,9 +26,6 @@ class handListener(QtCore.QThread, Listener):
         self.predictor = Predictor("KNN")   # 学習モデル
         self.memoryHands = {}
         self.preHands = {}
-
-
-
 
     def on_caribration(self, controller):
         print("Do caribration")
@@ -155,7 +153,7 @@ class handListener(QtCore.QThread, Listener):
                     handlist.pop(0)
 
                 hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
-                print(hand_state)
+                # print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
                 # 識別手形状とメモリのて形状リストから現在の手形状を決定
                 try:
@@ -169,61 +167,77 @@ class handListener(QtCore.QThread, Listener):
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
 
+    def isHolizon(self, hand):
+        # TODO 45度を閾値としているが調査の必要あり
+        thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_MCP)
+        index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_MCP)
+        dif_vec = Vector(index_pos.x - thumb_pos.x, index_pos.y - thumb_pos.y, 0)
+        return dif_vec.y * dif_vec.y / dif_vec.x /dif_vec.x < 1
 
-    def action(self, pre, next, hand):
+    def action(self, p_hand, n_hand, hand):
         # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
-        if next == HandEnum.FREE.value:
+        if self.isHolizon(hand):
+            direction = DirectionEnum.HORIZON.value
+        else:
+            direction = DirectionEnum.VERTICAL.value
+
+        if n_hand == HandEnum.FREE.value:
             if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):
                 self.hide_feedback.emit()
         
-        elif next == HandEnum.PINCH_IN.value:
-            if pre == HandEnum.PINCH_OUT.value:
+        elif n_hand == HandEnum.PINCH_IN.value:
+            if p_hand == HandEnum.PINCH_OUT.value:
                 print("削除関数呼び出し")
+                self.action_operation.emit(ActionEnum.DELETE.value, direction)
 
             else:
                 print("挿入ステータス呼び出し")
-                self.change_feedback.emit("挿入", "ピンチアウト", DirectionEnum.HORIZON.value)
+                self.change_feedback.emit("挿入", "ピンチアウト", direction)
 
-            
-        elif next == HandEnum.PINCH_OUT.value:
-            if pre == HandEnum.PINCH_IN.value:
+
+        elif n_hand == HandEnum.PINCH_OUT.value:
+            if p_hand == HandEnum.PINCH_IN.value:
                 print("挿入関数呼び出し")
+                self.action_operation.emit(ActionEnum.INSERT.value, DirectionEnum.HORIZON.value)
 
-            elif pre == HandEnum.REVERSE.value:
+            elif p_hand == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
                 print("降順ソート関数呼び出し")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
 
             else:
                 print("削除ステータス呼び出し")
-                self.change_feedback.emit("削除", "ピンチアウト", DirectionEnum.VERTICAL.value)
+                self.change_feedback.emit("削除", "ピンチアウト", direction)
 
-        elif next == HandEnum.REVERSE.value:
-            if pre == HandEnum.PINCH_OUT.value:
+
+        elif n_hand == HandEnum.REVERSE.value:
+            if p_hand == HandEnum.PINCH_OUT.value and direction == DirectionEnum.VERTICAL.value:
                 print("昇順ソート関数呼び出し")
-
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
             else:
                 print("降順ソートステータス呼び出し")
-                self.change_feedback.emit("降順ソート", "フリック", DirectionEnum.HORIZON.value)
+                self.change_feedback.emit("降順ソート", "フリック", direction)
 
-        
-        elif next == HandEnum.PALM.value:
-            if pre == HandEnum.GRIP.value:
+        elif n_hand == HandEnum.PALM.value:
+            if p_hand == HandEnum.GRIP.value:
                 print("ペースト関数呼び出し")
+                self.action_operation.emit(ActionEnum.PASTE.value, None)
 
             else:
                 print("コピー，カットステータス呼び出し")
-                self.change_feedback.emit("コピー，カット", "手を閉じる", DirectionEnum.HORIZON.value)
+                self.change_feedback.emit("コピー，カット", "手を閉じる", direction)
         
-        elif next == HandEnum.GRIP.value:
-            if pre == HandEnum.PALM.value:
+        elif n_hand == HandEnum.GRIP.value:
+            if p_hand == HandEnum.PALM.value:
                 if list(self.preHands.values()).count(HandEnum.PALM.value) > 1:
                     print("コピー関数呼び出し")
-
+                    self.action_operation.emit(ActionEnum.COPY.value, None)
                 else:
                     print("カット関数呼び出し")
+                    self.action_operation.emit(ActionEnum.CUT.value, None)
 
             else:
                 print("ペーストステータス呼び出し")
-                self.change_feedback.emit("ペースト", "手を開く", DirectionEnum.HORIZON.value)
+                self.change_feedback.emit("ペースト", "手を開く", direction)
 
 
 
