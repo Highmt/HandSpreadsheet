@@ -157,15 +157,23 @@ class myTable(QTableWidget):
                     self.setItem(i, j, SpreadSheetItem())
 
     def sortCells(self, d):
-        if d == DirectionEnum.FRONT.value:
-            #TODO　昇順ソート関数
-            pass
+        sortRanges = self.selectedRanges()[0]
+        editTable = QTableWidget(sortRanges.rowCount(), sortRanges.columnCount())
 
+        for i in range(sortRanges.topRow(), sortRanges.bottomRow() + 1):
+            for j in range(sortRanges.leftColumn(), sortRanges.rightColumn() + 1):
+                temp = self.item(i, j).clone()
+                editTable.setItem(i - sortRanges.topRow(), j - sortRanges.leftColumn(), temp)
+
+        if d == DirectionEnum.BACK.value:
+            editTable.sortItems(0, Qt.AscendingOrder)
         else:
-            # TODO　降順ソート関数
-            pass
-        # self.sortByColumn()
-        # self.sortItems()
+            editTable.sortItems(0, Qt.DescendingOrder)
+
+        for i in range(sortRanges.topRow(), sortRanges.bottomRow() + 1):
+            for j in range(sortRanges.leftColumn(), sortRanges.rightColumn() + 1):
+                temp = editTable.takeItem(i - sortRanges.topRow(), j - sortRanges.leftColumn())
+                self.setItem(i, j, temp)
 
     def copyCells(self):
         self.clipRanges = self.selectedRanges()[0]

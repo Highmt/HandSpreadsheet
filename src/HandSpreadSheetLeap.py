@@ -224,7 +224,7 @@ class handListener(QtCore.QThread, Listener):
 
             else:
                 print("コピー，カットステータス呼び出し")
-                if list(self.preHands.values()).__sizeof__() > 1:
+                if len(self.preHands) > 1:
                     self.change_feedback.emit("コピー", "手を閉じる", DirectionEnum.VERTICAL.value)
                 else:
                     self.change_feedback.emit("カット", "手を閉じる", DirectionEnum.VERTICAL.value)
