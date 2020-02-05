@@ -146,19 +146,20 @@ class myTable(QTableWidget):
             self.parent().statusBar().showMessage("insert", 1000)
 
         elif act == ActionEnum.DELETE.value:
-            pass
+            self.parent().statusBar().showMessage("delete", 1000)
 
         elif act == ActionEnum.SORT.value:
-            pass
+            self.parent().statusBar().showMessage("sort", 1000)
 
         elif act == ActionEnum.COPY.value:
-            pass
+            self.parent().statusBar().showMessage("copy", 1000)
 
         elif act == ActionEnum.CUT.value:
-            pass
+            self.parent().statusBar().showMessage("cut", 1000)
 
         else:
-            pass
+            self.parent().statusBar().showMessage("paste", 1000)
+
 
     def getItemCoordinate(self):
         itemList = self.selectedItems()

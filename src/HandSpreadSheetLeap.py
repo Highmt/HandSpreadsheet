@@ -9,7 +9,7 @@ from src.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
 DIS_SIZE = pyautogui.size()
-memorySize = 20
+memorySize = 30
 
 class handListener(QtCore.QThread, Listener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -238,10 +238,6 @@ class handListener(QtCore.QThread, Listener):
             else:
                 print("ペーストステータス呼び出し")
                 self.change_feedback.emit("ペースト", "手を開く", direction)
-
-
-
-
 
 
     def setPointingMode(self, isMode):
