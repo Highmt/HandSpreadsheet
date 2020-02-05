@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange
 
 from src.SSEnum import ActionEnum, DirectionEnum
 from src.spreadsheetdelegate import SpreadSheetDelegate
@@ -18,6 +18,8 @@ class myTable(QTableWidget):
         self.setItemDelegate(SpreadSheetDelegate(self))   #デリゲート
         self.initContents()
         self.setupContents()
+        self.clipTable = QTableWidget(rows, cols, None)
+        self.clipRanges = QTableWidgetSelectionRange()
 
 
 
@@ -146,7 +148,7 @@ class myTable(QTableWidget):
                     self.setItem(i, j, SpreadSheetItem())
 
         else:
-            for j in range(selectrange.topRow(), self.rowCount() - selectrange.rowCount()):
+            for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
 
                 for i in range(selectrange.topRow(), self.rowCount() - selectrange.rowCount()):
                     temp = self.takeItem(i + selectrange.rowCount(), j)
@@ -155,23 +157,43 @@ class myTable(QTableWidget):
                     self.setItem(i, j, SpreadSheetItem())
 
     def sortCells(self, d):
-        #TODO　昇順ソート関数
-        # TODO　降順ソート関数
+        if d == DirectionEnum.FRONT.value:
+            #TODO　昇順ソート関数
+            pass
+
+        else:
+            # TODO　降順ソート関数
+            pass
         # self.sortByColumn()
         # self.sortItems()
-        pass
 
     def copyCells(self):
-        #TODO　コピー関数
-        pass
+        self.clipRanges = self.selectedRanges()[0]
+        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow()+1):
+            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn()+1):
+                temp = self.item(i, j).clone()
+                self.clipTable.setItem(i, j, temp)
+
 
     def cutCells(self):
-        #TODO　カット関数
-        pass
+        self.clipRanges = self.selectedRanges()[0]
+        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow()+1):
+            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn()+1):
+                temp = self.takeItem(i, j)
+                self.clipTable.setItem(i, j, temp)
+                self.setItem(i, j, SpreadSheetItem())
+                print(self.clipTable.item(i, j).text())
+
+
 
     def pasteCells(self):
-        # TODO　ペースト関数
-        pass
+        selectrange = self.selectedRanges()[0]
+        for i in range(0, self.clipRanges.rowCount()):
+            for j in range(0, self.clipRanges.columnCount()):
+                temp = self.clipTable.item(self.clipRanges.topRow() + i, self.clipRanges.leftColumn() + j).clone()
+                self.setItem(selectrange.topRow() + i, selectrange.leftColumn() + j, temp)
+
+
 
     def actionOperate(self, act, direction):
         if self.selectedItems():
@@ -196,13 +218,14 @@ class myTable(QTableWidget):
                 self.parent().statusBar().showMessage("cut", 1000)
 
             else:
-                self.pasteCells()
-                self.parent().statusBar().showMessage("paste", 1000)
+                if self.clipRanges is not None:
+                    self.pasteCells()
+                    self.parent().statusBar().showMessage("paste", 1000)
 
 
     def getItemCoordinate(self):
         itemList = self.selectedItems()
-        # self.deleteCell(DirectionEnum.HORIZON.value)
+        # self.cutCells()
         if itemList:
             return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]

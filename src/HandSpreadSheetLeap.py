@@ -162,7 +162,7 @@ class handListener(QtCore.QThread, Listener):
                     currentStatus = hand_state
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
-                print(self.isHolizon(hand))
+                # print(self.isHolizon(hand))
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
@@ -224,7 +224,7 @@ class handListener(QtCore.QThread, Listener):
 
             else:
                 print("コピー，カットステータス呼び出し")
-                if list(self.preHands.values()).count(HandEnum.PALM.value) > 1:
+                if list(self.preHands.values()).__sizeof__() > 1:
                     self.change_feedback.emit("コピー", "手を閉じる", DirectionEnum.VERTICAL.value)
                 else:
                     self.change_feedback.emit("カット", "手を閉じる", DirectionEnum.VERTICAL.value)
