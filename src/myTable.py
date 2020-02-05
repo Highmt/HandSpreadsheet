@@ -112,7 +112,6 @@ class myTable(QTableWidget):
 
 
     def insertCell(self, d):
-        #TODO　セル挿入関数
         selectrange = self.selectedRanges()[0]
         if d == DirectionEnum.HORIZON.value:
             for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
@@ -136,8 +135,24 @@ class myTable(QTableWidget):
 
 
     def deleteCell(self, d):
-        #TODO　セル削除関数
-        pass
+        selectrange = self.selectedRanges()[0]
+        if d == DirectionEnum.HORIZON.value:
+            for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
+
+                for j in range(selectrange.leftColumn(), self.columnCount() - selectrange.columnCount()):
+                    temp = self.takeItem(i, j + selectrange.columnCount())
+                    self.setItem(i, j, temp)
+                for j in range(self.columnCount() - selectrange.columnCount(), self.columnCount()):
+                    self.setItem(i, j, SpreadSheetItem())
+
+        else:
+            for j in range(selectrange.topRow(), self.rowCount() - selectrange.rowCount()):
+
+                for i in range(selectrange.topRow(), self.rowCount() - selectrange.rowCount()):
+                    temp = self.takeItem(i + selectrange.rowCount(), j)
+                    self.setItem(i, j, temp)
+                for i in range(self.rowCount() - selectrange.rowCount(), self.rowCount()):
+                    self.setItem(i, j, SpreadSheetItem())
 
     def sortCells(self, d):
         #TODO　昇順ソート関数
@@ -187,7 +202,7 @@ class myTable(QTableWidget):
 
     def getItemCoordinate(self):
         itemList = self.selectedItems()
-        # self.insertCell(DirectionEnum.VERTICAL.value)
+        # self.deleteCell(DirectionEnum.HORIZON.value)
         if itemList:
             return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]

@@ -168,6 +168,7 @@ class handListener(QtCore.QThread, Listener):
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
 
     def isHolizon(self, hand):
+        # 親指第一関節と人差し指の第二関節の位置を識別
         # TODO 45度を閾値としているが調査の必要あり
         thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_DIP)
         index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_PIP)
@@ -175,7 +176,6 @@ class handListener(QtCore.QThread, Listener):
         return dif_vec.y * dif_vec.y / dif_vec.x /dif_vec.x < 1
 
     def action(self, p_hand, n_hand, hand):
-        # TODO ジェスチャ識別によるself.app.関数の呼び出しを実装
         if self.isHolizon(hand):
             direction = DirectionEnum.HORIZON.value
         else:
