@@ -162,15 +162,15 @@ class handListener(QtCore.QThread, Listener):
                     currentStatus = hand_state
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
-
+                print(self.isHolizon(hand))
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
 
     def isHolizon(self, hand):
         # TODO 45度を閾値としているが調査の必要あり
-        thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_MCP)
-        index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_MCP)
+        thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_DIP)
+        index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_PIP)
         dif_vec = Vector(index_pos.x - thumb_pos.x, index_pos.y - thumb_pos.y, 0)
         return dif_vec.y * dif_vec.y / dif_vec.x /dif_vec.x < 1
 
@@ -198,7 +198,7 @@ class handListener(QtCore.QThread, Listener):
         elif n_hand == HandEnum.PINCH_OUT.value:
             if p_hand == HandEnum.PINCH_IN.value:
                 print("挿入関数呼び出し")
-                self.action_operation.emit(ActionEnum.INSERT.value, DirectionEnum.HORIZON.value)
+                self.action_operation.emit(ActionEnum.INSERT.value, direction)
 
             elif p_hand == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
                 print("降順ソート関数呼び出し")

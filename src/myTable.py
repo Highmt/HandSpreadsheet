@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 
-from src.SSEnum import ActionEnum
+from src.SSEnum import ActionEnum, DirectionEnum
 from src.spreadsheetdelegate import SpreadSheetDelegate
 from src.spreadsheetitem import SpreadSheetItem
 
@@ -113,7 +113,27 @@ class myTable(QTableWidget):
 
     def insertCell(self, d):
         #TODO　セル挿入関数
-        pass
+        selectrange = self.selectedRanges()[0]
+        if d == DirectionEnum.HORIZON.value:
+            for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
+
+                for j in range(self.columnCount()-1, selectrange.rightColumn(), -1):
+                    temp = self.takeItem(i, j-selectrange.columnCount())
+                    self.setItem(i, j, temp)
+
+                for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
+                    self.setItem(i, j, SpreadSheetItem())
+                    self.item(i, j).setBackground(Qt.red)
+        else:
+            for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
+
+                for i in range(self.rowCount()-1, selectrange.bottomRow(), -1):
+                    temp = self.takeItem(i - selectrange.rowCount(), j)
+                    self.setItem(i, j, temp)
+                for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
+                    self.setItem(i, j, SpreadSheetItem())
+                    self.item(i, j).setBackground(Qt.red)
+
 
     def deleteCell(self, d):
         #TODO　セル削除関数
@@ -126,7 +146,7 @@ class myTable(QTableWidget):
         # self.sortItems()
         pass
 
-    def copyCell(self):
+    def copyCells(self):
         #TODO　コピー関数
         pass
 
@@ -139,33 +159,35 @@ class myTable(QTableWidget):
         pass
 
     def actionOperate(self, act, direction):
-        if act == ActionEnum.INSERT.value:
-            self.insertCell(direction)
-            self.parent().statusBar().showMessage("insert", 1000)
+        if self.selectedItems():
+            if act == ActionEnum.INSERT.value:
+                self.insertCell(direction)
+                self.parent().statusBar().showMessage("insert", 1000)
 
-        elif act == ActionEnum.DELETE.value:
-            self.deleteCell(direction)
-            self.parent().statusBar().showMessage("delete", 1000)
+            elif act == ActionEnum.DELETE.value:
+                self.deleteCell(direction)
+                self.parent().statusBar().showMessage("delete", 1000)
 
-        elif act == ActionEnum.SORT.value:
-            self.sortCell(direction)
-            self.parent().statusBar().showMessage("sort", 1000)
+            elif act == ActionEnum.SORT.value:
+                self.sortCells(direction)
+                self.parent().statusBar().showMessage("sort", 1000)
 
-        elif act == ActionEnum.COPY.value:
-            self.copyCells()
-            self.parent().statusBar().showMessage("copy", 1000)
+            elif act == ActionEnum.COPY.value:
+                self.copyCells()
+                self.parent().statusBar().showMessage("copy", 1000)
 
-        elif act == ActionEnum.CUT.value:
-            self.cutCells()
-            self.parent().statusBar().showMessage("cut", 1000)
+            elif act == ActionEnum.CUT.value:
+                self.cutCells()
+                self.parent().statusBar().showMessage("cut", 1000)
 
-        else:
-            self.pasteCells()
-            self.parent().statusBar().showMessage("paste", 1000)
+            else:
+                self.pasteCells()
+                self.parent().statusBar().showMessage("paste", 1000)
 
 
     def getItemCoordinate(self):
         itemList = self.selectedItems()
+        # self.insertCell(DirectionEnum.VERTICAL.value)
         if itemList:
             return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]
