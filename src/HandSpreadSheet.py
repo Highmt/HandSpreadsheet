@@ -299,6 +299,7 @@ class HandSpreadSheet(QMainWindow):
 
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
+        self.overlayGraphics.isSelected = True
 
     # def changeFeedback(self, text, option, direction):
     #     self.overlayGraphics.feedbackShow(

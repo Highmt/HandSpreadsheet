@@ -111,25 +111,22 @@ class myTable(QTableWidget):
         self.item(9, 4).setBackground(Qt.lightGray)
 
 
-    def removeCell(self):
-        #TODO　セル削除関数
-        pass
-
-    def insertCell(self):
+    def insertCell(self, d):
         #TODO　セル挿入関数
         pass
 
-    def sortUp(self):
+    def deleteCell(self, d):
+        #TODO　セル削除関数
+        pass
+
+    def sortCells(self, d):
         #TODO　昇順ソート関数
-        pass
-
-    def sortDown(self):
-        #TODO　降順ソート関数
-
+        # TODO　降順ソート関数
         # self.sortByColumn()
+        # self.sortItems()
         pass
 
-    def copyCells(self):
+    def copyCell(self):
         #TODO　コピー関数
         pass
 
@@ -143,21 +140,27 @@ class myTable(QTableWidget):
 
     def actionOperate(self, act, direction):
         if act == ActionEnum.INSERT.value:
+            self.insertCell(direction)
             self.parent().statusBar().showMessage("insert", 1000)
 
         elif act == ActionEnum.DELETE.value:
+            self.deleteCell(direction)
             self.parent().statusBar().showMessage("delete", 1000)
 
         elif act == ActionEnum.SORT.value:
+            self.sortCell(direction)
             self.parent().statusBar().showMessage("sort", 1000)
 
         elif act == ActionEnum.COPY.value:
+            self.copyCells()
             self.parent().statusBar().showMessage("copy", 1000)
 
         elif act == ActionEnum.CUT.value:
+            self.cutCells()
             self.parent().statusBar().showMessage("cut", 1000)
 
         else:
+            self.pasteCells()
             self.parent().statusBar().showMessage("paste", 1000)
 
 

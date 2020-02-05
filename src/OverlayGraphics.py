@@ -31,15 +31,16 @@ class OverlayGraphics(QGraphicsView):
         self.modal_rect.setBrush(QBrush(Qt.gray))
         self.modal_rect.setPen(QPen(Qt.gray))
         self.modal_rect.setOpacity(0.8)  # 透明度を設定
-        self.operate_text = QGraphicsSimpleTextItem("挿入", self.modal_rect)
+        self.operate_text = QGraphicsSimpleTextItem("", self.modal_rect)
         self.operate_text.setPos(30, 5)
         self.operate_text.setScale(1.7)
-        self.operate_option = QGraphicsSimpleTextItem("左に寄せる", self.modal_rect)
+        self.operate_option = QGraphicsSimpleTextItem("", self.modal_rect)
         self.operate_option.setPos(20.5, 40)
         self.setTargetPos(400, 180, DirectionEnum.VERTICAL.value)
         self.setTargetMode(True)
         self.luRect = QRect()
         self.rbRect = QRect()
+        self.isSelected = False
 
     # オーバレイヤのサイズが変わると呼び出される．シーンのサイズをビューの大きさに追従(-5 はマージン)
     def resizeEvent(self, event):
@@ -84,17 +85,17 @@ class OverlayGraphics(QGraphicsView):
 
 
     def feedbackShow(self, text, option, direction):
-        self.operate_text.setText(text)
-        self.operate_option.setText(option)
-        # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
-        # TODO モーダルの表示位置を変更する
-        if not self.targetMode:
-            if direction == DirectionEnum.VERTICAL.value:
-                x_pos = (self.luRect.left() + self.rbRect.right())/2 + 20
-                y_pos = self.rbRect.bottom() - self.rbRect.height()/2 + 20
-            else:
-                x_pos = self.rbRect.right() - self.rbRect.width()/2 + 20
-                y_pos = (self.luRect.top() + self.rbRect.bottom())/2 + 20
+        if self.isSelected:
+            self.operate_text.setText(text)
+            self.operate_option.setText(option)
+            # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
+            if not self.targetMode:
+                if direction == DirectionEnum.HORIZON.value:
+                    x_pos = (self.luRect.left() + self.rbRect.right())/2 + 20
+                    y_pos = self.rbRect.bottom() - self.rbRect.height()/2 + 20
+                else:
+                    x_pos = self.rbRect.right() - self.rbRect.width()/2 + 20
+                    y_pos = (self.luRect.top() + self.rbRect.bottom())/2 + 20
 
-            self.setTargetPos(x_pos, y_pos, direction)
-        self.show()
+                self.setTargetPos(x_pos, y_pos, direction)
+            self.show()
