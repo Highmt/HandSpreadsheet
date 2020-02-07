@@ -191,8 +191,8 @@ class handListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.DELETE.value, direction)
 
             else:
-                print("挿入ステータス呼び出し")
-                self.change_feedback.emit("挿入", "ピンチアウト", direction)
+                # print("挿入ステータス呼び出し")
+                self.change_feedback.emit("挿入", "", direction)
 
 
         elif n_hand == HandEnum.PINCH_OUT.value:
@@ -205,8 +205,8 @@ class handListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
 
             else:
-                print("削除ステータス呼び出し")
-                self.change_feedback.emit("削除", "ピンチアウト", direction)
+                # print("削除ステータス呼び出し")
+                self.change_feedback.emit("削除", "", direction)
 
 
         elif n_hand == HandEnum.REVERSE.value:
@@ -214,8 +214,8 @@ class handListener(QtCore.QThread, Listener):
                 print("昇順ソート関数呼び出し")
                 self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
             else:
-                print("降順ソートステータス呼び出し")
-                self.change_feedback.emit("降順ソート", "フリック", direction)
+                # print("降順ソートステータス呼び出し")
+                self.change_feedback.emit("ソート", "", direction)
 
         elif n_hand == HandEnum.PALM.value:
             if p_hand == HandEnum.GRIP.value:
@@ -223,11 +223,11 @@ class handListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.PASTE.value, None)
 
             else:
-                print("コピー，カットステータス呼び出し")
+                # print("コピー，カットステータス呼び出し")
                 if len(self.preHands) > 1:
-                    self.change_feedback.emit("コピー", "手を閉じる", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("コピー", "", DirectionEnum.VERTICAL.value)
                 else:
-                    self.change_feedback.emit("カット", "手を閉じる", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("カット", "", DirectionEnum.VERTICAL.value)
         
         elif n_hand == HandEnum.GRIP.value:
             if p_hand == HandEnum.PALM.value:
@@ -239,8 +239,8 @@ class handListener(QtCore.QThread, Listener):
                     self.action_operation.emit(ActionEnum.CUT.value, None)
 
             else:
-                print("ペーストステータス呼び出し")
-                self.change_feedback.emit("ペースト", "手を開く", DirectionEnum.VERTICAL.value)
+                # print("ペーストステータス呼び出し")
+                self.change_feedback.emit("ペースト", "", DirectionEnum.VERTICAL.value)
 
 
     def setPointingMode(self, isMode):

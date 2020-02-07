@@ -102,7 +102,6 @@ class HandSpreadSheet(QMainWindow):
         self.overlayLayout.setContentsMargins(0, 0, 0, 0)
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
-        # self.overlayGraphics.hide()  # 描画を非表示
 
         # Create a sample listener and controller
         self.listener = handListener()
@@ -110,7 +109,6 @@ class HandSpreadSheet(QMainWindow):
         self.setLeapSignal()
 
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
-        self.start_Leap.triggered.emit()
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")

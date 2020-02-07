@@ -38,7 +38,7 @@
 
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QTableWidgetItem
 
 from src.study.util import decode_pos
@@ -52,6 +52,7 @@ class SpreadSheetItem(QTableWidgetItem):
             super(SpreadSheetItem, self).__init__()
 
         self.isResolving = False
+        self.setFont(QFont("Arial", 20))
 
     def clone(self):
         item = super(SpreadSheetItem, self).clone()

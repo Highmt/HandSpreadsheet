@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QRect, QSize
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange
 
@@ -15,11 +15,14 @@ class myTable(QTableWidget):
         self.num_row = rows
         self.setupHeader(cols)  # ヘッダーのアルファベット設定
         self.setItemPrototype(self.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
-        self.setItemDelegate(SpreadSheetDelegate(self))   #デリゲート
+        self.setItemDelegate(SpreadSheetDelegate(self))   # デリゲート
         self.initContents()
         self.setupContents()
-        self.clipTable = QTableWidget(rows, cols, None)
-        self.clipRanges = QTableWidgetSelectionRange()
+
+        self.clipTable = QTableWidget(rows, cols, None)  # コピー，カットのための仮装テーブル
+        self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
+        self.verticalHeader().setDefaultSectionSize(60)
+        self.horizontalHeader().setDefaultSectionSize(120)
 
 
 
@@ -52,7 +55,7 @@ class myTable(QTableWidget):
         self.item(8, 0).setText("給料")
         self.item(9, 0).setText("Total:")
         self.item(9, 0).setFont(titleFont)
-        self.item(9, 0).setBackground(Qt.lightGray)
+        # self.item(9, 0).setBackground(Qt.lightGray)
         # column 1
         self.item(0, 1).setText("日付")
         self.item(0, 1).setBackground(titleBackground)
@@ -67,7 +70,7 @@ class myTable(QTableWidget):
         self.item(7, 1).setText("2020/2/20")
         self.item(8, 1).setText("2020/2/20")
         self.setItem(9, 1, SpreadSheetItem())
-        self.item(9, 1).setBackground(Qt.lightGray)
+        # self.item(9, 1).setBackground(Qt.lightGray)
         # column 2
         self.item(0, 2).setText("金額")
         self.item(0, 2).setBackground(titleBackground)
@@ -79,12 +82,12 @@ class myTable(QTableWidget):
         self.item(4, 2).setText("-3000")
         self.item(5, 2).setText("-5500")
         self.item(6, 2).setText("-4000")
-        self.item(8, 2).setText("-20000")
-        self.item(9, 2).setText("100000")
-        self.item(10, 2).setText("5000")
-        self.item(10, 2).setBackground(Qt.lightGray)
+        self.item(7, 2).setText("-20000")
+        self.item(8, 2).setText("100000")
+        self.item(9, 2).setText("5000")
+        # self.item(9, 2).setBackground(Qt.lightGray)
         # column 3
-        self.item(0, 3).setText("形状済")
+        self.item(0, 3).setText("計上済")
         self.item(0, 3).setBackground(titleBackground)
         self.item(0, 3).setToolTip("This column shows the currency")
         self.item(0, 3).setFont(titleFont)
@@ -96,7 +99,7 @@ class myTable(QTableWidget):
         self.item(6, 3).setText("○")
         self.item(7, 3).setText("")
         self.item(8, 3).setText("○")
-        self.item(9, 3).setBackground(Qt.lightGray)
+        # self.item(9, 3).setBackground(Qt.lightGray)
         # column 4
         self.item(0, 4).setText("備考")
         self.item(0, 4).setBackground(titleBackground)
@@ -110,7 +113,7 @@ class myTable(QTableWidget):
         self.item(6, 4).setText("")
         self.item(7, 4).setText("")
         self.item(8, 4).setText("先月より多い")
-        self.item(9, 4).setBackground(Qt.lightGray)
+        # self.item(9, 4).setBackground(Qt.lightGray)
 
 
     def insertCell(self, d):

@@ -15,7 +15,12 @@ class OverlayGraphics(QGraphicsView):
         self.setScene(self.overlayScene)
         self.overlayScene.setSceneRect(QRectF(self.rect()))
         self.createItem()
+
+        self.luRect = QRect()
+        self.rbRect = QRect()
+        self.isSelected = False
         self.setTargetMode(False)
+        self.hide()
 
 
 
@@ -37,10 +42,7 @@ class OverlayGraphics(QGraphicsView):
         self.operate_option = QGraphicsSimpleTextItem("", self.modal_rect)
         self.operate_option.setPos(20.5, 40)
         self.setTargetPos(400, 180, DirectionEnum.VERTICAL.value)
-        self.setTargetMode(True)
-        self.luRect = QRect()
-        self.rbRect = QRect()
-        self.isSelected = False
+
 
     # オーバレイヤのサイズが変わると呼び出される．シーンのサイズをビューの大きさに追従(-5 はマージン)
     def resizeEvent(self, event):
