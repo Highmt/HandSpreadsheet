@@ -62,7 +62,7 @@ class TestListener(Listener):
             true_list.append(self.true_label)
             print(pred)
 
-def main():
+def main(): 
     # Create a sample listener and controller
     listener = TestListener()
     controller = Controller()
