@@ -6,15 +6,16 @@ from lib.LeapMotion.Leap import RAD_TO_DEG
 
 class Predictor():
     def __init__(self, alg: str):
-        self.model = joblib.load('./HandScensing/learningModel/HandDitectModel_{}.pkl'.format(alg))
+        self.model = joblib.load('./learningModel/HandDitectModel_{}.pkl'.format(alg))
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         self.bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
         self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
-
+        self.df = self.create_emptypandas()
+        self.dfs = self.create_emptypandas()
 
     def handPredict(self, hand):
-        handType = "Left hand" if hand.is_left else "Right hand"
-        df = self.create_emptypandas()
+        # handType = "Left hand" if hand.is_left else "Right hand"
+
         # print("  %s, id %d, position: %s" % (
         #     handType, hand.id, hand.palm_position))
 
@@ -59,107 +60,108 @@ class Predictor():
 
                 if self.finger_names[finger.type] == 'Thumb':
                     if self.bone_names[bone.type] == 'Metacarpal':
-                        df.at[0, "Thumb_fin_meta_direction_x"] = bone.direction.x
-                        df.at[0, "Thumb_fin_meta_direction_y"] = bone.direction.y
-                        df.at[0, "Thumb_fin_meta_direction_z"] = bone.direction.z
+                        self.df.at[0, "Thumb_fin_meta_direction_x"] = bone.direction.x
+                        self.df.at[0, "Thumb_fin_meta_direction_y"] = bone.direction.y
+                        self.df.at[0, "Thumb_fin_meta_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Proximal':
-                        df.at[0, "Thumb_fin_prox_direction_x"] = bone.direction.x
-                        df.at[0, "Thumb_fin_prox_direction_y"] = bone.direction.y
-                        df.at[0, "Thumb_fin_prox_direction_z"] = bone.direction.z
+                        self.df.at[0, "Thumb_fin_prox_direction_x"] = bone.direction.x
+                        self.df.at[0, "Thumb_fin_prox_direction_y"] = bone.direction.y
+                        self.df.at[0, "Thumb_fin_prox_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Intermediate':
-                        df.at[0, "Thumb_fin_inter_direction_x"] = bone.direction.x
-                        df.at[0, "Thumb_fin_inter_direction_y"] = bone.direction.y
-                        df.at[0, "Thumb_fin_inter_direction_z"] = bone.direction.z
+                        self.df.at[0, "Thumb_fin_inter_direction_x"] = bone.direction.x
+                        self.df.at[0, "Thumb_fin_inter_direction_y"] = bone.direction.y
+                        self.df.at[0, "Thumb_fin_inter_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Distal':
-                        df.at[0, "Thumb_fin_dist_direction_x"] = bone.direction.x
-                        df.at[0, "Thumb_fin_dist_direction_y"] = bone.direction.y
-                        df.at[0, "Thumb_fin_dist_direction_z"] = bone.direction.z
+                        self.df.at[0, "Thumb_fin_dist_direction_x"] = bone.direction.x
+                        self.df.at[0, "Thumb_fin_dist_direction_y"] = bone.direction.y
+                        self.df.at[0, "Thumb_fin_dist_direction_z"] = bone.direction.z
                 if self.finger_names[finger.type] == 'Index':
                     if self.bone_names[bone.type] == 'Metacarpal':
-                        df.at[0, "Index_fin_meta_direction_x"] = bone.direction.x
-                        df.at[0, "Index_fin_meta_direction_y"] = bone.direction.y
-                        df.at[0, "Index_fin_meta_direction_z"] = bone.direction.z
+                        self.df.at[0, "Index_fin_meta_direction_x"] = bone.direction.x
+                        self.df.at[0, "Index_fin_meta_direction_y"] = bone.direction.y
+                        self.df.at[0, "Index_fin_meta_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Proximal':
-                        df.at[0, "Index_fin_prox_direction_x"] = bone.direction.x
-                        df.at[0, "Index_fin_prox_direction_y"] = bone.direction.y
-                        df.at[0, "Index_fin_prox_direction_z"] = bone.direction.z
+                        self.df.at[0, "Index_fin_prox_direction_x"] = bone.direction.x
+                        self.df.at[0, "Index_fin_prox_direction_y"] = bone.direction.y
+                        self.df.at[0, "Index_fin_prox_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Intermediate':
-                        df.at[0, "Index_fin_inter_direction_x"] = bone.direction.x
-                        df.at[0, "Index_fin_inter_direction_y"] = bone.direction.y
-                        df.at[0, "Index_fin_inter_direction_z"] = bone.direction.z
+                        self.df.at[0, "Index_fin_inter_direction_x"] = bone.direction.x
+                        self.df.at[0, "Index_fin_inter_direction_y"] = bone.direction.y
+                        self.df.at[0, "Index_fin_inter_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Distal':
-                        df.at[0, "Index_fin_dist_direction_x"] = bone.direction.x
-                        df.at[0, "Index_fin_dist_direction_y"] = bone.direction.y
-                        df.at[0, "Index_fin_dist_direction_z"] = bone.direction.z
+                        self.df.at[0, "Index_fin_dist_direction_x"] = bone.direction.x
+                        self.df.at[0, "Index_fin_dist_direction_y"] = bone.direction.y
+                        self.df.at[0, "Index_fin_dist_direction_z"] = bone.direction.z
                 if self.finger_names[finger.type] == 'Middle':
                     if self.bone_names[bone.type] == 'Metacarpal':
-                        df.at[0, "Middle_fin_meta_direction_x"] = bone.direction.x
-                        df.at[0, "Middle_fin_meta_direction_y"] = bone.direction.y
-                        df.at[0, "Middle_fin_meta_direction_z"] = bone.direction.z
+                        self.df.at[0, "Middle_fin_meta_direction_x"] = bone.direction.x
+                        self.df.at[0, "Middle_fin_meta_direction_y"] = bone.direction.y
+                        self.df.at[0, "Middle_fin_meta_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Proximal':
-                        df.at[0, "Middle_fin_prox_direction_x"] = bone.direction.x
-                        df.at[0, "Middle_fin_prox_direction_y"] = bone.direction.y
-                        df.at[0, "Middle_fin_prox_direction_z"] = bone.direction.z
+                        self.df.at[0, "Middle_fin_prox_direction_x"] = bone.direction.x
+                        self.df.at[0, "Middle_fin_prox_direction_y"] = bone.direction.y
+                        self.df.at[0, "Middle_fin_prox_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Intermediate':
-                        df.at[0, "Middle_fin_inter_direction_x"] = bone.direction.x
-                        df.at[0, "Middle_fin_inter_direction_y"] = bone.direction.y
-                        df.at[0, "Middle_fin_inter_direction_z"] = bone.direction.z
+                        self.df.at[0, "Middle_fin_inter_direction_x"] = bone.direction.x
+                        self.df.at[0, "Middle_fin_inter_direction_y"] = bone.direction.y
+                        self.df.at[0, "Middle_fin_inter_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Distal':
-                        df.at[0, "Middle_fin_dist_direction_x"] = bone.direction.x
-                        df.at[0, "Middle_fin_dist_direction_y"] = bone.direction.y
-                        df.at[0, "Middle_fin_dist_direction_z"] = bone.direction.z
+                        self.df.at[0, "Middle_fin_dist_direction_x"] = bone.direction.x
+                        self.df.at[0, "Middle_fin_dist_direction_y"] = bone.direction.y
+                        self.df.at[0, "Middle_fin_dist_direction_z"] = bone.direction.z
                 if self.finger_names[finger.type] == 'Ring':
                     if self.bone_names[bone.type] == 'Metacarpal':
-                        df.at[0, "Ring_fin_meta_direction_x"] = bone.direction.x
-                        df.at[0, "Ring_fin_meta_direction_y"] = bone.direction.y
-                        df.at[0, "Ring_fin_meta_direction_z"] = bone.direction.z
+                        self.df.at[0, "Ring_fin_meta_direction_x"] = bone.direction.x
+                        self.df.at[0, "Ring_fin_meta_direction_y"] = bone.direction.y
+                        self.df.at[0, "Ring_fin_meta_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Proximal':
-                        df.at[0, "Ring_fin_prox_direction_x"] = bone.direction.x
-                        df.at[0, "Ring_fin_prox_direction_y"] = bone.direction.y
-                        df.at[0, "Ring_fin_prox_direction_z"] = bone.direction.z
+                        self.df.at[0, "Ring_fin_prox_direction_x"] = bone.direction.x
+                        self.df.at[0, "Ring_fin_prox_direction_y"] = bone.direction.y
+                        self.df.at[0, "Ring_fin_prox_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Intermediate':
-                        df.at[0, "Ring_fin_inter_direction_x"] = bone.direction.x
-                        df.at[0, "Ring_fin_inter_direction_y"] = bone.direction.y
-                        df.at[0, "Ring_fin_inter_direction_z"] = bone.direction.z
+                        self.df.at[0, "Ring_fin_inter_direction_x"] = bone.direction.x
+                        self.df.at[0, "Ring_fin_inter_direction_y"] = bone.direction.y
+                        self.df.at[0, "Ring_fin_inter_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Distal':
-                        df.at[0, "Ring_fin_dist_direction_x"] = bone.direction.x
-                        df.at[0, "Ring_fin_dist_direction_y"] = bone.direction.y
-                        df.at[0, "Ring_fin_dist_direction_z"] = bone.direction.z
+                        self.df.at[0, "Ring_fin_dist_direction_x"] = bone.direction.x
+                        self.df.at[0, "Ring_fin_dist_direction_y"] = bone.direction.y
+                        self.df.at[0, "Ring_fin_dist_direction_z"] = bone.direction.z
                 if self.finger_names[finger.type] == 'Pinky':
                     if self.bone_names[bone.type] == 'Metacarpal':
-                        df.at[0, "Pinky_fin_meta_direction_x"] = bone.direction.x
-                        df.at[0, "Pinky_fin_meta_direction_y"] = bone.direction.y
-                        df.at[0, "Pinky_fin_meta_direction_z"] = bone.direction.z
+                        self.df.at[0, "Pinky_fin_meta_direction_x"] = bone.direction.x
+                        self.df.at[0, "Pinky_fin_meta_direction_y"] = bone.direction.y
+                        self.df.at[0, "Pinky_fin_meta_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Proximal':
-                        df.at[0, "Pinky_fin_prox_direction_x"] = bone.direction.x
-                        df.at[0, "Pinky_fin_prox_direction_y"] = bone.direction.y
-                        df.at[0, "Pinky_fin_prox_direction_z"] = bone.direction.z
+                        self.df.at[0, "Pinky_fin_prox_direction_x"] = bone.direction.x
+                        self.df.at[0, "Pinky_fin_prox_direction_y"] = bone.direction.y
+                        self.df.at[0, "Pinky_fin_prox_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Intermediate':
-                        df.at[0, "Pinky_fin_inter_direction_x"] = bone.direction.x
-                        df.at[0, "Pinky_fin_inter_direction_y"] = bone.direction.y
-                        df.at[0, "Pinky_fin_inter_direction_z"] = bone.direction.z
+                        self.df.at[0, "Pinky_fin_inter_direction_x"] = bone.direction.x
+                        self.df.at[0, "Pinky_fin_inter_direction_y"] = bone.direction.y
+                        self.df.at[0, "Pinky_fin_inter_direction_z"] = bone.direction.z
                     if self.bone_names[bone.type] == 'Distal':
-                        df.at[0, "Pinky_fin_dist_direction_x"] = bone.direction.x
-                        df.at[0, "Pinky_fin_dist_direction_y"] = bone.direction.y
-                        df.at[0, "Pinky_fin_dist_direction_z"] = bone.direction.z
+                        self.df.at[0, "Pinky_fin_dist_direction_x"] = bone.direction.x
+                        self.df.at[0, "Pinky_fin_dist_direction_y"] = bone.direction.y
+                        self.df.at[0, "Pinky_fin_dist_direction_z"] = bone.direction.z
 
-        # df.at[0, "hand_position_x"] = hand.palm_position.x
-        # df.at[0, "hand_position_y"] = hand.palm_position.y
-        # df.at[0, "hand_position_z"] = hand.palm_position.z
-        # df.at[0, "pitch_list"] = pitch
-        # df.at[0, "roll_list"] = roll
-        # df.at[0, "yaw_list"] = yaw
-        df.at[0, "arm_direction_x"] = arm.direction.x
-        df.at[0, "arm_direction_y"] = arm.direction.y
-        df.at[0, "arm_direction_z"] = arm.direction.z
-        # df.at[0, "wrist_position_x"] = arm.wrist_position.x
-        # df.at[0, "wrist_position_y"] = arm.wrist_position.y
-        # df.at[0, "wrist_position_z"] = arm.wrist_position.z
-        # df.at[0, "elbow_position_x"] = arm.elbow_position.x
-        # df.at[0, "elbow_position_y"] = arm.elbow_position.y
-        # df.at[0, "elbow_position_z"] = arm.elbow_position.z
-        pred = self.model.predict(df.values)
-        # print(self.model.decision_function(df.values))　# SVCのみ
+        # self.df.at[0, "hand_position_x"] = hand.palm_position.x
+        # self.df.at[0, "hand_position_y"] = hand.palm_position.y
+        # self.df.at[0, "hand_position_z"] = hand.palm_position.z
+        # self.df.at[0, "pitch_list"] = pitch
+        # self.df.at[0, "roll_list"] = roll
+        # self.df.at[0, "yaw_list"] = yaw
+        self.df.at[0, "arm_direction_x"] = arm.direction.x
+        self.df.at[0, "arm_direction_y"] = arm.direction.y
+        self.df.at[0, "arm_direction_z"] = arm.direction.z
+        # self.df.at[0, "wrist_position_x"] = arm.wrist_position.x
+        # self.df.at[0, "wrist_position_y"] = arm.wrist_position.y
+        # self.df.at[0, "wrist_position_z"] = arm.wrist_position.z
+        # self.df.at[0, "elbow_position_x"] = arm.elbow_position.x
+        # self.df.at[0, "elbow_position_y"] = arm.elbow_position.y
+        # self.df.at[0, "elbow_position_z"] = arm.elbow_position.z
+        self.dfs = pd.concat([self.dfs, self.df], ignore_index=True)
+        pred = self.model.predict(self.df.values)
+        # print(self.model.decision_function(self.df.values))　# SVCのみ
         return pred[0]
 
     def create_emptypandas(self):
