@@ -48,29 +48,29 @@ print("train start")
 print("# Tuning hyper-parameters for accuracy")
 
 #  KNN------------------------------------------------
-# knn_parameters = {'n_neighbors': [7, 11, 19],
-#                     'weights': ['uniform', 'distance'],
-#                     'metric': ['euclidean', 'manhattan']
-#                   }
-# scores = ['precision', 'recall', 'f1']
-#
-# clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
-#                    scoring='accuracy', n_jobs=-1)
-# clf.fit(train_data, train_label)
-# model = "KNN"
+knn_parameters = {'n_neighbors': [7, 11, 19],
+                    'weights': ['uniform', 'distance'],
+                    'metric': ['euclidean', 'manhattan']
+                  }
+scores = ['precision', 'recall', 'f1']
+
+clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
+                   scoring='accuracy', n_jobs=-1)
+clf.fit(train_data, train_label)
+model = "KNN"
 # ------------------------------------------------------
 
 
 #   SVC-------------------------------------------------
-tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                     'C': [0.1, 1, 10]},
-                    {'kernel': ['linear'], 'C': [0.1, 1, 10]}]
-scores = ['precision', 'recall', 'f1']
-#  グリッドサーチと交差検証法
-clf = GridSearchCV(svm.SVC(), tuned_parameters, cv=5,
-                    scoring='accuracy', n_jobs=-1)
-clf.fit(train_data, train_label)
-model = "SVC"
+# tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+#                      'C': [0.1, 1, 10]},
+#                     {'kernel': ['linear'], 'C': [0.1, 1, 10]}]
+# scores = ['precision', 'recall', 'f1']
+# #  グリッドサーチと交差検証法
+# clf = GridSearchCV(svm.SVC(), tuned_parameters, cv=5,
+#                     scoring='accuracy', n_jobs=-1)
+# clf.fit(train_data, train_label)
+# model = "SVC"
 # ------------------------------------------------------
 
 #   NN-------------------------------------------------
