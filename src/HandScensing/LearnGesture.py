@@ -89,7 +89,7 @@ model = "SVC"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-joblib.dump(clf, './learningModel/HandDitectModel_{}.pkl'.format(model))
+joblib.dump(clf, './learningModel/GestureDitectModel_{}.pkl'.format(model))
 
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)
