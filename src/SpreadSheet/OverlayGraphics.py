@@ -30,7 +30,7 @@ class OverlayGraphics(QGraphicsView):
         self.target_circle.setBrush(QBrush(Qt.red))
         self.target_circle.setPen(QPen(Qt.black))
         self.overlayScene.addItem(self.target_circle)
-        self.targetVisible(False)
+        self.setTargetMode(False)
         # モーダルの作成：モーダルはターゲット位置に追従する
         self.modal_rect = QGraphicsRectItem(QtCore.QRectF(0, 0, 100, 60), self.target_circle)
         self.modal_rect.setBrush(QBrush(Qt.gray))
@@ -52,8 +52,9 @@ class OverlayGraphics(QGraphicsView):
         self.target_circle.setPos(QPointF(x_pos, y_pos))
         self.setModalPos(direction)
 
-    def setMessage(self, text, option):
-        pass
+    def resizeModal(self):
+        self.resizeModal()
+
 
     def setModalPos(self, direction):
 
@@ -77,13 +78,16 @@ class OverlayGraphics(QGraphicsView):
 
     def setTargetMode(self, active):
         self.targetMode = active
-        self.targetVisible(active)
-
-    def targetVisible(self, visible):
-        if visible:
+        if active:
             self.target_circle.setRect(-10, -10, 20, 20)
         else:
             self.target_circle.setRect(0, 0, 0, 0)
+
+    # def targetVisible(self, visible):
+    #     if visible:
+    #         self.target_circle.setRect(-10, -10, 20, 20)
+    #     else:
+    #         self.target_circle.setRect(0, 0, 0, 0)
 
 
     def feedbackShow(self, text, option, direction):

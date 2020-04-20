@@ -6,5 +6,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     sheet = HandSpreadSheet(50, 50)
     sheet.resize(800, 400)
-    sheet.showFullScreen()
+    # sheet.showFullScreen()
     sys.exit(app.exec_())
