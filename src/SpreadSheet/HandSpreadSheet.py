@@ -103,6 +103,8 @@ class HandSpreadSheet(QMainWindow):
         self.controller = Leap.Controller()
         self.setLeapSignal()
 
+
+        self.startLeap()   # デバッグ時につける
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
     def createStatusBar(self):
@@ -294,10 +296,10 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
         self.overlayGraphics.isSelected = True
 
-    # def changeFeedback(self, text, option, direction):
+    # def changeFeedback(self, text1, text2, direction):
     #     self.overlayGraphics.feedbackShow(
-    #         text,
-    #         option,
+    #         text1,
+    #         text2,
     #         direction
     #     )
 

@@ -191,7 +191,7 @@ class HandListener(QtCore.QThread, Listener):
 
             else:
                 # print("挿入ステータス呼び出し")
-                self.change_feedback.emit("挿入", "", direction)
+                self.change_feedback.emit("INSERT", "", direction)
 
 
         elif n_hand == HandEnum.PINCH_OUT.value:
@@ -205,7 +205,7 @@ class HandListener(QtCore.QThread, Listener):
 
             else:
                 # print("削除ステータス呼び出し")
-                self.change_feedback.emit("削除", "", direction)
+                self.change_feedback.emit("DELETE", "SORT", direction)
 
 
         elif n_hand == HandEnum.REVERSE.value:
@@ -214,7 +214,7 @@ class HandListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
             else:
                 # print("降順ソートステータス呼び出し")
-                self.change_feedback.emit("ソート", "", direction)
+                self.change_feedback.emit("SORT", "", direction)
 
         elif n_hand == HandEnum.PALM.value:
             if p_hand == HandEnum.GRIP.value:
@@ -224,9 +224,9 @@ class HandListener(QtCore.QThread, Listener):
             else:
                 # print("コピー，カットステータス呼び出し")
                 if len(self.preHands) > 1:
-                    self.change_feedback.emit("コピー", "", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("COPY", "", DirectionEnum.VERTICAL.value)
                 else:
-                    self.change_feedback.emit("カット", "", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("CUT", "", DirectionEnum.VERTICAL.value)
         
         elif n_hand == HandEnum.GRIP.value:
             if p_hand == HandEnum.PALM.value:
@@ -239,7 +239,7 @@ class HandListener(QtCore.QThread, Listener):
 
             else:
                 # print("ペーストステータス呼び出し")
-                self.change_feedback.emit("ペースト", "", DirectionEnum.VERTICAL.value)
+                self.change_feedback.emit("PASTE", "", DirectionEnum.VERTICAL.value)
 
 
     def setPointingMode(self, isMode):
