@@ -20,7 +20,7 @@ class OverlayGraphics(QGraphicsView):
         self.rbRect = QRect()
         self.isSelected = False
         self.setTargetMode(False)
-        self.hide()
+        self.hide()  # 初期状態は非表示
 
 
 
@@ -30,17 +30,18 @@ class OverlayGraphics(QGraphicsView):
         self.target_circle.setBrush(QBrush(Qt.red))
         self.target_circle.setPen(QPen(Qt.black))
         self.overlayScene.addItem(self.target_circle)
-        self.targetVisible(False)
+        self.setTargetMode(False)
+
         # モーダルの作成：モーダルはターゲット位置に追従する
-        self.modal_rect = QGraphicsRectItem(QtCore.QRectF(0, 0, 100, 60), self.target_circle)
-        self.modal_rect.setBrush(QBrush(Qt.gray))
-        self.modal_rect.setPen(QPen(Qt.gray))
-        self.modal_rect.setOpacity(0.8)  # 透明度を設定
-        self.operate_text = QGraphicsSimpleTextItem("", self.modal_rect)
-        self.operate_text.setPos(30, 5)
+        self.pop_rect = QGraphicsRectItem(QtCore.QRectF(0, 0, 100, 60), self.target_circle)
+        self.pop_rect.setBrush(QBrush(Qt.gray))
+        self.pop_rect.setPen(QPen(Qt.gray))
+        self.pop_rect.setOpacity(0.8)  # 透明度を設定
+
+        self.operate_text = QGraphicsSimpleTextItem("", self.pop_rect)
         self.operate_text.setScale(1.7)
-        self.operate_option = QGraphicsSimpleTextItem("", self.modal_rect)
-        self.operate_option.setPos(20.5, 40)
+        self.sub_operate_text = QGraphicsSimpleTextItem("", self.pop_rect)
+        self.sub_operate_text.setScale(1.7)
         self.setTargetPos(400, 180, DirectionEnum.VERTICAL.value)
 
 
@@ -48,48 +49,59 @@ class OverlayGraphics(QGraphicsView):
     def resizeEvent(self, event):
         self.overlayScene.setSceneRect(QRectF(0, 0, self.size().width() - 5, self.size().height() - 5))
 
-    def setTargetPos(self, x_pos, y_pos, direction):  # ウィンドウ左上からの位置　（画面位置からウインドウ左上の一を引く）
+    # ウィンドウ左上からの位置（画面位置からウインドウ左上の位置を引く）
+    def setTargetPos(self, x_pos, y_pos, direction):
         self.target_circle.setPos(QPointF(x_pos, y_pos))
-        self.setModalPos(direction)
+        self.setPopPos(direction)
 
-    def setMessage(self, text, option):
-        pass
 
-    def setModalPos(self, direction):
+    def setPopTextPos(self, text1, text2):
+        lentext1 = len(text1)
+        lentext2 = len(text2)
+        if lentext2 == 0:
+            self.operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext1 / 2 * 14), 15)
+        else:
+            self.operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext1 / 2 * 14), 5)
+            self.sub_operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext2 / 2 * 14), 30)
 
+
+    def setPopPos(self, direction):
         if direction == DirectionEnum.VERTICAL.value:
             # モーダルを右に表示しきれない場合に左に表示
-            if self.target_circle.pos().x() > self.overlayScene.width() - self.modal_rect.rect().size().width() * 1.5:
-                self.modal_rect.setPos(-self.modal_rect.rect().size().width() * 1.5,
-                                       -self.modal_rect.rect().size().height() / 2)
+            if self.target_circle.pos().x() > self.overlayScene.width() - self.pop_rect.rect().size().width() * 1.5:
+                self.pop_rect.setPos(-self.pop_rect.rect().size().width() * 1.5,
+                                     -self.pop_rect.rect().size().height() / 2)
             else:  # 右に表示
-                self.modal_rect.setPos(self.modal_rect.rect().size().width() / 2,
-                                       -self.modal_rect.rect().size().height() / 2)
+                self.pop_rect.setPos(self.pop_rect.rect().size().width() / 2,
+                                     -self.pop_rect.rect().size().height() / 2)
 
         else:
             # モーダルを下に表示しきれない場合に上に表示
-            if self.target_circle.pos().y() > self.overlayScene.height() - self.modal_rect.rect().size().height() * 1.5:
-                self.modal_rect.setPos(-self.modal_rect.rect().size().width() / 2,
-                                       -self.modal_rect.rect().size().height() * 1.5)
+            if self.target_circle.pos().y() > self.overlayScene.height() - self.pop_rect.rect().size().height() * 1.5:
+                self.pop_rect.setPos(-self.pop_rect.rect().size().width() / 2,
+                                     -self.pop_rect.rect().size().height() * 1.5)
             else:  # 下に表示
-                self.modal_rect.setPos(-self.modal_rect.rect().size().width() / 2,
-                                       self.modal_rect.rect().size().height() / 2)
+                self.pop_rect.setPos(-self.pop_rect.rect().size().width() / 2,
+                                     self.pop_rect.rect().size().height() / 2)
 
     def setTargetMode(self, active):
         self.targetMode = active
-        self.targetVisible(active)
-
-    def targetVisible(self, visible):
-        if visible:
+        if active:
             self.target_circle.setRect(-10, -10, 20, 20)
-        else:
+        else: # ターゲットを非表示にする
             self.target_circle.setRect(0, 0, 0, 0)
 
+    # def targetVisible(self, visible):
+    #     if visible:
+    #         self.target_circle.setRect(-10, -10, 20, 20)
+    #     else:
+    #         self.target_circle.setRect(0, 0, 0, 0)
 
-    def feedbackShow(self, text, option, direction):
+
+    def feedbackShow(self, text1, text2, direction):
         if self.isSelected:
-            self.operate_text.setText(text)
-            self.operate_option.setText(option)
+            self.operate_text.setText(text1)
+            self.sub_operate_text.setText(text2)
             # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
             if not self.targetMode:
                 if direction == DirectionEnum.HORIZON.value:
@@ -100,4 +112,5 @@ class OverlayGraphics(QGraphicsView):
                     y_pos = (self.luRect.top() + self.rbRect.bottom())/2 + 20
 
                 self.setTargetPos(x_pos, y_pos, direction)
+                self.setPopTextPos(text1, text2)
             self.show()

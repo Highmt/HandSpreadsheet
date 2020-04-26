@@ -19,7 +19,6 @@ predictor = Predictor(model)
 collect_data_num = 2000
 pred_list = []
 true_list = []
-PORT = 8080
 
 
 # for result
