@@ -1,6 +1,7 @@
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
 from res.SSEnum import ActionEnum, DirectionEnum
 from src.SpreadSheet.spreadsheetdelegate import SpreadSheetDelegate
@@ -231,6 +232,12 @@ class myTable(QTableWidget):
                 if self.clipRanges is not None:
                     self.pasteCells()
                     self.parent().statusBar().showMessage("paste", 1000)
+
+    # def contextMenuEvent(self, event: QtGui.QContextMenuEvent):
+    #     menu = QMenu()
+    #     self.insert_Action = QAction("insert", self)
+    #     menu.addAction(self.insert_Action)
+    #     menu.popup(QtGui.QCursor.pos())
 
 
     def getItemCoordinate(self):
