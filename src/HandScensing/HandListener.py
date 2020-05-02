@@ -200,8 +200,8 @@ class HandListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.INSERT.value, direction)
 
             elif p_hand == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
-                print("降順ソート関数呼び出し")
-                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
+                print("昇順ソート関数呼び出し")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
 
             else:
                 # print("削除ステータス呼び出し")
@@ -210,8 +210,8 @@ class HandListener(QtCore.QThread, Listener):
 
         elif n_hand == HandEnum.REVERSE.value:
             if p_hand == HandEnum.PINCH_OUT.value and direction == DirectionEnum.VERTICAL.value:
-                print("昇順ソート関数呼び出し")
-                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
+                print("降順ソート関数呼び出し")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
             else:
                 # print("降順ソートステータス呼び出し")
                 self.change_feedback.emit("SORT", "", direction)
