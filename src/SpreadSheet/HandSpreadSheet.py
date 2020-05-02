@@ -40,11 +40,13 @@
 #############################################################################
 
 from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar, QMenu)
+                             QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
+                             QVBoxLayout, QButtonGroup)
 
 from lib.LeapMotion import Leap
+from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.HandListener import HandListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
@@ -111,7 +113,7 @@ class HandSpreadSheet(QMainWindow):
         self.setLeapSignal()
 
 
-        self.startLeap()   # デバッグ時につける
+        self.startLeap()   # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
     def createStatusBar(self):
@@ -149,6 +151,8 @@ class HandSpreadSheet(QMainWindow):
 
     def createMenuActions(self):
         self.start_Leap = QAction("StartLeap", self)
+        self.start_Leap.setShortcut('Ctrl+L')
+        self.start_Leap.setShortcutContext(Qt.ApplicationShortcut)
         self.start_Leap.triggered.connect(self.startLeap)
 
         self.end_Leap = QAction("EndLeap", self)
@@ -178,25 +182,93 @@ class HandSpreadSheet(QMainWindow):
 
     def createTableActions(self):
         self.insert_Action = QAction("Insert...", self)
-        self.insert_Action.triggered.connect(self.actionInsert)
+        self.insert_Action.triggered.connect(self.showInsertDialog)
 
         self.delete_Action = QAction("Delete...", self)
-        self.delete_Action.triggered.connect(self.actionDelete)
+        self.delete_Action.triggered.connect(self.showDeleteDialog)
 
         self.sort_AtoZ_Action = QAction("Sort A to Z", self)
-        self.sort_AtoZ_Action.triggered.connect(self.actionSort)
+        # self.sort_AtoZ_Action.setShortcut('Ctrl+E')
+        # self.sort_AtoZ_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.sort_AtoZ_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.SORT.value, DirectionEnum.BACK.value))
+
         self.sort_ZtoA_Action = QAction("Sort Z to A", self)
-        self.sort_ZtoA_Action.triggered.connect(self.actionSort)
+        self.sort_ZtoA_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.SORT.value, DirectionEnum.FRONT.value))
 
         self.copy_Action = QAction("Copy", self)
-        self.copy_Action.triggered.connect(self.actionCopy)
+        self.copy_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.COPY.value, None))
 
         self.cut_Action = QAction("Cut", self)
-        self.cut_Action.triggered.connect(self.actionCut)
+        self.cut_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.CUT.value, None))
 
         self.paste_Action = QAction("Paste", self)
-        self.paste_Action.triggered.connect(self.actionPaste)
+        self.paste_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.PASTE.value, None))
 
+        # ショートカットキー専用アクション
+        self.insert_right_Action = QAction("Insert...", self)
+        self.insert_right_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.INSERT.value, DirectionEnum.HORIZON.value))
+        self.insert_down_Action = QAction("Insert...", self)
+        self.insert_down_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.INSERT.value, DirectionEnum.VERTICAL.value))
+
+    def showInsertDialog(self):
+        insert_dialog = QDialog()
+        radio_layout = QVBoxLayout(insert_dialog)
+        label = QLabel('Witch direction shift cells?')
+        self.radio_insert_group = QButtonGroup()
+        self.radio_insert_right = QRadioButton('Shift cells right')
+        self.radio_insert_down = QRadioButton('Shift cells down')
+        self.radio_insert_group.addButton(self.radio_insert_right, DirectionEnum.HORIZON.value)
+        self.radio_insert_group.addButton(self.radio_insert_down, DirectionEnum.VERTICAL.value)
+        radio_layout.addWidget(label)
+        radio_layout.addWidget(self.radio_insert_right)
+        radio_layout.addWidget(self.radio_insert_down)
+
+        insert_button = QPushButton("Insert")
+        cancel_button = QPushButton("Cancel")
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(insert_button)
+        button_layout.addWidget(cancel_button)
+        radio_layout.addLayout(button_layout)
+        insert_button.clicked.connect(self.clickedInsertButton)
+        insert_button.clicked.connect(insert_dialog.close)
+        cancel_button.clicked.connect(insert_dialog.close)
+        insert_dialog.setWindowTitle("Insert...")
+        insert_dialog.setWindowModality(Qt.ApplicationModal)
+        insert_dialog.exec_()
+        
+    def clickedInsertButton(self):
+        if self.radio_insert_group.checkedId() > 0:
+            self.table.actionOperate(ActionEnum.INSERT.value, self.radio_insert_group.checkedId())
+
+    def showDeleteDialog(self):
+        delete_dialog = QDialog()
+        radio_layout = QVBoxLayout(delete_dialog)
+        label = QLabel('Witch direction shift cells?')
+        self.radio_delete_group = QButtonGroup()
+        self.radio_delete_left = QRadioButton('Shift cells left')
+        self.radio_delete_up = QRadioButton('Shift cells up')
+        self.radio_delete_group.addButton(self.radio_delete_left, DirectionEnum.HORIZON.value)
+        self.radio_delete_group.addButton(self.radio_delete_up, DirectionEnum.VERTICAL.value)
+        radio_layout.addWidget(label)
+        radio_layout.addWidget(self.radio_delete_left)
+        radio_layout.addWidget(self.radio_delete_up)
+
+        delete_button = QPushButton("Delete")
+        cancel_button = QPushButton("Cancel")
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(delete_button)
+        button_layout.addWidget(cancel_button)
+        radio_layout.addLayout(button_layout)
+        delete_button.clicked.connect(self.clickedDeleteButton)
+        delete_button.clicked.connect(delete_dialog.close)
+        cancel_button.clicked.connect(delete_dialog.close)
+        delete_dialog.setWindowTitle("Delete...")
+        delete_dialog.setWindowModality(Qt.ApplicationModal)
+        delete_dialog.exec_()
+
+    def clickedDeleteButton(self):
+        if self.radio_delete_group.checkedId() > 0:
+            self.table.actionOperate(ActionEnum.DELETE.value, self.radio_delete_group.checkedId())
 
     def openContextMenu(self, event):
         menu = QMenu()
@@ -325,13 +397,6 @@ class HandSpreadSheet(QMainWindow):
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
         self.overlayGraphics.isSelected = True
-
-    # def changeFeedback(self, text1, text2, direction):
-    #     self.overlayGraphics.feedbackShow(
-    #         text1,
-    #         text2,
-    #         direction
-    #     )
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)

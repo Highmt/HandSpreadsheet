@@ -233,12 +233,6 @@ class myTable(QTableWidget):
                     self.pasteCells()
                     self.parent().statusBar().showMessage("paste", 1000)
 
-    # def contextMenuEvent(self, event: QtGui.QContextMenuEvent):
-    #     menu = QMenu()
-    #     self.insert_Action = QAction("insert", self)
-    #     menu.addAction(self.insert_Action)
-    #     menu.popup(QtGui.QCursor.pos())
-
 
     def getItemCoordinate(self):
         itemList = self.selectedItems()
