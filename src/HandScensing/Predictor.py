@@ -162,6 +162,7 @@ class Predictor():
         self.dfs = pd.concat([self.dfs, self.df], ignore_index=True)
         pred = self.model.predict(self.df.values)
         # print(self.model.decision_function(self.df.values))　# SVCのみ
+        # print(pred)
         return pred[0]
 
     def create_emptypandas(self):

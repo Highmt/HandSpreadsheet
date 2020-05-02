@@ -433,9 +433,13 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
         self.overlayGraphics.isSelected = True
 
+    def actionOperate(self, act, direction):
+        self.table.actionOperate(act, direction)
+        self.listener.resetHand()
+
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
         self.listener.show_feedback.connect(self.overlayGraphics.show)
         self.listener.change_feedback.connect(self.overlayGraphics.feedbackShow)
-        self.listener.action_operation.connect(self.table.actionOperate)
+        self.listener.action_operation.connect(self.actionOperate)
         self.listener.startorend_leap.connect(self.changeLeap)
