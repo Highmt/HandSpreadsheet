@@ -155,18 +155,14 @@ class HandListener(QtCore.QThread, Listener):
                     handlist.pop(0)
 
                 hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
-                # print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
                 # 識別手形状とメモリのて形状リストから現在の手形状を決定
                 try:
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
                 except:
                     currentStatus = hand_state
-                print(currentStatus)
-                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
+                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力（文字列で）
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
-                print(self.memoryHands[hand.id])
-                # print(self.isHolizon(hand)) 向きが横か出力
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
