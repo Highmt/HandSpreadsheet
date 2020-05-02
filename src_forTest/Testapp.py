@@ -1,0 +1,35 @@
+import random
+import sys
+from PyQt5.QtWidgets import QApplication
+
+from res.SSEnum import TestSectionEnum, TestModeEnum
+from src_forTest.SpreadSheet.HandSpreadSheet import HandSpreadSheet
+
+ModeNames = ["Gesture", "Shortcut-key", "Menu"]
+SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
+if __name__ == '__main__':
+    modeList = [TestModeEnum.GESTURE.value, TestModeEnum.SHORTCUT_KEY.value]
+    random.shuffle(modeList)
+    sectionList = []
+    for section in TestSectionEnum:
+        sectionList.append(section.value)
+    random.shuffle(sectionList)
+    section_count = 1
+    task_count = 1
+    for section in sectionList:
+        modes = list(modeList)
+        for mode in modes:
+            app = QApplication(sys.argv)
+            sheet = HandSpreadSheet(14, 12, mode, section)
+            sheet.resize(500, 500)
+            sheet.showFullScreen()
+            print("Task: {0}-{1}\nSection: {2}, Mode: {3} start.".format(section_count, task_count,
+                                                                          SectionNames[section], ModeNames[mode]))
+            app.exec_()
+            print("Task: {0}-{1}\nSection: {2}, Mode: {3} end.".format(section_count, task_count,
+                                                                       SectionNames[section],ModeNames[mode]))
+            print("Push Return-key to next Task")
+            del sheet
+            del app
+            input()
+    sys.exit()

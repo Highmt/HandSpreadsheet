@@ -25,3 +25,15 @@ class ActionEnum(Enum):
     CUT = 3
     PASTE = 4
     SORT = 5
+
+class TestSectionEnum(Enum):
+    INSERT = 0
+    DELETE = 1
+    CUT_COPY_PASTE = 2
+    SORT = 3
+
+
+class TestModeEnum(Enum):
+    GESTURE = 0
+    SHORTCUT_KEY = 1
+    MENU = 2

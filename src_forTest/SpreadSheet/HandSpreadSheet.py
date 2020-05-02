@@ -46,12 +46,12 @@ from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QVBoxLayout, QButtonGroup)
 
 from lib.LeapMotion import Leap
-from res.SSEnum import ActionEnum, DirectionEnum
-from src.HandScensing.HandListener import HandListener
-from src.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src.SpreadSheet.myTable import myTable
-from src.SpreadSheet.spreadsheetitem import SpreadSheetItem
-from src.SpreadSheet.util import encode_pos
+from res.SSEnum import *
+from src_forTest.HandScensing.HandListener import HandListener
+from src_forTest.SpreadSheet.OverlayGraphics import OverlayGraphics
+from src_forTest.SpreadSheet.myTable import myTable
+from src_forTest.SpreadSheet.spreadsheetitem import SpreadSheetItem
+from src_forTest.SpreadSheet.util import encode_pos
 
 
 # class circleWidget(QWidget):
@@ -65,7 +65,7 @@ from src.SpreadSheet.util import encode_pos
 #         painter.drawEllipse(10, 10, 100, 100)
 
 class HandSpreadSheet(QMainWindow):
-    def __init__(self, rows, cols, parent=None):
+    def __init__(self, rows, cols, mode, section, parent=None):
         super(HandSpreadSheet, self).__init__(parent)
 
         self.toolBar = QToolBar()
@@ -81,7 +81,7 @@ class HandSpreadSheet(QMainWindow):
         self.createMenuActions()
         self.createTableActions()
 
-        self.updateColor(0)
+        self.updateColor()
         self.setupMenuBar()
 
         self.setCentralWidget(self.table)
@@ -111,9 +111,29 @@ class HandSpreadSheet(QMainWindow):
         self.controller = Leap.Controller()
         self.setLeapSignal()
 
-
-        self.startLeap()   # デバッグ時につけると初期状態でLeapMotion起動
+        if mode == TestModeEnum.GESTURE.value:
+            self.startLeap()   # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
+
+        self.setTrueList(section)
+        self.count = 0
+        self.maxCount = len(self.true_action_list) * len(self.true_direction_list)
+
+    def setTrueList(self, section):
+        self.true_action_list = []
+        self.true_direction_list = []
+        if section == TestSectionEnum.INSERT.value:
+            self.true_action_list = [ActionEnum.INSERT.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value, DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
+        elif section == TestSectionEnum.DELETE.value:
+            self.true_action_list = [ActionEnum.DELETE.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value, DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
+        elif section == TestSectionEnum.CUT_COPY_PASTE.value:
+            self.true_action_list = [ActionEnum.COPY.value, ActionEnum.CUT.value, ActionEnum.PASTE.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value]
+        else:
+            self.true_action_list = [ActionEnum.SORT.value]
+            self.true_direction_list = [DirectionEnum.FRONT.value, DirectionEnum.BACK.value]
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")
@@ -230,7 +250,7 @@ class HandSpreadSheet(QMainWindow):
             lambda: self.table.actionOperate(ActionEnum.INSERT.value, DirectionEnum.VERTICAL.value))
         
         self.delete_left_Action = QAction(self)
-        self.delete_left_Action.setShortcut("Ctrl+Left+I")
+        self.delete_left_Action.setShortcut("Ctrl+Left+D")
         self.delete_left_Action.setShortcutContext(Qt.ApplicationShortcut)
         self.delete_left_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.delete_left_Action)
@@ -238,7 +258,7 @@ class HandSpreadSheet(QMainWindow):
             lambda: self.table.actionOperate(ActionEnum.DELETE.value, DirectionEnum.HORIZON.value))
         
         self.delete_up_Action = QAction(self)
-        self.delete_up_Action.setShortcut("Ctrl+Up+I")
+        self.delete_up_Action.setShortcut("Ctrl+Up+D")
         self.delete_up_Action.setShortcutContext(Qt.ApplicationShortcut)
         self.delete_up_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.delete_up_Action)
@@ -349,7 +369,7 @@ class HandSpreadSheet(QMainWindow):
             self.cellLabel.setText("Cell: (%s)" % encode_pos(self.table.row(item),
                                                              self.table.column(item)))
 
-    def updateColor(self, item):
+    def updateColor(self):
         pixmap = QPixmap(16, 16)
         color = QColor()
         # if item:
@@ -428,6 +448,7 @@ class HandSpreadSheet(QMainWindow):
 
     def closeEvent(self, event):
         self.controller.remove_listener(self.listener)
+    #     TODO 記録処理記述
 
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()

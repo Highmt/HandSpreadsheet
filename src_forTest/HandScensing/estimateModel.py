@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from lib.LeapMotion.Leap import Controller, Listener
-from src.HandScensing.Predictor import Predictor
+from src_forTest.HandScensing.Predictor import Predictor
 
 np.set_printoptions(suppress=True)
 training_data = np.empty([0, 7])

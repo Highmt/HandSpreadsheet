@@ -4,8 +4,8 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
 from res.SSEnum import ActionEnum, DirectionEnum
-from src.SpreadSheet.spreadsheetdelegate import SpreadSheetDelegate
-from src.SpreadSheet.spreadsheetitem import SpreadSheetItem
+from src_forTest.SpreadSheet.spreadsheetdelegate import SpreadSheetDelegate
+from src_forTest.SpreadSheet.spreadsheetitem import SpreadSheetItem
 
 
 class myTable(QTableWidget):
@@ -193,7 +193,6 @@ class myTable(QTableWidget):
                 temp = self.takeItem(i, j)
                 self.clipTable.setItem(i, j, temp)
                 self.setItem(i, j, SpreadSheetItem())
-                print(self.clipTable.item(i, j).text())
 
 
 

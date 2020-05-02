@@ -3,7 +3,7 @@ import sys
 import pyautogui
 
 from lib.LeapMotion.Leap import Listener, Vector, Finger
-from src.HandScensing.Predictor import Predictor
+from src_forTest.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
