@@ -368,7 +368,7 @@ def data_save_pandas():
         "Pinky_fin_dist_direction_z" : Pinky_fin_dist_direction_z,
         "label" : label_list,
     })
-    df.to_csv("./data/{0}_{1}.csv".format(str(label), current))
+    df.to_csv("../../res/data/{0}_{1}.csv".format(str(label), current))
 
 def main():
     # Create a sample listener and controller

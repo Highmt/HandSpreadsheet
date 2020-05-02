@@ -22,12 +22,12 @@ np.random.seed(1671)  # for reproducibility
 DROPOUT = 0.2
 
 # data: shuffled and split between train and test sets
-read_data0 = pd.read_csv('./data/0_FREE.csv', sep=',', index_col=0)
-read_data1 = pd.read_csv('./data/1_PINCH_IN.csv', sep=',', index_col=0)
-read_data2 = pd.read_csv('./data/2_PINCH_OUT.csv', sep=',', index_col=0)
-read_data3 = pd.read_csv('./data/3_REVERSE.csv', sep=',', index_col=0)
-read_data4 = pd.read_csv('./data/4_PALM.csv', sep=',', index_col=0)
-read_data5 = pd.read_csv('./data/5_GRAB.csv', sep=',', index_col=0)
+read_data0 = pd.read_csv('../../res/data/0_FREE.csv', sep=',', index_col=0)
+read_data1 = pd.read_csv('../../res/data/1_PINCH_IN.csv', sep=',', index_col=0)
+read_data2 = pd.read_csv('../../res/data/2_PINCH_OUT.csv', sep=',', index_col=0)
+read_data3 = pd.read_csv('../../res/data/3_REVERSE.csv', sep=',', index_col=0)
+read_data4 = pd.read_csv('../../res/data/4_PALM.csv', sep=',', index_col=0)
+read_data5 = pd.read_csv('../../res/data/5_GRAB.csv', sep=',', index_col=0)
 
 read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
 data = read_data.drop("label", axis=1).values
@@ -89,7 +89,7 @@ model = "KNN"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-joblib.dump(clf, './learningModel/HandDitectModel_{}.pkl'.format(model))
+joblib.dump(clf, '../../res/learningModel/HandDitectModel_{}.pkl'.format(model))
 
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)
@@ -104,8 +104,8 @@ cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
 sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
 fig, ax = plt.subplots(figsize=(9, 8))
 sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  #  正規化したものを表示
-plt.savefig('./learningResult/cvCM_{}.png'.format(model))
-with open('./learningResult/cvCM_{}.csv'.format(model), 'w') as file:
+plt.savefig('../../res/learningResult/cvCM_{}.png'.format(model))
+with open('../../res/learningResult/cvCM_{}.csv'.format(model), 'w') as file:
     writer = csv.writer(file, lineterminator='\n')
     writer.writerows(c_matrix)
 print(classification_report(test_label, pred))

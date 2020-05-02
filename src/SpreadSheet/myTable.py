@@ -1,6 +1,7 @@
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
 from res.SSEnum import ActionEnum, DirectionEnum
 from src.SpreadSheet.spreadsheetdelegate import SpreadSheetDelegate

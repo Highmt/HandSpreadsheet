@@ -40,11 +40,13 @@
 #############################################################################
 
 from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtGui import QColor, QPainter, QPixmap
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar)
+                             QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
+                             QVBoxLayout, QButtonGroup)
 
 from lib.LeapMotion import Leap
+from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.HandListener import HandListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
@@ -75,13 +77,19 @@ class HandSpreadSheet(QMainWindow):
         self.toolBar.addWidget(self.formulaInput)
         self.table = myTable(rows, cols, self)
 
-        self.createActions()  # アクションの追加
+        # アクションの追加
+        self.createMenuActions()
+        self.createTableActions()
+
         self.updateColor(0)
         self.setupMenuBar()
 
-        self.setupContextMenu()  # コンテクストメニュー設定
         self.setCentralWidget(self.table)
         self.createStatusBar()
+
+        # self.setupContextMenu()  # コンテクストメニュー設定
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.openContextMenu)
 
         self.table.currentItemChanged.connect(self.updateStatus)
         self.table.currentItemChanged.connect(self.updateColor)
@@ -104,7 +112,7 @@ class HandSpreadSheet(QMainWindow):
         self.setLeapSignal()
 
 
-        self.startLeap()   # デバッグ時につける
+        self.startLeap()   # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
     def createStatusBar(self):
@@ -118,11 +126,16 @@ class HandSpreadSheet(QMainWindow):
         self.statusBar().addWidget(self.leapLabel)
         self.statusBar().addPermanentWidget(self.pointStatusLabel)
 
-    def createActions(self):
+
+    def createMenuActions(self):
         self.start_Leap = QAction("StartLeap", self)
+        self.start_Leap.setShortcut('Ctrl+L')
+        self.start_Leap.setShortcutContext(Qt.ApplicationShortcut)
         self.start_Leap.triggered.connect(self.startLeap)
 
         self.end_Leap = QAction("EndLeap", self)
+        self.end_Leap.setShortcut('Shift+Ctrl+L')
+        self.end_Leap.setShortcutContext(Qt.ApplicationShortcut)
         self.end_Leap.triggered.connect(self.endLeap)
         self.end_Leap.setEnabled(False)
 
@@ -133,48 +146,6 @@ class HandSpreadSheet(QMainWindow):
         self.negative_Point = QAction("negative", self)
         self.negative_Point.triggered.connect(self.negativePointing)
         self.negative_Point.setEnabled(False)
-
-        self.firstSeparator = QAction(self)
-        self.firstSeparator.setSeparator(True)
-
-        self.secondSeparator = QAction(self)
-        self.secondSeparator.setSeparator(True)
-
-        self.insert_Action = QAction("insert", self)
-        self.insert_Action.triggered.connect(self.actionInsert)
-
-        self.delete_Action = QAction("delete", self)
-        self.delete_Action.triggered.connect(self.actionDelete)
-
-        self.sort_Action = QAction("sort", self)
-        self.sort_Action.triggered.connect(self.actionSort)
-
-        self.copy_Action = QAction("copy", self)
-        self.copy_Action.triggered.connect(self.actionCopy)
-
-        self.cut_Action = QAction("cut", self)
-        self.cut_Action.triggered.connect(self.actionCut)
-
-        self.paste_Action = QAction("paste", self)
-        self.paste_Action.triggered.connect(self.actionPaste)
-
-    def actionInsert(self):
-        self.table.insertRow(2)
-
-    def actionDelete(self):
-        pass
-
-    def actionSort(self):
-        pass
-
-    def actionCopy(self):
-        pass
-
-    def actionCut(self):
-        pass
-
-    def actionPaste(self):
-        pass
 
     def setupMenuBar(self):
         self.leapMenu = self.menuBar().addMenu("&LeapMotion")
@@ -188,23 +159,189 @@ class HandSpreadSheet(QMainWindow):
         self.pointMode.addAction(self.negative_Point)
         self.pointMode.setEnabled(False)
 
-        # self.cellMenu = self.menuBar().addMenu("&Cell")
-        # self.cellMenu.addAction(self.insert_Action)
-        # self.cellMenu.addAction(self.delete_Action)
-        # self.cellMenu.addAction(self.sort_Action)
-        # self.cellMenu.addAction(self.copy_Action)
-        # self.cellMenu.addAction(self.cut_Action)
-        # self.cellMenu.addAction(self.paste_Action)
-
-    def setupContextMenu(self):
+    def createTableActions(self):
+        self.insert_Action = QAction("Insert...", self)
+        self.insert_Action.setShortcut("Ctrl+I")
+        self.insert_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.insert_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.insert_Action)
+        self.insert_Action.triggered.connect(self.showInsertDialog)
+
+
+        self.delete_Action = QAction("Delete...", self)
+        self.delete_Action.setShortcut("Ctrl+D")
+        self.delete_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.delete_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.delete_Action)
-        self.addAction(self.sort_Action)
+        self.delete_Action.triggered.connect(self.showDeleteDialog)
+
+        self.sort_AtoZ_Action = QAction("Sort A to Z", self)
+        self.sort_AtoZ_Action.setShortcut("Alt+Down")
+        self.sort_AtoZ_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.sort_AtoZ_Action.setShortcutVisibleInContextMenu(True)
+        self.addAction(self.sort_AtoZ_Action)
+        self.sort_AtoZ_Action.triggered.connect(
+            lambda: self.table.actionOperate(ActionEnum.SORT.value, DirectionEnum.FRONT.value))
+
+        self.sort_ZtoA_Action = QAction("Sort Z to A", self)
+        self.sort_ZtoA_Action.setShortcut("Alt+Up")
+        self.sort_ZtoA_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.sort_ZtoA_Action.setShortcutVisibleInContextMenu(True)
+        self.addAction(self.sort_ZtoA_Action)
+        self.sort_ZtoA_Action.triggered.connect(
+            lambda: self.table.actionOperate(ActionEnum.SORT.value, DirectionEnum.BACK.value))
+
+        self.copy_Action = QAction("Copy", self)
+        self.copy_Action.setShortcut("Ctrl+C")
+        self.copy_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.copy_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.copy_Action)
+        self.copy_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.COPY.value, None))
+
+        self.cut_Action = QAction("Cut", self)
+        self.cut_Action.setShortcut("Ctrl+X")
+        self.cut_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.cut_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.cut_Action)
+        self.cut_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.CUT.value, None))
+
+        self.paste_Action = QAction("Paste", self)
+        self.paste_Action.setShortcut("Ctrl+V")
+        self.paste_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.paste_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.paste_Action)
-        self.addAction(self.firstSeparator)
-        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.paste_Action.triggered.connect(lambda: self.table.actionOperate(ActionEnum.PASTE.value, None))
+
+        # ショートカットキー専用アクション
+        self.insert_right_Action = QAction(self)
+        self.insert_right_Action.setShortcut("Ctrl+Right+I")
+        self.insert_right_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.insert_right_Action.setShortcutVisibleInContextMenu(True)
+        self.addAction(self.insert_right_Action)
+        self.insert_right_Action.triggered.connect(
+            lambda: self.table.actionOperate(ActionEnum.INSERT.value, DirectionEnum.HORIZON.value))
+        
+        self.insert_down_Action = QAction(self)
+        self.insert_down_Action.setShortcut("Ctrl+Down+I")
+        self.insert_down_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.insert_down_Action.setShortcutVisibleInContextMenu(True)
+        self.addAction(self.insert_down_Action)
+        self.insert_down_Action.triggered.connect(
+            lambda: self.table.actionOperate(ActionEnum.INSERT.value, DirectionEnum.VERTICAL.value))
+        
+        self.delete_left_Action = QAction(self)
+        self.delete_left_Action.setShortcut("Ctrl+Left+I")
+        self.delete_left_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.delete_left_Action.setShortcutVisibleInContextMenu(True)
+        self.addAction(self.delete_left_Action)
+        self.delete_left_Action.triggered.connect(
+            lambda: self.table.actionOperate(ActionEnum.DELETE.value, DirectionEnum.HORIZON.value))
+        
+        self.delete_up_Action = QAction(self)
+        self.delete_up_Action.setShortcut("Ctrl+Up+I")
+        self.delete_up_Action.setShortcutContext(Qt.ApplicationShortcut)
+        self.delete_up_Action.setShortcutVisibleInContextMenu(True)
+        self.addAction(self.delete_up_Action)
+        self.delete_up_Action.triggered.connect(
+            lambda: self.table.actionOperate(ActionEnum.DELETE.value, DirectionEnum.VERTICAL.value))
+
+    def openContextMenu(self, event):
+        menu = QMenu()
+        menu.addAction(self.cut_Action)
+        menu.addAction(self.copy_Action)
+        menu.addAction(self.paste_Action)
+        menu.addAction("Paste Special...")
+        menu.addSeparator()
+        menu.addAction("Smart Lookup...")
+        menu.addAction("Thesaurus...")
+        menu.addSeparator()
+        menu.addAction(self.insert_Action)
+        menu.addAction(self.delete_Action)
+        menu.addAction("Clear Contents")
+        menu.addSeparator()
+        menu.addAction("Filter")
+        sort_menu = QMenu("Sort")
+        sort_menu.addAction(self.sort_AtoZ_Action)
+        sort_menu.addAction(self.sort_ZtoA_Action)
+        menu.addMenu(sort_menu)
+        menu.addSeparator()
+        menu.addAction("New Comment")
+        menu.addAction("New Note")
+        menu.addSeparator()
+        menu.addAction("Format Cells...")
+        menu.addAction("Pick From Drop-down List...")
+        menu.addAction("Define Name...")
+        menu.addAction("Hyperlink...")
+        menu.addSeparator()
+        smartphone = QAction("Smart Phone", self)
+        menu.addAction(smartphone)
+        smartphone.setEnabled(False)
+        menu.addAction("Take Photo")
+        menu.addAction("Scan Documents")
+        menu.addAction("Add Sketch")
+        menu.addSeparator()
+        menu.addAction("Services")
+        menu.exec_(self.mapToGlobal(event))
+
+    def showInsertDialog(self):
+        insert_dialog = QDialog()
+        radio_layout = QVBoxLayout(insert_dialog)
+        label = QLabel('Witch direction shift cells?')
+        self.radio_insert_group = QButtonGroup()
+        self.radio_insert_right = QRadioButton('Shift cells right')
+        self.radio_insert_down = QRadioButton('Shift cells down')
+        self.radio_insert_group.addButton(self.radio_insert_right, DirectionEnum.HORIZON.value)
+        self.radio_insert_group.addButton(self.radio_insert_down, DirectionEnum.VERTICAL.value)
+        radio_layout.addWidget(label)
+        radio_layout.addWidget(self.radio_insert_right)
+        radio_layout.addWidget(self.radio_insert_down)
+
+        insert_button = QPushButton("Insert")
+        cancel_button = QPushButton("Cancel")
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(insert_button)
+        button_layout.addWidget(cancel_button)
+        radio_layout.addLayout(button_layout)
+        insert_button.clicked.connect(self.clickedDialogInsertButton)
+        insert_button.clicked.connect(insert_dialog.close)
+        cancel_button.clicked.connect(insert_dialog.close)
+        insert_dialog.setWindowTitle("Insert...")
+        insert_dialog.setWindowModality(Qt.ApplicationModal)
+        insert_dialog.exec_()
+        
+    def clickedDialogInsertButton(self):
+        if self.radio_insert_group.checkedId() > 0:
+            self.table.actionOperate(ActionEnum.INSERT.value, self.radio_insert_group.checkedId())
+
+    def showDeleteDialog(self):
+        delete_dialog = QDialog()
+        radio_layout = QVBoxLayout(delete_dialog)
+        label = QLabel('Witch direction shift cells?')
+        self.radio_delete_group = QButtonGroup()
+        self.radio_delete_left = QRadioButton('Shift cells left')
+        self.radio_delete_up = QRadioButton('Shift cells up')
+        self.radio_delete_group.addButton(self.radio_delete_left, DirectionEnum.HORIZON.value)
+        self.radio_delete_group.addButton(self.radio_delete_up, DirectionEnum.VERTICAL.value)
+        radio_layout.addWidget(label)
+        radio_layout.addWidget(self.radio_delete_left)
+        radio_layout.addWidget(self.radio_delete_up)
+
+        delete_button = QPushButton("Delete")
+        cancel_button = QPushButton("Cancel")
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(delete_button)
+        button_layout.addWidget(cancel_button)
+        radio_layout.addLayout(button_layout)
+        delete_button.clicked.connect(self.clickedDialogDeleteButton)
+        delete_button.clicked.connect(delete_dialog.close)
+        cancel_button.clicked.connect(delete_dialog.close)
+        delete_dialog.setWindowTitle("Delete...")
+        delete_dialog.setWindowModality(Qt.ApplicationModal)
+        delete_dialog.exec_()
+
+    def clickedDialogDeleteButton(self):
+        if self.radio_delete_group.checkedId() > 0:
+            self.table.actionOperate(ActionEnum.DELETE.value, self.radio_delete_group.checkedId())
 
     def updateStatus(self, item):
         if item and item == self.table.currentItem():
@@ -296,18 +433,13 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
         self.overlayGraphics.isSelected = True
 
-    # def changeFeedback(self, text1, text2, direction):
-    #     self.overlayGraphics.feedbackShow(
-    #         text1,
-    #         text2,
-    #         direction
-    #     )
+    def actionOperate(self, act, direction):
+        self.table.actionOperate(act, direction)
+        self.listener.resetHand()
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
         self.listener.show_feedback.connect(self.overlayGraphics.show)
         self.listener.change_feedback.connect(self.overlayGraphics.feedbackShow)
-        self.listener.action_operation.connect(self.table.actionOperate)
+        self.listener.action_operation.connect(self.actionOperate)
         self.listener.startorend_leap.connect(self.changeLeap)
-
-

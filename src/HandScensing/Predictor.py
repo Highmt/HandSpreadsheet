@@ -6,7 +6,7 @@ from lib.LeapMotion.Leap import RAD_TO_DEG
 
 class Predictor():
     def __init__(self, alg: str):
-        self.model = joblib.load('./HandScensing/learningModel/HandDitectModel_{}.pkl'.format(alg))
+        self.model = joblib.load('../res/learningModel/HandDitectModel_{}.pkl'.format(alg))
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         self.bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
         self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
@@ -162,6 +162,7 @@ class Predictor():
         self.dfs = pd.concat([self.dfs, self.df], ignore_index=True)
         pred = self.model.predict(self.df.values)
         # print(self.model.decision_function(self.df.values))　# SVCのみ
+        # print(pred)
         return pred[0]
 
     def create_emptypandas(self):
