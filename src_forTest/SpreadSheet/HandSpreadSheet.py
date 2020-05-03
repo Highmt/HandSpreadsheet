@@ -70,6 +70,8 @@ from src_forTest.SpreadSheet.util import encode_pos
 #         painter.drawEllipse(10, 10, 100, 100)
 
 TASK_NUM = 20
+USER_NO = 1
+FILE = '/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p{}.csv'.format(USER_NO)
 
 class HandSpreadSheet(QMainWindow):
     def __init__(self, rows, cols, mode, section, parent=None):
@@ -518,13 +520,7 @@ class HandSpreadSheet(QMainWindow):
 
     def closeEvent(self, event):
         self.controller.remove_listener(self.listener)
-        print("close")
-        recordpd = pd.DataFrame(self.records, columns=['time', 'error count', 'manipulation', 'direction'])
-        if os.path.isfile('/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p1.csv'):
-            recordpd.to_csv('/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p1.csv', mode='a', header=False, index=False)
-        else:
-            recordpd.to_csv('/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p1.csv', mode='x',
-                            header=True, index=False)
+
 
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
@@ -540,6 +536,11 @@ class HandSpreadSheet(QMainWindow):
                 os.system('play -n synth %s sin %s' % (150 / 1000, 600))
                 self.records = np.append(self.records, [[time.time() - self.start_time, self.error_count, act, direction]], axis=0)
                 if len(self.true_list) == 0:
+                    recordpd = pd.DataFrame(self.records, columns=['time', 'error count', 'manipulation', 'direction'])
+                    if os.path.isfile(FILE):
+                        recordpd.to_csv(FILE, mode='a', header=False, index=False)
+                    else:
+                        recordpd.to_csv(FILE, mode='x', header=True, index=False)
                     self.hide()
                     self.close()
                 else:
