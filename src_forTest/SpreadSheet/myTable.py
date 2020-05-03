@@ -1,3 +1,5 @@
+import random
+
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
@@ -240,6 +242,16 @@ class myTable(QTableWidget):
             return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]
             # self.last_item = itemList[-1]
+
+    def setRandomCellColor(self):
+        top = random.randint(0, self.columnCount())
+        left = random.randint(0, self.rowCount())
+        bottom = random.randint(top, top + 2)
+        right = random.randint(left, left + 2)
+        for i in range(top, bottom):
+            for j in range(left, right):
+                self.item(i, j).setBackground(Qt.blue)
+
 
 
 
