@@ -122,6 +122,7 @@ class HandSpreadSheet(QMainWindow):
 
         self.pointStatusLabel = QLabel("")
         self.pointStatusLabel.setAlignment(Qt.AlignLeft)
+        self.pointStatusLabel.setContentsMargins(0, 0, 30, 0)
 
         self.statusBar().addWidget(self.leapLabel)
         self.statusBar().addPermanentWidget(self.pointStatusLabel)
