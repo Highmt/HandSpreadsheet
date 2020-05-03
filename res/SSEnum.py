@@ -6,6 +6,7 @@ class DirectionEnum(Enum):
     VERTICAL = 1
     FRONT = 2
     BACK = 3
+    NONE = 4
 
 
 class HandEnum(Enum):

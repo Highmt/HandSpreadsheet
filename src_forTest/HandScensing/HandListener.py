@@ -8,7 +8,7 @@ from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
 DIS_SIZE = pyautogui.size()
-memorySize = 20
+memorySize = 30
     
 class HandListener(QtCore.QThread, Listener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -162,10 +162,8 @@ class HandListener(QtCore.QThread, Listener):
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
                 except:
                     currentStatus = hand_state
-                print(currentStatus)
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
-                print(self.memoryHands[hand.id])
                 # print(self.isHolizon(hand)) 向きが横か出力
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
@@ -225,7 +223,7 @@ class HandListener(QtCore.QThread, Listener):
         elif n_hand == HandEnum.PALM.value:
             if p_hand == HandEnum.GRIP.value:
                 print("ペースト関数実行")
-                self.action_operation.emit(ActionEnum.PASTE.value, None)
+                self.action_operation.emit(ActionEnum.PASTE.value, DirectionEnum.NONE.value)
 
             else:
                 # print("コピー，カット前状態に遷移")
@@ -238,10 +236,10 @@ class HandListener(QtCore.QThread, Listener):
             if p_hand == HandEnum.PALM.value:
                 if list(self.preHands.values()).count(HandEnum.PALM.value) > 1:
                     print("コピー関数実行")
-                    self.action_operation.emit(ActionEnum.COPY.value, None)
+                    self.action_operation.emit(ActionEnum.COPY.value, DirectionEnum.NONE.value)
                 else:
                     print("カット関数実行")
-                    self.action_operation.emit(ActionEnum.CUT.value, None)
+                    self.action_operation.emit(ActionEnum.CUT.value, DirectionEnum.NONE.value)
 
             else:
                 # print("ペースト前状態に遷移")

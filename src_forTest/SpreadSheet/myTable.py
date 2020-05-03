@@ -244,14 +244,16 @@ class myTable(QTableWidget):
             # self.last_item = itemList[-1]
 
     def setRandomCellColor(self):
-        top = random.randint(0, self.columnCount())
-        left = random.randint(0, self.rowCount())
-        bottom = random.randint(top, top + 2)
-        right = random.randint(left, left + 2)
-        for i in range(top, bottom):
-            for j in range(left, right):
+        self.target_top = random.randint(1, self.columnCount()-4)
+        self.target_left = random.randint(1, self.rowCount()-4)
+        self.target_bottom = self.target_top + random.randint(1, 3)
+        self.target_right = self.target_left + random.randint(1, 3)
+        for i in range(self.target_top, self.target_bottom):
+            for j in range(self.target_left, self.target_right):
                 self.item(i, j).setBackground(Qt.blue)
 
-
-
+    def resetRandomCellColor(self):
+        for i in range(self.target_top, self.target_bottom):
+            for j in range(self.target_left, self.target_right):
+                self.item(i, j).setBackground(Qt.white)
 

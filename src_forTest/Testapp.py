@@ -23,7 +23,7 @@ if __name__ == '__main__':
             app = QApplication(sys.argv)
             print("Task: {0}-{1}\nSection: {2}, Mode: {3} start.".format(section_count, task_count,
                                                                          SectionNames[section], ModeNames[mode]))
-            sheet = HandSpreadSheet(14, 12, mode, section)
+            sheet = HandSpreadSheet(16, 15, mode, section)
             sheet.resize(500, 500)
             sheet.showFullScreen()
             app.exec_()

@@ -45,7 +45,7 @@ import time
 import pandas as pd
 import numpy as np
 from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup)
@@ -138,7 +138,7 @@ class HandSpreadSheet(QMainWindow):
             self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
         elif section == TestSectionEnum.CUT_COPY_PASTE.value:
             self.true_action_list = [ActionEnum.COPY.value, ActionEnum.CUT.value, ActionEnum.PASTE.value]
-            self.true_direction_list = [None]
+            self.true_direction_list = [DirectionEnum.NONE.value]
         else:
             self.true_action_list = [ActionEnum.SORT.value]
             self.true_direction_list = [DirectionEnum.FRONT.value, DirectionEnum.BACK.value]
@@ -154,6 +154,7 @@ class HandSpreadSheet(QMainWindow):
                     self.true_list.append(true_dict)
         random.shuffle(self.true_list)
         self.records = np.empty([0, 4])
+        self.isTestrun = False
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")
@@ -166,9 +167,11 @@ class HandSpreadSheet(QMainWindow):
         self.statusLabel = QLabel("")
         self.statusLabel.setAlignment(Qt.AlignLeft)
 
-        self.statusBar().addWidget(self.leapLabel)
+        # self.statusBar().addWidget(self.leapLabel)
         # self.statusBar().addPermanentWidget(self.pointStatusLabel)
         self.statusBar().addPermanentWidget(self.statusLabel)
+
+        self.statusBar().setFont(QFont('Times', 60))
 
 
     def createMenuActions(self):
@@ -248,21 +251,21 @@ class HandSpreadSheet(QMainWindow):
         self.copy_Action.setShortcutContext(Qt.ApplicationShortcut)
         self.copy_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.copy_Action)
-        self.copy_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.COPY.value, None))
+        self.copy_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.COPY.value, DirectionEnum.NONE.value))
 
         self.cut_Action = QAction("Cut", self)
         self.cut_Action.setShortcut("Ctrl+X")
         self.cut_Action.setShortcutContext(Qt.ApplicationShortcut)
         self.cut_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.cut_Action)
-        self.cut_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.CUT.value, None))
+        self.cut_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.CUT.value, DirectionEnum.NONE.value))
 
         self.paste_Action = QAction("Paste", self)
         self.paste_Action.setShortcut("Ctrl+V")
         self.paste_Action.setShortcutContext(Qt.ApplicationShortcut)
         self.paste_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.paste_Action)
-        self.paste_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.PASTE.value, None))
+        self.paste_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.PASTE.value, DirectionEnum.NONE.value))
 
         # ショートカットキー専用アクション
         self.insert_right_Action = QAction(self)
@@ -477,6 +480,7 @@ class HandSpreadSheet(QMainWindow):
             else:
                 self.statusLabel.setText("Sort Z to A")
 
+        self.isTestrun = True
         self.error_count = 0
         self.table.setRandomCellColor()
         self.start_time = time.time()
@@ -514,6 +518,7 @@ class HandSpreadSheet(QMainWindow):
 
     def closeEvent(self, event):
         self.controller.remove_listener(self.listener)
+        print("close")
         recordpd = pd.DataFrame(self.records, columns=['time', 'error count', 'manipulation', 'direction'])
         if os.path.isfile('/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p1.csv'):
             recordpd.to_csv('/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p1.csv', mode='a', header=False, index=False)
@@ -526,22 +531,29 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics.isSelected = True
 
     def actionOperate(self, act, direction):
-        # self.table.actionOperate(act, direction)
-        if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
-            os.system('play -n synth %s sin %s' % (150 / 1000, 600))
-            self.records = np.append(self.records, [[time.time() - self.start_time, self.error_count, act, direction]], axis=0)
-            if len(self.true_list) == 0:
-                self.hide()
-                self.close()
-            else:
-                self.startTest()
-
+        if not self.isTestrun:
+            self.table.actionOperate(act, direction)
         else:
-            os.system('play -n synth %s sin %s' % (100 / 1000, 220))
-            self.error_count += 1
+            print("{0}-{1}".format(act, direction))
+            print("{0}-{1}".format(self.current_true_dict.get("action"), self.current_true_dict.get("direction")))
+            if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
+                os.system('play -n synth %s sin %s' % (150 / 1000, 600))
+                self.records = np.append(self.records, [[time.time() - self.start_time, self.error_count, act, direction]], axis=0)
+                if len(self.true_list) == 0:
+                    self.hide()
+                    self.close()
+                else:
+                    self.table.resetRandomCellColor()
+                    self.startTest()
+                    print(len(self.true_list))
 
-        if self.end_Leap.isEnabled():
-            self.listener.resetHand()
+
+            else:
+                os.system('play -n synth %s sin %s' % (100 / 1000, 220))
+                self.error_count += 1
+
+            if self.end_Leap.isEnabled():
+                self.listener.resetHand()
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)

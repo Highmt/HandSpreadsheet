@@ -16,8 +16,8 @@ from res.SSEnum import HandEnum
 
 current = datetime.now().strftime('%Y%m%d%H%M')
 #　収集する手形状のラベル（）
-label = HandEnum.REVERSE.value
-collect_data_num = 10000
+label = HandEnum.PALM.value
+collect_data_num = 2000
 data_count = 0
 
 hand_position_x = []
