@@ -70,7 +70,7 @@ from src_forTest.SpreadSheet.util import encode_pos
 
 TASK_NUM = 20
 USER_NO = 1
-FILE = '/Users/yuta/develop/HandSpreadsheet/src_forTest/Result/result_p{}.csv'.format(USER_NO)
+FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 
 class HandSpreadSheet(QMainWindow):
@@ -152,7 +152,7 @@ class HandSpreadSheet(QMainWindow):
                 for k in range(TASK_NUM):
                     self.true_list.append(true_dict)
         random.shuffle(self.true_list)
-        self.records = np.empty([0, 4])
+        self.records = np.empty([0, 5])
         self.isTestrun = False
 
     def createStatusBar(self):
@@ -162,9 +162,11 @@ class HandSpreadSheet(QMainWindow):
 
         self.pointStatusLabel = QLabel("")
         self.pointStatusLabel.setAlignment(Qt.AlignLeft)
+        self.pointStatusLabel.setContentsMargins(0, 0, 30, 0)
 
         self.statusLabel = QLabel("")
         self.statusLabel.setAlignment(Qt.AlignLeft)
+        self.statusLabel.setContentsMargins(0, 0, 30, 0)
 
         # self.statusBar().addWidget(self.leapLabel)
         # self.statusBar().addPermanentWidget(self.pointStatusLabel)
@@ -525,24 +527,27 @@ class HandSpreadSheet(QMainWindow):
         if not self.isTestrun:
             self.table.actionOperate(act, direction)
         else:
-            print("{0}-{1}".format(act, direction))
-            print("{0}-{1}".format(self.current_true_dict.get("action"), self.current_true_dict.get("direction")))
             if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
                 os.system('play -n synth %s sin %s' % (150 / 1000, 600))
                 self.records = np.append(self.records,
-                                         [[time.time() - self.start_time, self.error_count, act, direction]], axis=0)
+                                         [[TASK_NUM - len(self.true_list) + 1, time.time() - self.start_time, self.error_count, act, direction]], axis=0)
                 if len(self.true_list) == 0:
-                    recordpd = pd.DataFrame(self.records, columns=['time', 'error count', 'manipulation', 'direction'])
+                    recordDF = pd.DataFrame(self.records, columns=['No', 'time', 'error', 'manipulation', 'direction'])
+                    recordDF['No'] = recordDF['No'].astype(int)
+                    recordDF['error'] = recordDF['error'].astype(int)
+                    recordDF['manipulation'] = recordDF['manipulation'].astype(int)
+                    recordDF['direction'] = recordDF['direction'].astype(int)
+                    print(recordDF)
                     if os.path.isfile(FILE):
-                        recordpd.to_csv(FILE, mode='a', header=False, index=False)
+                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
                     else:
-                        recordpd.to_csv(FILE, mode='x', header=True, index=False)
+                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
                     self.hide()
                     self.close()
                 else:
                     self.table.resetRandomCellColor()
                     self.startTest()
-                    print(len(self.true_list))
+                    print("Remaining Task: {}".format(len(self.true_list)))
 
 
             else:
