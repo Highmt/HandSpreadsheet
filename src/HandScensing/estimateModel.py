@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from lib.LeapMotion.Leap import Controller, Listener
+from res.SSEnum import HandEnum
 from src.HandScensing.Predictor import Predictor
 
 np.set_printoptions(suppress=True)
@@ -69,7 +70,7 @@ def main():
 
     # Have the sample listener receive events from the controller
 
-    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
+    labels = HandEnum.NAME_LIST.value
     # Keep this process running until Enter is pressed
     for true_label in range(0, len(labels)):
         listener.true_label = true_label
