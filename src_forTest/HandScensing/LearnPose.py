@@ -27,7 +27,7 @@ read_data1 = pd.read_csv('../../res/data/1_PINCH_IN.csv', sep=',', index_col=0)
 read_data2 = pd.read_csv('../../res/data/2_PINCH_OUT.csv', sep=',', index_col=0)
 read_data3 = pd.read_csv('../../res/data/3_REVERSE.csv', sep=',', index_col=0)
 read_data4 = pd.read_csv('../../res/data/4_PALM.csv', sep=',', index_col=0)
-read_data5 = pd.read_csv('../../res/data/5_GRAB.csv', sep=',', index_col=0)
+read_data5 = pd.read_csv('../../res/data/5_FIST.csv', sep=',', index_col=0)
 
 read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
 data = read_data.drop("label", axis=1).values
@@ -96,14 +96,14 @@ pred = clf.predict(test_data)
 print(pred)
 print(clf.predict_proba(test_data))
 touch_true = test_label.tolist()
-labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "PALM", "GRIP", ]
+labels = ["FREE", "PINCH IN", "PINCH OUT", "REVERSE", "PALM", "FIST", ]
 
 c_matrix = confusion_matrix(touch_true, pred)
 print(c_matrix)
 cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
 sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
 fig, ax = plt.subplots(figsize=(9, 8))
-sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  #  正規化したものを表示
+sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax)  #  正規化したものを表示
 plt.savefig('../../res/learningResult/cvCM_{}.png'.format(model))
 with open('../../res/learningResult/cvCM_{}.csv'.format(model), 'w') as file:
     writer = csv.writer(file, lineterminator='\n')

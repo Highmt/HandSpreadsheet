@@ -19,8 +19,8 @@ class myTable(QTableWidget):
         self.setItemPrototype(self.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
         self.setItemDelegate(SpreadSheetDelegate(self))   # デリゲート
         self.initContents()
-        self.setupContents()
-
+        # self.setupContents()
+        #
         self.clipTable = QTableWidget(rows, cols, None)  # コピー，カットのための仮装テーブル
         self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
         self.verticalHeader().setDefaultSectionSize(60)
