@@ -1,10 +1,10 @@
 import csv
 import datetime
+import pickle
 
 import numpy as np
 import pandas as pd
 from sklearn import metrics, svm
-from sklearn.externals import joblib
 from sklearn.metrics import classification_report, confusion_matrix
 
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -89,7 +89,7 @@ model = "KNN"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-joblib.dump(clf, '../../res/learningModel/HandDitectModel_{}.pkl'.format(model))
+pickle.dump(clf, open('../../res/learningModel/HandDetectModel_{}.pkl'.format(model), 'wb'))
 
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)

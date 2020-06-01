@@ -74,7 +74,7 @@ def main():
     # Keep this process running until Enter is pressed
     for true_label in range(0, len(labels)):
         listener.true_label = true_label
-        print("Press Enter to start scensing hand")
+        print("Press Enter to start sensing hand")
         print("Please make {} hand".format(labels.__getitem__(true_label)))
         print("Press Enter again to next when stop")
         sys.stdin.readline()
@@ -87,8 +87,8 @@ def main():
     print(c_matrix)
     cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
     sum = int(true_list.__len__()) / int(labels.__len__())  # 各ラベルの数
-    fig, ax = plt.subplots(figsize=(9, 8))
-    sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g', ax=ax)  # 正規化したものを表示
+    fig, ax = plt.subplots(figsize=(8, 7))
+    sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # 正規化したものを表示
     plt.savefig('../../res/learningResult/testCM_{}.png'.format(model))
     with open('../../res/learningResult/testCM_{}.csv'.format(model), 'w') as file:
         writer = csv.writer(file, lineterminator='\n')
