@@ -1,10 +1,10 @@
 import csv
 import datetime
+import pickle
 
 import numpy as np
 import pandas as pd
 from sklearn import metrics, svm
-from sklearn.externals import joblib
 from sklearn.metrics import classification_report, confusion_matrix
 
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -89,7 +89,7 @@ model = "KNN"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-joblib.dump(clf, '../../res/learningModel/HandDitectModel_{}.pkl'.format(model))
+pickle.dump(clf, open('../../res/learningModel/HandDetectModel_{}.pkl'.format(model), 'wb'))
 
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)
@@ -103,7 +103,7 @@ print(c_matrix)
 cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
 sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
 fig, ax = plt.subplots(figsize=(9, 8))
-sns.heatmap(cm_pd / sum, annot=True, cmap="Reds", fmt='.4g')  #  正規化したものを表示
+sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g')  #  正規化したものを表示
 plt.savefig('../../res/learningResult/cvCM_{}.png'.format(model))
 with open('../../res/learningResult/cvCM_{}.csv'.format(model), 'w') as file:
     writer = csv.writer(file, lineterminator='\n')

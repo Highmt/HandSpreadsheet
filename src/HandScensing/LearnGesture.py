@@ -1,5 +1,6 @@
 import csv
 import datetime
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -89,7 +90,7 @@ model = "SVC"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-joblib.dump(clf, '../../res/learningModel/GestureDitectModel_{}.pkl'.format(model))
+pickle.dump(clf, open('../../res/learningModel/GestureDetectModel_{}.pkl'.format(model), 'wb'))
 
 # モデルを読み込む --- (*4)
 pred = clf.predict(test_data)
