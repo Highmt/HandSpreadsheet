@@ -124,6 +124,7 @@ class HandSpreadSheet(QMainWindow):
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
         self.setTestPropaty(section)
+        self.show()
 
     def setTestPropaty(self, section):
         # タスク毎の操作種類

@@ -7,7 +7,7 @@ from lib.LeapMotion.Leap import RAD_TO_DEG
 
 class Predictor():
     def __init__(self, alg: str):
-        self.model = pickle.load('../../res/learningModel/HandDetectModel_{}.pkl'.format(alg))
+        self.model = pickle.load(open('../../res/learningModel/HandDetectModel_{}.pkl'.format(alg), 'rb'))
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         self.bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
         self.stateLabels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
@@ -15,7 +15,7 @@ class Predictor():
         self.dfs = self.create_emptypandas()
 
     def handPredict(self, hand):
-        # handType = "Left hand" if hand.is_left else "Right hand"
+        # handType = "Left hand" if hand.is_left else "Right hand"s
 
         # print("  %s, id %d, position: %s" % (
         #     handType, hand.id, hand.palm_position))

@@ -114,6 +114,7 @@ class HandSpreadSheet(QMainWindow):
 
         self.startLeap()   # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
+        self.show()
 
     def createStatusBar(self):
         self.leapLabel = QLabel("LeapMotion is disconnecting")
