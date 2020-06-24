@@ -4,8 +4,8 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
 from res.SSEnum import ActionEnum, DirectionEnum
-from src.SpreadSheet.spreadsheetdelegate import SpreadSheetDelegate
-from src.SpreadSheet.spreadsheetitem import SpreadSheetItem
+from src.Utility.spreadsheetdelegate import SpreadSheetDelegate
+from src.Utility.spreadsheetitem import SpreadSheetItem
 
 
 class myTable(QTableWidget):

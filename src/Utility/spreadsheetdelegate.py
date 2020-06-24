@@ -47,11 +47,11 @@ class SpreadSheetDelegate(QItemDelegate):
         super(SpreadSheetDelegate, self).__init__(parent)
 
     def createEditor(self, parent, styleOption, index):
-        if index.column() == 1:
-            editor = QDateTimeEdit(parent)
-            editor.setDisplayFormat(self.parent().currentDateFormat)
-            editor.setCalendarPopup(True)
-            return editor
+        # if index.column() == 1:
+        #     editor = QDateTimeEdit(parent)
+        #     editor.setDisplayFormat(self.parent().currentDateFormat)
+        #     editor.setCalendarPopup(True)
+        #     return editor
 
         editor = QLineEdit(parent)
         # create a completer with the strings in the column as model

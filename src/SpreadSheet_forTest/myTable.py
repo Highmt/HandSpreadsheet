@@ -1,13 +1,12 @@
 import random
 
-from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange
 
 from res.SSEnum import ActionEnum, DirectionEnum
-from src_forTest.SpreadSheet.spreadsheetdelegate import SpreadSheetDelegate
-from src_forTest.SpreadSheet.spreadsheetitem import SpreadSheetItem
+from src.Utility.spreadsheetdelegate import SpreadSheetDelegate
+from src.Utility.spreadsheetitem import SpreadSheetItem
 
 
 class myTable(QTableWidget):

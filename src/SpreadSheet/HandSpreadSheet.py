@@ -50,8 +50,8 @@ from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.HandListener import HandListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
-from src.SpreadSheet.spreadsheetitem import SpreadSheetItem
-from src.SpreadSheet.util import encode_pos
+from src.Utility.spreadsheetitem import SpreadSheetItem
+from src.Utility.util import encode_pos
 
 
 # class circleWidget(QWidget):

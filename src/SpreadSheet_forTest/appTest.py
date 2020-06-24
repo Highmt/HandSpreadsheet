@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from res.SSEnum import TestSectionEnum, TestModeEnum
-from src_forTest.SpreadSheet.HandSpreadSheet import HandSpreadSheet
+from src.SpreadSheet_forTest.HandSpreadSheet import HandSpreadSheet
 
 ModeNames = ["Gesture", "Shortcut-key", "Menu"]
 SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
