@@ -15,7 +15,7 @@ class myTable(QTableWidget):
         self.num_row = rows
         self.setupHeader(cols)  # ヘッダーのアルファベット設定
         self.setItemPrototype(self.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
-        self.setItemDelegate(SpreadSheetDelegate(self))   # デリゲート
+        self.setItemDelegate(SpreadSheetDelegate(self))  # デリゲート
         self.initContents()
         self.setupContents()
 
@@ -23,8 +23,6 @@ class myTable(QTableWidget):
         self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
         self.verticalHeader().setDefaultSectionSize(60)
         self.horizontalHeader().setDefaultSectionSize(120)
-
-
 
     def setupHeader(self, cols):
         for c in range(cols):
@@ -115,34 +113,32 @@ class myTable(QTableWidget):
         self.item(8, 4).setText("Up from last month.")
         # self.item(9, 4).setBackground(Qt.lightGray)
 
-
     def insertCell(self, d):
         selectrange = self.selectedRanges()[0]
         if d == DirectionEnum.HORIZON.value:
-            for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
+            for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
 
-                for j in range(self.columnCount()-1, selectrange.rightColumn(), -1):
-                    temp = self.takeItem(i, j-selectrange.columnCount())
+                for j in range(self.columnCount() - 1, selectrange.rightColumn(), -1):
+                    temp = self.takeItem(i, j - selectrange.columnCount())
                     self.setItem(i, j, temp)
 
                 for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
                     self.setItem(i, j, SpreadSheetItem())
                     self.item(i, j).setBackground(Qt.red)
         else:
-            for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
+            for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
 
-                for i in range(self.rowCount()-1, selectrange.bottomRow(), -1):
+                for i in range(self.rowCount() - 1, selectrange.bottomRow(), -1):
                     temp = self.takeItem(i - selectrange.rowCount(), j)
                     self.setItem(i, j, temp)
                 for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
                     self.setItem(i, j, SpreadSheetItem())
                     self.item(i, j).setBackground(Qt.red)
 
-
     def deleteCell(self, d):
         selectrange = self.selectedRanges()[0]
         if d == DirectionEnum.HORIZON.value:
-            for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
+            for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
 
                 for j in range(selectrange.leftColumn(), self.columnCount() - selectrange.columnCount()):
                     temp = self.takeItem(i, j + selectrange.columnCount())
@@ -151,7 +147,7 @@ class myTable(QTableWidget):
                     self.setItem(i, j, SpreadSheetItem())
 
         else:
-            for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
+            for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
 
                 for i in range(selectrange.topRow(), self.rowCount() - selectrange.rowCount()):
                     temp = self.takeItem(i + selectrange.rowCount(), j)
@@ -180,22 +176,19 @@ class myTable(QTableWidget):
 
     def copyCells(self):
         self.clipRanges = self.selectedRanges()[0]
-        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow()+1):
-            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn()+1):
+        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow() + 1):
+            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn() + 1):
                 temp = self.item(i, j).clone()
                 self.clipTable.setItem(i, j, temp)
 
-
     def cutCells(self):
         self.clipRanges = self.selectedRanges()[0]
-        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow()+1):
-            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn()+1):
+        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow() + 1):
+            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn() + 1):
                 temp = self.takeItem(i, j)
                 self.clipTable.setItem(i, j, temp)
                 self.setItem(i, j, SpreadSheetItem())
                 print(self.clipTable.item(i, j).text())
-
-
 
     def pasteCells(self):
         selectrange = self.selectedRanges()[0]
@@ -203,8 +196,6 @@ class myTable(QTableWidget):
             for j in range(0, self.clipRanges.columnCount()):
                 temp = self.clipTable.item(self.clipRanges.topRow() + i, self.clipRanges.leftColumn() + j).clone()
                 self.setItem(selectrange.topRow() + i, selectrange.leftColumn() + j, temp)
-
-
 
     def actionOperate(self, act, direction):
         if self.selectedItems():
@@ -233,7 +224,6 @@ class myTable(QTableWidget):
                     self.pasteCells()
                     self.parent().statusBar().showMessage("paste", 1000)
 
-
     def getItemCoordinate(self):
         itemList = self.selectedItems()
         # self.cutCells()
@@ -241,6 +231,3 @@ class myTable(QTableWidget):
             return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]
             # self.last_item = itemList[-1]
-
-
-

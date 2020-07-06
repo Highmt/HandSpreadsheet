@@ -22,8 +22,6 @@ class OverlayGraphics(QGraphicsView):
         self.setTargetMode(False)
         self.hide()  # 初期状態は非表示
 
-
-
     def createItem(self):
         # 　ターゲットマーカの作成
         self.target_circle = QGraphicsEllipseItem(QtCore.QRectF(-10, -10, 20, 20))
@@ -44,7 +42,6 @@ class OverlayGraphics(QGraphicsView):
         self.sub_operate_text.setScale(1.7)
         self.setTargetPos(400, 180, DirectionEnum.VERTICAL.value)
 
-
     # オーバレイヤのサイズが変わると呼び出される．シーンのサイズをビューの大きさに追従(-5 はマージン)
     def resizeEvent(self, event):
         self.overlayScene.setSceneRect(QRectF(0, 0, self.size().width() - 5, self.size().height() - 5))
@@ -54,7 +51,6 @@ class OverlayGraphics(QGraphicsView):
         self.target_circle.setPos(QPointF(x_pos, y_pos))
         self.setPopPos(direction)
 
-
     def setPopTextPos(self, text1, text2):
         lentext1 = len(text1)
         lentext2 = len(text2)
@@ -63,7 +59,6 @@ class OverlayGraphics(QGraphicsView):
         else:
             self.operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext1 / 2 * 14), 5)
             self.sub_operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext2 / 2 * 14), 30)
-
 
     def setPopPos(self, direction):
         if direction == DirectionEnum.VERTICAL.value:
@@ -88,7 +83,7 @@ class OverlayGraphics(QGraphicsView):
         self.targetMode = active
         if active:
             self.target_circle.setRect(-10, -10, 20, 20)
-        else: # ターゲットを非表示にする
+        else:  # ターゲットを非表示にする
             self.target_circle.setRect(0, 0, 0, 0)
 
     # def targetVisible(self, visible):
@@ -97,7 +92,6 @@ class OverlayGraphics(QGraphicsView):
     #     else:
     #         self.target_circle.setRect(0, 0, 0, 0)
 
-
     def feedbackShow(self, text1, text2, direction):
         if self.isSelected:
             self.operate_text.setText(text1)
@@ -105,11 +99,11 @@ class OverlayGraphics(QGraphicsView):
             # ターゲットモードがアクティブでないとき，ターゲットマーカの位置は選択セルに依存
             if not self.targetMode:
                 if direction == DirectionEnum.HORIZON.value:
-                    x_pos = (self.luRect.left() + self.rbRect.right())/2 + 20
-                    y_pos = self.rbRect.bottom() - self.rbRect.height()/2 + 20
+                    x_pos = (self.luRect.left() + self.rbRect.right()) / 2 + 20
+                    y_pos = self.rbRect.bottom() - self.rbRect.height() / 2 + 20
                 else:
-                    x_pos = self.rbRect.right() - self.rbRect.width()/2 + 20
-                    y_pos = (self.luRect.top() + self.rbRect.bottom())/2 + 20
+                    x_pos = self.rbRect.right() - self.rbRect.width() / 2 + 20
+                    y_pos = (self.luRect.top() + self.rbRect.bottom()) / 2 + 20
 
                 self.setTargetPos(x_pos, y_pos, direction)
                 self.setPopTextPos(text1, text2)

@@ -9,12 +9,13 @@ from PyQt5 import QtCore
 
 DIS_SIZE = pyautogui.size()
 memorySize = 30
-    
+
+
 class HandListener(QtCore.QThread, Listener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
     change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
-    action_operation = QtCore.pyqtSignal(int, int)   # 操作実行シグナル
+    action_operation = QtCore.pyqtSignal(int, int)  # 操作実行シグナル
     startorend_leap = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
 
     def __init__(self):
@@ -22,10 +23,9 @@ class HandListener(QtCore.QThread, Listener):
         self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
         self.finger_dis_size = [0, 0]
         self.isPointingMode = False
-        self.predictor = Predictor("KNN")   # 学習モデル
+        self.predictor = Predictor("KNN")  # 学習モデル
         self.memoryHands = {}
         self.preHands = {}
-
 
     def on_caribration(self, controller):
         print("Do caribration")
@@ -145,18 +145,18 @@ class HandListener(QtCore.QThread, Listener):
                 handlist = self.memoryHands.get(hand.id)
                 prehand = self.preHands.get(hand.id)
 
-                if handlist is None:   # 新規の手だったら追加
+                if handlist is None:  # 新規の手だったら追加
                     handlist = []
                     for i in range(memorySize - 1):
                         handlist.append(HandEnum.FREE.value)
                     prehand = HandEnum.FREE.value  # １つ前の手形状にFREE状態をセット
 
-                if len(handlist) == memorySize:   # 記憶サイズいっぱいだったらFirst out
+                if len(handlist) == memorySize:  # 記憶サイズいっぱいだったらFirst out
                     handlist.pop(0)
 
                 hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
                 print(hand_state)
-                handlist.append(hand_state)   # 手形状のメモリに新規追加
+                handlist.append(hand_state)  # 手形状のメモリに新規追加
                 # 識別手形状とメモリのて形状リストから現在の手形状を決定
                 try:
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
@@ -168,14 +168,13 @@ class HandListener(QtCore.QThread, Listener):
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
 
-
     def isHolizon(self, hand):
         # 親指第一関節と人差し指の第二関節の位置を識別
         # TODO 45度を閾値としているが調査の必要あり
         thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_DIP)
         index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_PIP)
         dif_vec = Vector(index_pos.x - thumb_pos.x, index_pos.y - thumb_pos.y, 0)
-        return dif_vec.y * dif_vec.y / dif_vec.x /dif_vec.x < 1
+        return dif_vec.y * dif_vec.y / dif_vec.x / dif_vec.x < 1
 
     def action(self, p_hand, n_hand, hand):
         if self.isHolizon(hand):
@@ -243,7 +242,6 @@ class HandListener(QtCore.QThread, Listener):
             else:
                 # print("ペースト前状態に遷移")
                 self.change_feedback.emit("PASTE", "", DirectionEnum.VERTICAL.value)
-
 
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode

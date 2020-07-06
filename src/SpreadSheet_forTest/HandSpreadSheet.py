@@ -531,7 +531,8 @@ class HandSpreadSheet(QMainWindow):
             if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
                 os.system('play -n synth %s sin %s' % (150 / 1000, 600))
                 self.records = np.append(self.records,
-                                         [[TASK_NUM - len(self.true_list) + 1, time.time() - self.start_time, self.error_count, act, direction]], axis=0)
+                                         [[TASK_NUM - len(self.true_list) + 1, time.time() - self.start_time,
+                                           self.error_count, act, direction]], axis=0)
                 if len(self.true_list) == 0:
                     recordDF = pd.DataFrame(self.records, columns=['No', 'time', 'error', 'manipulation', 'direction'])
                     recordDF['No'] = recordDF['No'].astype(int)

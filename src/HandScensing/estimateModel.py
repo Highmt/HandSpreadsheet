@@ -61,7 +61,7 @@ class TestListener(Listener):
             pred_list.append(pred)
             true_list.append(self.true_label)
             print(pred)
-            print(predictor.dfs)
+            # print(predictor.dfs)
 
 def main():
     # Create a sample listener and controller

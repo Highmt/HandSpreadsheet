@@ -111,8 +111,7 @@ class HandSpreadSheet(QMainWindow):
         self.controller = Leap.Controller()
         self.setLeapSignal()
 
-
-        self.startLeap()   # デバッグ時につけると初期状態でLeapMotion起動
+        self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
         self.show()
 
@@ -129,7 +128,6 @@ class HandSpreadSheet(QMainWindow):
         self.statusBar().addPermanentWidget(self.pointStatusLabel)
 
         self.statusBar().setFont(QFont('Times', 60))
-
 
     def createMenuActions(self):
         self.start_Leap = QAction("StartLeap", self)
@@ -170,7 +168,6 @@ class HandSpreadSheet(QMainWindow):
         self.insert_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.insert_Action)
         self.insert_Action.triggered.connect(self.showInsertDialog)
-
 
         self.delete_Action = QAction("Delete...", self)
         self.delete_Action.setShortcut("Ctrl+D")
@@ -214,7 +211,8 @@ class HandSpreadSheet(QMainWindow):
         self.paste_Action.setShortcutContext(Qt.ApplicationShortcut)
         self.paste_Action.setShortcutVisibleInContextMenu(True)
         self.addAction(self.paste_Action)
-        self.paste_Action.triggered.connect(lambda: self.actionOperate(ActionEnum.PASTE.value, DirectionEnum.NONE.value))
+        self.paste_Action.triggered.connect(
+            lambda: self.actionOperate(ActionEnum.PASTE.value, DirectionEnum.NONE.value))
 
         # ショートカットキー専用アクション
         self.insert_right_Action = QAction(self)
@@ -224,7 +222,7 @@ class HandSpreadSheet(QMainWindow):
         self.addAction(self.insert_right_Action)
         self.insert_right_Action.triggered.connect(
             lambda: self.actionOperate(ActionEnum.INSERT.value, DirectionEnum.HORIZON.value))
-        
+
         self.insert_down_Action = QAction(self)
         self.insert_down_Action.setShortcut("Ctrl+Down")
         self.insert_down_Action.setShortcutContext(Qt.ApplicationShortcut)
@@ -232,7 +230,7 @@ class HandSpreadSheet(QMainWindow):
         self.addAction(self.insert_down_Action)
         self.insert_down_Action.triggered.connect(
             lambda: self.actionOperate(ActionEnum.INSERT.value, DirectionEnum.VERTICAL.value))
-        
+
         self.delete_left_Action = QAction(self)
         self.delete_left_Action.setShortcut("Ctrl+Left")
         self.delete_left_Action.setShortcutContext(Qt.ApplicationShortcut)
@@ -240,7 +238,7 @@ class HandSpreadSheet(QMainWindow):
         self.addAction(self.delete_left_Action)
         self.delete_left_Action.triggered.connect(
             lambda: self.actionOperate(ActionEnum.DELETE.value, DirectionEnum.HORIZON.value))
-        
+
         self.delete_up_Action = QAction(self)
         self.delete_up_Action.setShortcut("Ctrl+Up")
         self.delete_up_Action.setShortcutContext(Qt.ApplicationShortcut)
@@ -312,7 +310,7 @@ class HandSpreadSheet(QMainWindow):
         insert_dialog.setWindowTitle("Insert...")
         insert_dialog.setWindowModality(Qt.ApplicationModal)
         insert_dialog.exec_()
-        
+
     def clickedDialogInsertButton(self):
         if self.radio_insert_group.checkedId() > 0:
             self.actionOperate(ActionEnum.INSERT.value, self.radio_insert_group.checkedId())
