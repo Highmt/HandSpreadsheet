@@ -16,15 +16,16 @@ if __name__ == '__main__':
     random.shuffle(sectionList)
     section_count = 1
 
+    modes = list(modeList)
     for section in sectionList:
-        modes = list(modeList)
+
         task_count = 1
         for mode in modes:
             app = QApplication(sys.argv)
             print("Task: {0}-{1}\nSection: {2}, Mode: {3} start.".format(section_count, task_count,
                                                                          SectionNames[section], ModeNames[mode]))
-            sheet = HandSpreadSheet(7, 7, mode, section)
-            sheet.resize(500, 500)
+            sheet = HandSpreadSheet(10, 10, mode, section)
+            sheet.resize(1240, 700)
             sheet.showFullScreen()
             app.exec_()
             print("Task: {0}-{1}\nSection: {2}, Mode: {3} end.".format(section_count, task_count,

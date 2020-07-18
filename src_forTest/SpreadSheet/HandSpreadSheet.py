@@ -69,7 +69,7 @@ from src_forTest.SpreadSheet.util import encode_pos
 #         painter.drawEllipse(10, 10, 100, 100)
 
 TASK_NUM = 20
-USER_NO = 1
+USER_NO = 2
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 
@@ -153,7 +153,7 @@ class HandSpreadSheet(QMainWindow):
                 for k in range(TASK_NUM):
                     self.true_list.append(true_dict)
         random.shuffle(self.true_list)
-        self.records = np.empty([0, 5])
+        self.records = np.empty([0, 7])
         self.isTestrun = False
 
     def createStatusBar(self):
@@ -173,7 +173,7 @@ class HandSpreadSheet(QMainWindow):
         # self.statusBar().addPermanentWidget(self.pointStatusLabel)
         self.statusBar().addPermanentWidget(self.statusLabel)
 
-        self.statusBar().setFont(QFont('Times', 60))
+        self.statusBar().setFont(QFont('Times', 40))
 
     def createMenuActions(self):
         self.start_Leap = QAction("StartLeap", self)
@@ -530,30 +530,31 @@ class HandSpreadSheet(QMainWindow):
         else:
             if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
                 os.system('play -n synth %s sin %s' % (150 / 1000, 600))
-                self.records = np.append(self.records,
-                                         [[TASK_NUM - len(self.true_list) + 1, time.time() - self.start_time, self.error_count, act, direction]], axis=0)
-                if len(self.true_list) == 0:
-                    recordDF = pd.DataFrame(self.records, columns=['No', 'time', 'error', 'manipulation', 'direction'])
-                    recordDF['No'] = recordDF['No'].astype(int)
-                    recordDF['error'] = recordDF['error'].astype(int)
-                    recordDF['manipulation'] = recordDF['manipulation'].astype(int)
-                    recordDF['direction'] = recordDF['direction'].astype(int)
-                    print(recordDF)
-                    if os.path.isfile(FILE):
-                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
-                    else:
-                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
-                    self.hide()
-                    self.close()
-                else:
-                    self.table.resetRandomCellColor()
-                    self.startTest()
-                    print("Remaining Task: {}".format(len(self.true_list)))
-
-
             else:
                 os.system('play -n synth %s sin %s' % (100 / 1000, 220))
-                self.error_count += 1
+                self.error_count = 1
+
+            self.records = np.append(self.records,
+                                     [[TASK_NUM - len(self.true_list) + 1, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
+            if len(self.true_list) == 0:
+                recordDF = pd.DataFrame(self.records, columns=['No', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
+                recordDF['No'] = recordDF['No'].astype(int)
+                recordDF['error'] = recordDF['error'].astype(int)
+                recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
+                recordDF['true_direction'] = recordDF['true_direction'].astype(int)
+                recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
+                recordDF['select_direction'] = recordDF['select_direction'].astype(int)
+                print(recordDF)
+                if os.path.isfile(FILE):
+                    recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                else:
+                    recordDF.to_csv(FILE, mode='x', header=True, index=False)
+                self.hide()
+                self.close()
+            else:
+                self.table.resetRandomCellColor()
+                self.startTest()
+                print("Remaining Task: {}".format(len(self.true_list)))
 
             if self.end_Leap.isEnabled():
                 self.listener.resetHand()
