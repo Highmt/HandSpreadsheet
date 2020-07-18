@@ -1,7 +1,7 @@
 import random
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
@@ -25,6 +25,7 @@ class myTable(QTableWidget):
         self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
         self.verticalHeader().setDefaultSectionSize(60)
         self.horizontalHeader().setDefaultSectionSize(120)
+        self.pre_target = QRect(0, 0, 0, 0)
 
 
 
@@ -244,16 +245,23 @@ class myTable(QTableWidget):
             # self.last_item = itemList[-1]
 
     def setRandomCellColor(self):
-        self.target_top = random.randint(1, self.columnCount()-4)
-        self.target_left = random.randint(1, self.rowCount()-4)
-        self.target_bottom = self.target_top + random.randint(1, 3)
-        self.target_right = self.target_left + random.randint(1, 3)
-        for i in range(self.target_top, self.target_bottom):
-            for j in range(self.target_left, self.target_right):
-                self.item(i, j).setBackground(Qt.blue)
+        count = 0
+        while True:
+            print(count)
+            self.target_top = random.randint(1, self.columnCount()-4)
+            self.target_left = random.randint(1, self.rowCount()-4)
+            count += 1
+            if self.target_top != self.pre_target.y and self.target_left != self.pre_target.x:
+                break
+        self.target_height = random.randint(1, 3)
+        self.target_width = random.randint(1, 3)
+        for i in range(self.target_height):
+            for j in range(self.target_width):
+                self.item(self.target_top + i, self.target_left + j).setBackground(Qt.blue)
 
+        self.pre_target = QRect(self.target_left, self.target_top, self.target_width, self.target_height)
     def resetRandomCellColor(self):
-        for i in range(self.target_top, self.target_bottom):
-            for j in range(self.target_left, self.target_right):
-                self.item(i, j).setBackground(Qt.white)
+        for i in range(self.target_height):
+            for j in range(self.target_width):
+                self.item(self.target_top + i, self.target_left + j).setBackground(Qt.white)
 

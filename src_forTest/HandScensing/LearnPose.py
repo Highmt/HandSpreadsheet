@@ -22,14 +22,14 @@ np.random.seed(1671)  # for reproducibility
 
 # network and training
 DROPOUT = 0.2
-
+version = "p3"
 # data: shuffled and split between train and test sets
-read_data0 = pd.read_csv('../../res/data/0_FREE.csv', sep=',', index_col=0)
-read_data1 = pd.read_csv('../../res/data/1_PINCH_IN.csv', sep=',', index_col=0)
-read_data2 = pd.read_csv('../../res/data/2_PINCH_OUT.csv', sep=',', index_col=0)
-read_data3 = pd.read_csv('../../res/data/3_REVERSE.csv', sep=',', index_col=0)
-read_data4 = pd.read_csv('../../res/data/4_PALM.csv', sep=',', index_col=0)
-read_data5 = pd.read_csv('../../res/data/5_FIST.csv', sep=',', index_col=0)
+read_data0 = pd.read_csv('../../res/data/' + version + '/0_FREE.csv', sep=',', index_col=0)
+read_data1 = pd.read_csv('../../res/data/' + version + '/1_PINCH_IN.csv', sep=',', index_col=0)
+read_data2 = pd.read_csv('../../res/data/' + version + '/2_PINCH_OUT.csv', sep=',', index_col=0)
+read_data3 = pd.read_csv('../../res/data/' + version + '/3_REVERSE.csv', sep=',', index_col=0)
+read_data4 = pd.read_csv('../../res/data/' + version + '/4_PALM.csv', sep=',', index_col=0)
+read_data5 = pd.read_csv('../../res/data/' + version + '/5_FIST.csv', sep=',', index_col=0)
 
 read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
 data = read_data.drop("label", axis=1).values

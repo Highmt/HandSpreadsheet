@@ -9,7 +9,7 @@ ModeNames = ["Gesture", "Shortcut-key", "Menu"]
 SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
 if __name__ == '__main__':
     modeList = [TestModeEnum.GESTURE.value, TestModeEnum.SHORTCUT_KEY.value]
-    random.shuffle(modeList)
+    # random.shuffle(modeList)
     sectionList = []
     for section in TestSectionEnum:
         sectionList.append(section.value)
@@ -17,10 +17,11 @@ if __name__ == '__main__':
     section_count = 1
 
     modes = list(modeList)
-    for section in sectionList:
+    for mode in modes:
+
 
         task_count = 1
-        for mode in modes:
+        for section in sectionList:
             app = QApplication(sys.argv)
             print("Task: {0}-{1}\nSection: {2}, Mode: {3} start.".format(section_count, task_count,
                                                                          SectionNames[section], ModeNames[mode]))

@@ -68,7 +68,7 @@ from src_forTest.SpreadSheet.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-TASK_NUM = 20
+TASK_NUM = 10
 USER_NO = 2
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
@@ -521,8 +521,9 @@ class HandSpreadSheet(QMainWindow):
         self.controller.remove_listener(self.listener)
 
     def cellSelect(self):
-        self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
-        self.overlayGraphics.isSelected = True
+        if self.table.selectedItems():
+            self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
+            self.overlayGraphics.isSelected = True
 
     def actionOperate(self, act, direction):
         if not self.isTestrun:
@@ -558,6 +559,7 @@ class HandSpreadSheet(QMainWindow):
 
             if self.end_Leap.isEnabled():
                 self.listener.resetHand()
+        self.table.clearSelection()
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
