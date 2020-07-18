@@ -26,6 +26,10 @@ class myTable(QTableWidget):
         self.verticalHeader().setDefaultSectionSize(60)
         self.horizontalHeader().setDefaultSectionSize(120)
         self.pre_target = QRect(0, 0, 0, 0)
+        self.target_top = 0
+        self.target_left = 0
+        self.target_height = 0
+        self.target_width = 0
 
 
 

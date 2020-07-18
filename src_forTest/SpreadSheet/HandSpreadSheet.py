@@ -528,7 +528,11 @@ class HandSpreadSheet(QMainWindow):
     def actionOperate(self, act, direction):
         if not self.isTestrun:
             self.table.actionOperate(act, direction)
-        else:
+        elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
+                self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
+                self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
+                self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
+
             if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
                 os.system('play -n synth %s sin %s' % (150 / 1000, 600))
             else:

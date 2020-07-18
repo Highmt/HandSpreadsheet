@@ -16,6 +16,7 @@ if __name__ == '__main__':
     random.shuffle(sectionList)
     section_count = 1
 
+    modeList.reverse()
     modes = list(modeList)
     for mode in modes:
 
