@@ -22,12 +22,13 @@ np.random.seed(1671)  # for reproducibility
 DROPOUT = 0.2
 
 # data: shuffled and split between train and test sets
-read_data0 = pd.read_csv('../../res/data/0_FREE.csv', sep=',', index_col=0)
-read_data1 = pd.read_csv('../../res/data/1_PINCH_IN.csv', sep=',', index_col=0)
-read_data2 = pd.read_csv('../../res/data/2_PINCH_OUT.csv', sep=',', index_col=0)
-read_data3 = pd.read_csv('../../res/data/3_REVERSE.csv', sep=',', index_col=0)
-read_data4 = pd.read_csv('../../res/data/4_PALM.csv', sep=',', index_col=0)
-read_data5 = pd.read_csv('../../res/data/5_FIST.csv', sep=',', index_col=0)
+hand_root = '../../res/data/a0/'
+read_data0 = pd.read_csv('{}0_FREE.csv'.format(hand_root), sep=',', index_col=0)
+read_data1 = pd.read_csv('{}1_PINCH_IN.csv'.format(hand_root), sep=',', index_col=0)
+read_data2 = pd.read_csv('{}2_PINCH_OUT.csv'.format(hand_root), sep=',', index_col=0)
+read_data3 = pd.read_csv('{}3_REVERSE.csv'.format(hand_root), sep=',', index_col=0)
+read_data4 = pd.read_csv('{}4_PALM.csv'.format(hand_root), sep=',', index_col=0)
+read_data5 = pd.read_csv('{}5_FIST.csv'.format(hand_root), sep=',', index_col=0)
 
 read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
 data = read_data.drop("label", axis=1).values
@@ -89,6 +90,7 @@ model = "KNN"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
+model += '_a0'
 pickle.dump(clf, open('../../res/learningModel/HandDetectModel_{}.pkl'.format(model), 'wb'))
 
 # モデルを読み込む --- (*4)

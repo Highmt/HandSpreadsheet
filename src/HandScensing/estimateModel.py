@@ -15,9 +15,9 @@ from src.HandScensing.Predictor import Predictor
 
 np.set_printoptions(suppress=True)
 training_data = np.empty([0, 7])
-model = "KNN"
+model = "KNN_a0"
 predictor = Predictor(model)
-collect_data_num = 2000
+collect_data_num = 1000
 pred_list = []
 true_list = []
 
