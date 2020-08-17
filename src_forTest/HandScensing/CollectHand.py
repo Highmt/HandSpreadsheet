@@ -14,9 +14,9 @@ from datetime import datetime
 
 from res.SSEnum import HandEnum
 
-version = "p2"
+version = "p8"
 #　収集する手形状のラベル（）
-label = HandEnum.PINCH_OUT.value
+label = HandEnum.PINCH_IN.value
 names = HandEnum.NAME_LIST.value
 collect_data_num = 2000
 data_count = 0

@@ -22,7 +22,7 @@ np.random.seed(1671)  # for reproducibility
 
 # network and training
 DROPOUT = 0.2
-version = "p3"
+version = "p8"
 # data: shuffled and split between train and test sets
 read_data0 = pd.read_csv('../../res/data/' + version + '/0_FREE.csv', sep=',', index_col=0)
 read_data1 = pd.read_csv('../../res/data/' + version + '/1_PINCH_IN.csv', sep=',', index_col=0)

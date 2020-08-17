@@ -68,8 +68,8 @@ from src_forTest.SpreadSheet.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-TASK_NUM = 10
-USER_NO = 2
+TASK_NUM = 3
+USER_NO = 10
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 
@@ -90,7 +90,7 @@ class HandSpreadSheet(QMainWindow):
 
         # アクションの追加
         self.createMenuActions()
-        if mode == TestModeEnum.SHORTCUT_KEY.value:
+        if self.mode == TestModeEnum.SHORTCUT_KEY.value:
             self.createTableActions()
 
         self.updateColor()
@@ -119,7 +119,7 @@ class HandSpreadSheet(QMainWindow):
         self.controller = Leap.Controller()
         self.setLeapSignal()
 
-        if mode == TestModeEnum.GESTURE.value:
+        if self.mode == TestModeEnum.GESTURE.value:
             self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
@@ -153,7 +153,7 @@ class HandSpreadSheet(QMainWindow):
                 for k in range(TASK_NUM):
                     self.true_list.append(true_dict)
         random.shuffle(self.true_list)
-        self.records = np.empty([0, 7])
+        self.records = np.empty([0, 9])
         self.isTestrun = False
 
     def createStatusBar(self):
@@ -526,44 +526,45 @@ class HandSpreadSheet(QMainWindow):
             self.overlayGraphics.isSelected = True
 
     def actionOperate(self, act, direction):
-        if not self.isTestrun:
-            self.table.actionOperate(act, direction)
-        elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
-                self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
-                self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
-                self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
+        if self.table.selectedItems():
+            if not self.isTestrun:
+                self.table.actionOperate(act, direction)
+            elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
+                    self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
+                    self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
+                    self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
 
-            if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
-                os.system('play -n synth %s sin %s' % (150 / 1000, 600))
-            else:
-                os.system('play -n synth %s sin %s' % (100 / 1000, 220))
-                self.error_count = 1
-
-            self.records = np.append(self.records,
-                                     [[TASK_NUM - len(self.true_list) + 1, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
-            if len(self.true_list) == 0:
-                recordDF = pd.DataFrame(self.records, columns=['No', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
-                recordDF['No'] = recordDF['No'].astype(int)
-                recordDF['error'] = recordDF['error'].astype(int)
-                recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
-                recordDF['true_direction'] = recordDF['true_direction'].astype(int)
-                recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
-                recordDF['select_direction'] = recordDF['select_direction'].astype(int)
-                print(recordDF)
-                if os.path.isfile(FILE):
-                    recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
+                    os.system('play -n synth %s sin %s' % (150 / 1000, 600))
                 else:
-                    recordDF.to_csv(FILE, mode='x', header=True, index=False)
-                self.hide()
-                self.close()
-            else:
-                self.table.resetRandomCellColor()
-                self.startTest()
-                print("Remaining Task: {}".format(len(self.true_list)))
+                    os.system('play -n synth %s sin %s' % (100 / 1000, 220))
+                    self.error_count = 1
 
-            if self.end_Leap.isEnabled():
-                self.listener.resetHand()
-        self.table.clearSelection()
+                self.records = np.append(self.records,
+                                         [[USER_NO, TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), self.mode, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
+                if len(self.true_list) == 0:
+                    recordDF = pd.DataFrame(self.records, columns=['participant', 'No', 'mode', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
+                    recordDF['No'] = recordDF['No'].astype(int)
+                    recordDF['error'] = recordDF['error'].astype(int)
+                    recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
+                    recordDF['true_direction'] = recordDF['true_direction'].astype(int)
+                    recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
+                    recordDF['select_direction'] = recordDF['select_direction'].astype(int)
+                    print(recordDF)
+                    if os.path.isfile(FILE):
+                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                    else:
+                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
+                    self.hide()
+                    self.close()
+                else:
+                    self.table.resetRandomCellColor()
+                    self.startTest()
+                    print("Remaining Task: {}".format(len(self.true_list)))
+
+                if self.end_Leap.isEnabled():
+                    self.listener.resetHand()
+            self.table.clearSelection()
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)

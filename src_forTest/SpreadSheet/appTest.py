@@ -16,11 +16,9 @@ if __name__ == '__main__':
     random.shuffle(sectionList)
     section_count = 1
 
-    modeList.reverse()
+    # modeList.reverse()
     modes = list(modeList)
     for mode in modes:
-
-
         task_count = 1
         for section in sectionList:
             app = QApplication(sys.argv)
