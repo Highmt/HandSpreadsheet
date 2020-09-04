@@ -5,7 +5,6 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn import metrics, svm
-from sklearn.externals import joblib
 from sklearn.metrics import classification_report, confusion_matrix
 
 from sklearn.model_selection import train_test_split, GridSearchCV

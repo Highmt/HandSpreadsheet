@@ -45,18 +45,18 @@ import time
 import pandas as pd
 import numpy as np
 from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
+                             QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup)
 
 from lib.LeapMotion import Leap
 from res.SSEnum import *
-from src_forTest.HandScensing.HandListener import HandListener
-from src_forTest.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src_forTest.SpreadSheet.myTable import myTable
-from src_forTest.SpreadSheet.spreadsheetitem import SpreadSheetItem
-from src_forTest.SpreadSheet.util import encode_pos
+from src.HandScensing.HandListener import HandListener
+from src.SpreadSheet_test.OverlayGraphics import OverlayGraphics
+from src.SpreadSheet_test.myTable import myTable
+from lib.sample.spreadsheetitem import SpreadSheetItem
+from lib.sample.util import encode_pos
 
 # class circleWidget(QWidget):
 #     def __init__(self, parent = None):

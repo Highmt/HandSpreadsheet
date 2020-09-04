@@ -155,15 +155,16 @@ class HandListener(QtCore.QThread, Listener):
                     handlist.pop(0)
 
                 hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
-                print(hand_state)
+                # print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
                 # 識別手形状とメモリのて形状リストから現在の手形状を決定
                 try:
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
                 except:
                     currentStatus = hand_state
-                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力（文字列で）
+                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
+                # print(self.isHolizon(hand)) 向きが横か出力
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
@@ -203,8 +204,8 @@ class HandListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.INSERT.value, direction)
 
             elif p_hand == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
-                print("昇順ソート関数実行")
-                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
+                print("降順ソート関数実行")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
 
             else:
                 # print("削除前状態に遷移")
@@ -213,8 +214,8 @@ class HandListener(QtCore.QThread, Listener):
 
         elif n_hand == HandEnum.REVERSE.value:
             if p_hand == HandEnum.PINCH_OUT.value and direction == DirectionEnum.VERTICAL.value:
-                print("降順ソート関数実行")
-                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
+                print("昇順ソート関数実行")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
             else:
                 # print("降順ソート前状態に遷移")
                 self.change_feedback.emit("SORT", "", direction)

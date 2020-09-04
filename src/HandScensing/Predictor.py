@@ -15,7 +15,7 @@ class Predictor():
         self.dfs = self.create_emptypandas()
 
     def handPredict(self, hand):
-        # handType = "Left hand" if hand.is_left else "Right hand"s
+        # handType = "Left hand" if hand.is_left else "Right hand"
 
         # print("  %s, id %d, position: %s" % (
         #     handType, hand.id, hand.palm_position))
