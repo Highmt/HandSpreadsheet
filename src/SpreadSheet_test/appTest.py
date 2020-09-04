@@ -3,17 +3,18 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from res.SSEnum import TestSectionEnum, TestModeEnum
-from src_forTest.SpreadSheet.HandSpreadSheet import HandSpreadSheet
+from src.SpreadSheet_test.HandSpreadSheet import HandSpreadSheet
 
 ModeNames = ["Gesture", "Shortcut-key", "Menu"]
 SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
 if __name__ == '__main__':
-    modeList = [TestModeEnum.GESTURE.value, TestModeEnum.SHORTCUT_KEY.value]
+    modeList = [TestModeEnum.SHORTCUT_KEY.value]
     # random.shuffle(modeList)
     sectionList = []
-    for section in TestSectionEnum:
-        sectionList.append(section.value)
-    random.shuffle(sectionList)
+    # for section in TestSectionEnum:
+    #     sectionList.append(section.value)
+    # random.shuffle(sectionList)
+    sectionList.append(2)
     section_count = 1
 
     # modeList.reverse()

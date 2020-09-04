@@ -51,12 +51,12 @@ from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QVBoxLayout, QButtonGroup)
 
 from lib.LeapMotion import Leap
+from lib.sample.spreadsheetitem import SpreadSheetItem
+from lib.sample.util import encode_pos
 from res.SSEnum import *
-from src_forTest.HandScensing.HandListener import HandListener
-from src_forTest.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src_forTest.SpreadSheet.myTable import myTable
-from src_forTest.SpreadSheet.spreadsheetitem import SpreadSheetItem
-from src_forTest.SpreadSheet.util import encode_pos
+from src.HandScensing.HandListener import HandListener
+from src.SpreadSheet_test.OverlayGraphics import OverlayGraphics
+from src.SpreadSheet_test.myTable import myTable
 
 # class circleWidget(QWidget):
 #     def __init__(self, parent = None):
@@ -68,8 +68,8 @@ from src_forTest.SpreadSheet.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-TASK_NUM = 3
-USER_NO = 10
+TASK_NUM = 10
+USER_NO = 11
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 
@@ -491,14 +491,14 @@ class HandSpreadSheet(QMainWindow):
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
         self.overlayGraphics.setTargetMode(True)
-        self.pointStatusLabel.setText("Pointing mode: active")
+        # self.pointStatusLabel.setText("Pointing mode: active")
 
     def negativePointing(self):
         self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
         self.overlayGraphics.setTargetMode(False)
-        self.pointStatusLabel.setText("Pointing mode: negative")
+        # self.pointStatusLabel.setText("Pointing mode: negative")
 
     def changeLeap(self, toConnect):
         if toConnect:
@@ -506,14 +506,14 @@ class HandSpreadSheet(QMainWindow):
             self.end_Leap.setEnabled(True)
             self.pointMenu.setEnabled(True)
             self.active_Point.setEnabled(True)
-            self.leapLabel.setText("LeapMotion: connecting")
-            self.pointStatusLabel.setText("Pointing mode: negative")
+            # self.leapLabel.setText("LeapMotion: connecting")
+            # self.pointStatusLabel.setText("Pointing mode: negative")
         else:
             self.end_Leap.setEnabled(False)
             self.start_Leap.setEnabled(True)
             self.pointMenu.setEnabled(False)
             self.negative_Point.setEnabled(False)
-            self.leapLabel.setText("LeapMotion: disconnecting")
+            # self.leapLabel.setText("LeapMotion: disconnecting")
             self.overlayGraphics.hide()
             self.pointStatusLabel.setText("")
 
