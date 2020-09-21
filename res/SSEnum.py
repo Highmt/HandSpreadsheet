@@ -18,6 +18,18 @@ class HandEnum(Enum):
     GRIP = 5
     NAME_LIST = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "PALM", "FIST"]
 
+class OperationEnum(Enum):
+    Ir = 0
+    Id = 1
+    Dl = 2
+    Du = 3
+    Copy = 4
+    Cut = 5
+    Paste = 6
+    Sa = 7
+    Sd = 8
+    OperationName_LIST = ["Ir", "Id", "Dl", "Du", "Copy", "Cut", "Paste", "Sa", "Sd"]
+
 
 
 class ActionEnum(Enum):
