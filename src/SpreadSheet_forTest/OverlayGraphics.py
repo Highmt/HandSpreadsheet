@@ -37,7 +37,7 @@ class OverlayGraphics(QGraphicsView):
         self.pop_rect.setOpacity(0.8)  # 透明度を設定
 
         self.operate_text = QGraphicsSimpleTextItem("", self.pop_rect)
-        self.operate_text.setScale(1.5)
+        self.operate_text.setScale(1.7)
         self.sub_operate_text = QGraphicsSimpleTextItem("", self.pop_rect)
         self.sub_operate_text.setScale(1.7)
         self.setTargetPos(400, 180, DirectionEnum.VERTICAL.value)
@@ -55,7 +55,7 @@ class OverlayGraphics(QGraphicsView):
         lentext1 = len(text1)
         lentext2 = len(text2)
         if lentext2 == 0:
-            self.operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext1 / 2 * 10), 15)
+            self.operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext1 / 2 * 14), 15)
         else:
             self.operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext1 / 2 * 14), 5)
             self.sub_operate_text.setPos((self.pop_rect.rect().size().width() / 2) - (lentext2 / 2 * 14), 30)

@@ -91,6 +91,7 @@ model = "KNN"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
+model += '_a0'
 pickle.dump(clf, open('../../res/learningModel/HandDetectModel_{}.pkl'.format(model), 'wb'))
 
 # モデルを読み込む --- (*4)
