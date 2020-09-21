@@ -38,21 +38,25 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
+import os
+import random
+import time
 
-from PyQt5.QtCore import QPoint, Qt, QTimer
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
+import pandas as pd
+import numpy as np
+from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
+                             QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup)
 
 from lib.LeapMotion import Leap
-from res.SSEnum import ActionEnum, DirectionEnum
+from res.SSEnum import *
 from src.HandScensing.HandListener import HandListener
-from src.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src.SpreadSheet.myTable import myTable
+from src.SpreadSheet_test.OverlayGraphics import OverlayGraphics
+from src.SpreadSheet_test.myTable import myTable
 from lib.sample.spreadsheetitem import SpreadSheetItem
 from lib.sample.util import encode_pos
-
 
 # class circleWidget(QWidget):
 #     def __init__(self, parent = None):
@@ -64,9 +68,16 @@ from lib.sample.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
+TASK_NUM = 3
+USER_NO = 10
+FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
+
+
 class HandSpreadSheet(QMainWindow):
-    def __init__(self, rows, cols, parent=None):
+    def __init__(self, rows, cols, mode, section, parent=None):
         super(HandSpreadSheet, self).__init__(parent)
+        self.mode = mode
+        self.section = section
 
         self.toolBar = QToolBar()
         self.addToolBar(self.toolBar)  # ツールバーの追加
@@ -79,17 +90,14 @@ class HandSpreadSheet(QMainWindow):
 
         # アクションの追加
         self.createMenuActions()
-        self.createTableActions()
+        if self.mode == TestModeEnum.SHORTCUT_KEY.value:
+            self.createTableActions()
 
-        self.updateColor(0)
+        self.updateColor()
         self.setupMenuBar()
 
         self.setCentralWidget(self.table)
         self.createStatusBar()
-
-        # self.setupContextMenu()  # コンテクストメニュー設定
-        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self.openContextMenu)
 
         self.table.currentItemChanged.connect(self.updateStatus)
         self.table.currentItemChanged.connect(self.updateColor)
@@ -111,14 +119,45 @@ class HandSpreadSheet(QMainWindow):
         self.controller = Leap.Controller()
         self.setLeapSignal()
 
-        self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
+        if self.mode == TestModeEnum.GESTURE.value:
+            self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
+
+        self.setTestPropaty(section)
         self.show()
 
-    def createStatusBar(self):
+    def setTestPropaty(self, section):
+        # タスク毎の操作種類
+        self.true_action_list = []
+        self.true_direction_list = []
+        if section == TestSectionEnum.INSERT.value:
+            self.true_action_list = [ActionEnum.INSERT.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
+        elif section == TestSectionEnum.DELETE.value:
+            self.true_action_list = [ActionEnum.DELETE.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
+        elif section == TestSectionEnum.CUT_COPY_PASTE.value:
+            self.true_action_list = [ActionEnum.COPY.value, ActionEnum.CUT.value, ActionEnum.PASTE.value]
+            self.true_direction_list = [DirectionEnum.NONE.value]
+        else:
+            self.true_action_list = [ActionEnum.SORT.value]
+            self.true_direction_list = [DirectionEnum.FRONT.value, DirectionEnum.BACK.value]
 
-        self.leapLabel = QLabel("")
-        # self.leapLabel = QLabel("LeapMotion is disconnecting")
+        self.true_list = []
+        for i in range(len(self.true_action_list)):
+            for j in range(len(self.true_direction_list)):
+                true_dict = {
+                    "action": self.true_action_list[i],
+                    "direction": self.true_direction_list[j]
+                }
+                for k in range(TASK_NUM):
+                    self.true_list.append(true_dict)
+        random.shuffle(self.true_list)
+        self.records = np.empty([0, 9])
+        self.isTestrun = False
+
+    def createStatusBar(self):
+        self.leapLabel = QLabel("LeapMotion is disconnecting")
         self.leapLabel.setAlignment(Qt.AlignLeft)
         self.leapLabel.setMinimumSize(self.leapLabel.sizeHint())
 
@@ -126,10 +165,15 @@ class HandSpreadSheet(QMainWindow):
         self.pointStatusLabel.setAlignment(Qt.AlignLeft)
         self.pointStatusLabel.setContentsMargins(0, 0, 30, 0)
 
-        self.statusBar().addWidget(self.leapLabel)
-        self.statusBar().addPermanentWidget(self.pointStatusLabel)
+        self.statusLabel = QLabel("")
+        self.statusLabel.setAlignment(Qt.AlignLeft)
+        self.statusLabel.setContentsMargins(0, 0, 30, 0)
 
-        self.statusBar().setFont(QFont('Times', 60))
+        # self.statusBar().addWidget(self.leapLabel)
+        # self.statusBar().addPermanentWidget(self.pointStatusLabel)
+        self.statusBar().addPermanentWidget(self.statusLabel)
+
+        self.statusBar().setFont(QFont('Times', 40))
 
     def createMenuActions(self):
         self.start_Leap = QAction("StartLeap", self)
@@ -151,6 +195,11 @@ class HandSpreadSheet(QMainWindow):
         self.negative_Point.triggered.connect(self.negativePointing)
         self.negative_Point.setEnabled(False)
 
+        self.start_test = QAction("start test", self)
+        self.start_test.setShortcut('Ctrl+T')
+        self.start_test.setShortcutContext(Qt.ApplicationShortcut)
+        self.start_test.triggered.connect(self.startTest)
+
     def setupMenuBar(self):
         self.leapMenu = self.menuBar().addMenu("&LeapMotion")
         self.leapMenu.addAction(self.start_Leap)
@@ -162,6 +211,9 @@ class HandSpreadSheet(QMainWindow):
         self.pointMenu.addAction(self.active_Point)
         self.pointMenu.addAction(self.negative_Point)
         self.pointMenu.setEnabled(False)
+
+        self.testMenu = self.menuBar().addMenu("&Test")
+        self.testMenu.addAction(self.start_test)
 
     def createTableActions(self):
         self.insert_Action = QAction("Insert...", self)
@@ -249,6 +301,10 @@ class HandSpreadSheet(QMainWindow):
         self.delete_up_Action.triggered.connect(
             lambda: self.actionOperate(ActionEnum.DELETE.value, DirectionEnum.VERTICAL.value))
 
+        # self.setupContextMenu()  # コンテクストメニュー設定
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.openContextMenu)
+
     def openContextMenu(self, event):
         menu = QMenu()
         menu.addAction(self.cut_Action)
@@ -314,7 +370,7 @@ class HandSpreadSheet(QMainWindow):
         insert_dialog.exec_()
 
     def clickedDialogInsertButton(self):
-        if self.radio_insert_group.checkedId() > 0:
+        if self.radio_insert_group.checkedId() >= 0:
             self.actionOperate(ActionEnum.INSERT.value, self.radio_insert_group.checkedId())
 
     def showDeleteDialog(self):
@@ -344,16 +400,16 @@ class HandSpreadSheet(QMainWindow):
         delete_dialog.exec_()
 
     def clickedDialogDeleteButton(self):
-        if self.radio_delete_group.checkedId() > 0:
+        if self.radio_delete_group.checkedId() >= 0:
             self.actionOperate(ActionEnum.DELETE.value, self.radio_delete_group.checkedId())
 
     def updateStatus(self, item):
         if item and item == self.table.currentItem():
-            self.statusBar().showMessage(item.data(Qt.StatusTipRole), 1500)
+            self.statusBar().showMessage(item.data(Qt.StatusTipRole), 1000)
             self.cellLabel.setText("Cell: (%s)" % encode_pos(self.table.row(item),
                                                              self.table.column(item)))
 
-    def updateColor(self, item):
+    def updateColor(self):
         pixmap = QPixmap(16, 16)
         color = QColor()
         # if item:
@@ -399,19 +455,50 @@ class HandSpreadSheet(QMainWindow):
     def endLeap(self):
         self.controller.remove_listener(self.listener)
 
+    def startTest(self):
+        self.current_true_dict = self.true_list.pop(0)
+
+        if self.section == TestSectionEnum.INSERT.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Insert Shift Right")
+            else:
+                self.statusLabel.setText("Insert Shift Down")
+        elif self.section == TestSectionEnum.DELETE.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Delete Shift Left")
+            else:
+                self.statusLabel.setText("Delete Shift Up")
+        elif self.section == TestSectionEnum.CUT_COPY_PASTE.value:
+            if self.current_true_dict.get('action') == ActionEnum.CUT.value:
+                self.statusLabel.setText("Cut")
+            elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
+                self.statusLabel.setText("Copy")
+            else:
+                self.statusLabel.setText("Paste")
+        else:
+            if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
+                self.statusLabel.setText("Sort A to Z")
+            else:
+                self.statusLabel.setText("Sort Z to A")
+
+        self.isTestrun = True
+        self.error_count = 0
+        self.table.setRandomCellColor()
+        self.start_time = time.time()
+
     def activePointing(self):
         self.listener.setPointingMode(True)
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
         self.overlayGraphics.setTargetMode(True)
-        # self.pointStatusLabel.setText("Pointing mode: active")
+        self.pointStatusLabel.setText("Pointing mode: active")
 
     def negativePointing(self):
         self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
         self.overlayGraphics.setTargetMode(False)
-        # self.pointStatusLabel.setText("Pointing mode: negative")
+        self.pointStatusLabel.setText("Pointing mode: negative")
 
     def changeLeap(self, toConnect):
         if toConnect:
@@ -419,14 +506,14 @@ class HandSpreadSheet(QMainWindow):
             self.end_Leap.setEnabled(True)
             self.pointMenu.setEnabled(True)
             self.active_Point.setEnabled(True)
-            # self.leapLabel.setText("LeapMotion: connecting")
-            # self.pointStatusLabel.setText("Pointing mode: negative")
+            self.leapLabel.setText("LeapMotion: connecting")
+            self.pointStatusLabel.setText("Pointing mode: negative")
         else:
             self.end_Leap.setEnabled(False)
             self.start_Leap.setEnabled(True)
             self.pointMenu.setEnabled(False)
             self.negative_Point.setEnabled(False)
-            # self.leapLabel.setText("LeapMotion: disconnecting")
+            self.leapLabel.setText("LeapMotion: disconnecting")
             self.overlayGraphics.hide()
             self.pointStatusLabel.setText("")
 
@@ -434,40 +521,50 @@ class HandSpreadSheet(QMainWindow):
         self.controller.remove_listener(self.listener)
 
     def cellSelect(self):
-        self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
-        self.overlayGraphics.isSelected = True
-
-
-    def action_feedback_slot(self):
-        print("insert")
+        if self.table.selectedItems():
+            self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
+            self.overlayGraphics.isSelected = True
 
     def actionOperate(self, act, direction):
-        self.table.actionOperate(act, direction)
         if self.table.selectedItems():
-            if act == ActionEnum.INSERT.value:
-                QTimer.singleShot(1000, self.action_feedback_slot)
-            # elif act == ActionEnum.DELETE.value:
-            #     self.deleteCell(direction)
-            #     self.parent().statusBar().showMessage("delete", 1000)
-            #
-            # elif act == ActionEnum.SORT.value:
-            #     self.sortCells(direction)
-            #     self.parent().statusBar().showMessage("sort", 1000)
-            #
-            # elif act == ActionEnum.COPY.value:
-            #     self.copyCells()
-            #     self.parent().statusBar().showMessage("copy", 1000)
-            #
-            # elif act == ActionEnum.CUT.value:
-            #     self.cutCells()
-            #     self.parent().statusBar().showMessage("cut", 1000)
-            #
-            # else:
-            #     if self.clipRanges is not None:
-            #
+            if not self.isTestrun:
+                self.table.actionOperate(act, direction)
+            elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
+                    self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
+                    self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
+                    self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
 
-        if self.end_Leap.isEnabled():
-            self.listener.resetHand()
+                if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
+                    os.system('play -n synth %s sin %s' % (150 / 1000, 600))
+                else:
+                    os.system('play -n synth %s sin %s' % (100 / 1000, 220))
+                    self.error_count = 1
+
+                self.records = np.append(self.records,
+                                         [[USER_NO, TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), self.mode, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
+                if len(self.true_list) == 0:
+                    recordDF = pd.DataFrame(self.records, columns=['participant', 'No', 'mode', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
+                    recordDF['No'] = recordDF['No'].astype(int)
+                    recordDF['error'] = recordDF['error'].astype(int)
+                    recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
+                    recordDF['true_direction'] = recordDF['true_direction'].astype(int)
+                    recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
+                    recordDF['select_direction'] = recordDF['select_direction'].astype(int)
+                    print(recordDF)
+                    if os.path.isfile(FILE):
+                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                    else:
+                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
+                    self.hide()
+                    self.close()
+                else:
+                    self.table.resetRandomCellColor()
+                    self.startTest()
+                    print("Remaining Task: {}".format(len(self.true_list)))
+
+                if self.end_Leap.isEnabled():
+                    self.listener.resetHand()
+            self.table.clearSelection()
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)

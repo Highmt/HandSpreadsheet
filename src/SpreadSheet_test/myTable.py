@@ -1,5 +1,7 @@
+import random
+
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
@@ -15,14 +17,21 @@ class myTable(QTableWidget):
         self.num_row = rows
         self.setupHeader(cols)  # ヘッダーのアルファベット設定
         self.setItemPrototype(self.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
-        self.setItemDelegate(SpreadSheetDelegate(self))  # デリゲート
+        self.setItemDelegate(SpreadSheetDelegate(self))   # デリゲート
         self.initContents()
-        self.setupContents()
-
+        # self.setupContents()
+        #
         self.clipTable = QTableWidget(rows, cols, None)  # コピー，カットのための仮装テーブル
         self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
         self.verticalHeader().setDefaultSectionSize(60)
         self.horizontalHeader().setDefaultSectionSize(120)
+        self.pre_target = QRect(0, 0, 0, 0)
+        self.target_top = 0
+        self.target_left = 0
+        self.target_height = 0
+        self.target_width = 0
+
+
 
     def setupHeader(self, cols):
         for c in range(cols):
@@ -35,27 +44,27 @@ class myTable(QTableWidget):
                 self.setItem(i, j, SpreadSheetItem())
 
     def setupContents(self):
-        titleBackground = QColor(Qt.white)
+        titleBackground = QColor(Qt.lightGray)
         titleFont = self.font()
         titleFont.setBold(True)
         # column 0
-        self.item(0, 0).setText("Item")
+        self.item(0, 0).setText("項目")
         self.item(0, 0).setBackground(titleBackground)
         # self.item(0, 0).setToolTip("This column shows the purchased item/service")
         self.item(0, 0).setFont(titleFont)
-        self.item(1, 0).setText("Rent")
-        self.item(2, 0).setText("Food")
-        self.item(3, 0).setText("Water")
-        self.item(4, 0).setText("Electricity")
-        self.item(5, 0).setText("Gas")
-        self.item(6, 0).setText("Travel")
-        self.item(7, 0).setText("Amusement")
-        self.item(8, 0).setText("Salary")
-        self.item(9, 0).setText("Total")
+        self.item(1, 0).setText("家賃")
+        self.item(2, 0).setText("食費")
+        self.item(3, 0).setText("水道")
+        self.item(4, 0).setText("電気")
+        self.item(5, 0).setText("ガス")
+        self.item(6, 0).setText("交通費")
+        self.item(7, 0).setText("娯楽")
+        self.item(8, 0).setText("給料")
+        self.item(9, 0).setText("Total:")
         self.item(9, 0).setFont(titleFont)
         # self.item(9, 0).setBackground(Qt.lightGray)
         # column 1
-        self.item(0, 1).setText("Date")
+        self.item(0, 1).setText("日付")
         self.item(0, 1).setBackground(titleBackground)
         # self.item(0, 1).setToolTip("This column shows the purchase date, double click to change")
         self.item(0, 1).setFont(titleFont)
@@ -70,7 +79,7 @@ class myTable(QTableWidget):
         self.setItem(9, 1, SpreadSheetItem())
         # self.item(9, 1).setBackground(Qt.lightGray)
         # column 2
-        self.item(0, 2).setText("money")
+        self.item(0, 2).setText("金額")
         self.item(0, 2).setBackground(titleBackground)
         # self.item(0, 2).setToolTip("This column shows the price of the purchase")
         self.item(0, 2).setFont(titleFont)
@@ -85,7 +94,7 @@ class myTable(QTableWidget):
         self.item(9, 2).setText("5000")
         # self.item(9, 2).setBackground(Qt.lightGray)
         # column 3
-        self.item(0, 3).setText("allocated")
+        self.item(0, 3).setText("計上済")
         self.item(0, 3).setBackground(titleBackground)
         self.item(0, 3).setToolTip("This column shows the currency")
         self.item(0, 3).setFont(titleFont)
@@ -99,7 +108,7 @@ class myTable(QTableWidget):
         self.item(8, 3).setText("○")
         # self.item(9, 3).setBackground(Qt.lightGray)
         # column 4
-        self.item(0, 4).setText("note")
+        self.item(0, 4).setText("備考")
         self.item(0, 4).setBackground(titleBackground)
         self.item(0, 4).setToolTip("This column shows the exchange rate to NOK")
         self.item(0, 4).setFont(titleFont)
@@ -110,35 +119,37 @@ class myTable(QTableWidget):
         self.item(5, 4).setText("")
         self.item(6, 4).setText("")
         self.item(7, 4).setText("")
-        self.item(8, 4).setText("Up from last month.")
+        self.item(8, 4).setText("先月より多い")
         # self.item(9, 4).setBackground(Qt.lightGray)
+
 
     def insertCell(self, d):
         selectrange = self.selectedRanges()[0]
         if d == DirectionEnum.HORIZON.value:
-            for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
+            for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
 
-                for j in range(self.columnCount() - 1, selectrange.rightColumn(), -1):
-                    temp = self.takeItem(i, j - selectrange.columnCount())
+                for j in range(self.columnCount()-1, selectrange.rightColumn(), -1):
+                    temp = self.takeItem(i, j-selectrange.columnCount())
                     self.setItem(i, j, temp)
 
                 for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
                     self.setItem(i, j, SpreadSheetItem())
                     self.item(i, j).setBackground(Qt.red)
         else:
-            for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
+            for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
 
-                for i in range(self.rowCount() - 1, selectrange.bottomRow(), -1):
+                for i in range(self.rowCount()-1, selectrange.bottomRow(), -1):
                     temp = self.takeItem(i - selectrange.rowCount(), j)
                     self.setItem(i, j, temp)
                 for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
                     self.setItem(i, j, SpreadSheetItem())
                     self.item(i, j).setBackground(Qt.red)
 
+
     def deleteCell(self, d):
         selectrange = self.selectedRanges()[0]
         if d == DirectionEnum.HORIZON.value:
-            for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
+            for i in range(selectrange.topRow(), selectrange.bottomRow()+1):
 
                 for j in range(selectrange.leftColumn(), self.columnCount() - selectrange.columnCount()):
                     temp = self.takeItem(i, j + selectrange.columnCount())
@@ -147,7 +158,7 @@ class myTable(QTableWidget):
                     self.setItem(i, j, SpreadSheetItem())
 
         else:
-            for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
+            for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
 
                 for i in range(selectrange.topRow(), self.rowCount() - selectrange.rowCount()):
                     temp = self.takeItem(i + selectrange.rowCount(), j)
@@ -176,19 +187,21 @@ class myTable(QTableWidget):
 
     def copyCells(self):
         self.clipRanges = self.selectedRanges()[0]
-        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow() + 1):
-            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn() + 1):
+        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow()+1):
+            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn()+1):
                 temp = self.item(i, j).clone()
                 self.clipTable.setItem(i, j, temp)
 
+
     def cutCells(self):
         self.clipRanges = self.selectedRanges()[0]
-        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow() + 1):
-            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn() + 1):
+        for i in range(self.clipRanges.topRow(), self.clipRanges.bottomRow()+1):
+            for j in range(self.clipRanges.leftColumn(), self.clipRanges.rightColumn()+1):
                 temp = self.takeItem(i, j)
                 self.clipTable.setItem(i, j, temp)
                 self.setItem(i, j, SpreadSheetItem())
-                print(self.clipTable.item(i, j).text())
+
+
 
     def pasteCells(self):
         selectrange = self.selectedRanges()[0]
@@ -196,6 +209,8 @@ class myTable(QTableWidget):
             for j in range(0, self.clipRanges.columnCount()):
                 temp = self.clipTable.item(self.clipRanges.topRow() + i, self.clipRanges.leftColumn() + j).clone()
                 self.setItem(selectrange.topRow() + i, selectrange.leftColumn() + j, temp)
+
+
 
     def actionOperate(self, act, direction):
         if self.selectedItems():
@@ -224,6 +239,7 @@ class myTable(QTableWidget):
                     self.pasteCells()
                     self.parent().statusBar().showMessage("paste", 1000)
 
+
     def getItemCoordinate(self):
         itemList = self.selectedItems()
         # self.cutCells()
@@ -231,3 +247,26 @@ class myTable(QTableWidget):
             return self.visualItemRect(itemList[0]), self.visualItemRect(itemList[-1])
             # self.first_item = itemList[0]
             # self.last_item = itemList[-1]
+
+    def setRandomCellColor(self):
+        while True:
+            self.target_top = random.randint(1, self.columnCount()-4)
+            self.target_left = random.randint(1, self.rowCount()-4)
+            self.target_height = random.randint(1, 3)
+            self.target_width = random.randint(1, 3)
+            if self.target_top < self.pre_target.y() or \
+                    self.target_left < self.pre_target.x() or \
+                    self.target_height + self.target_top > self.pre_target.height() + self.pre_target.y() or \
+                    self.target_width + self.target_left > self.pre_target.width() + self.pre_target.x():
+                break
+
+        for i in range(self.target_height):
+            for j in range(self.target_width):
+                self.item(self.target_top + i, self.target_left + j).setBackground(Qt.blue)
+
+        self.pre_target = QRect(self.target_left, self.target_top, self.target_width, self.target_height)
+    def resetRandomCellColor(self):
+        for i in range(self.target_height):
+            for j in range(self.target_width):
+                self.item(self.target_top + i, self.target_left + j).setBackground(Qt.white)
+

@@ -14,9 +14,9 @@ from datetime import datetime
 
 from res.SSEnum import HandEnum
 
-current = datetime.now().strftime('%Y%m%d%H%M')
-# 　収集する手形状のラベル（）
-label = HandEnum.FREE.value
+version = "p8"
+#　収集する手形状のラベル（）
+label = HandEnum.PINCH_IN.value
 names = HandEnum.NAME_LIST.value
 collect_data_num = 2000
 data_count = 0
@@ -369,8 +369,8 @@ def data_save_pandas():
         "Pinky_fin_dist_direction_z": Pinky_fin_dist_direction_z,
         "label": label_list,
     })
-    df.to_csv("../../res/data/a10/{0}_{1}.csv".format(label, names.pop(label)))
-
+    
+    df.to_csv("../../res/data/{0}/{1}_{2}.csv".format(version, label, names.pop(label)))
 
 def main():
     # Create a sample listener and controller

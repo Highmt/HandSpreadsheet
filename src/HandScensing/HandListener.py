@@ -155,15 +155,18 @@ class HandListener(QtCore.QThread, Listener):
                     handlist.pop(0)
 
                 hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
-                print(hand_state)
-                handlist.append(hand_state)  # 手形状のメモリに新規追加
+
+                # print(hand_state)
+                handlist.append(hand_state)   # 手形状のメモリに新規追加
+
                 # 識別手形状とメモリのて形状リストから現在の手形状を決定
                 try:
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
                 except:
                     currentStatus = hand_state
-                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力（文字列で）
+                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
                 self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
+                # print(self.isHolizon(hand)) 向きが横か出力
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, hand)
                     self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
@@ -183,8 +186,8 @@ class HandListener(QtCore.QThread, Listener):
             direction = DirectionEnum.VERTICAL.value
 
         if n_hand == HandEnum.FREE.value:
-            if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):
-                self.hide_feedback.emit()
+            # if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):  //　絶対入らない
+            self.hide_feedback.emit()
 
         elif n_hand == HandEnum.PINCH_IN.value:
             if p_hand == HandEnum.PINCH_OUT.value:
@@ -193,7 +196,7 @@ class HandListener(QtCore.QThread, Listener):
 
             else:
                 # print("挿入前状態に遷移")
-                self.change_feedback.emit("INSERT", "", direction)
+                self.change_feedback.emit("Pinch In", "", direction)
 
 
         elif n_hand == HandEnum.PINCH_OUT.value:
@@ -202,21 +205,21 @@ class HandListener(QtCore.QThread, Listener):
                 self.action_operation.emit(ActionEnum.INSERT.value, direction)
 
             elif p_hand == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
-                print("昇順ソート関数実行")
-                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
+                print("降順ソート関数実行")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
 
             else:
                 # print("削除前状態に遷移")
-                self.change_feedback.emit("DELETE", "SORT", direction)
+                self.change_feedback.emit("Pinch Out", "", direction)
 
 
         elif n_hand == HandEnum.REVERSE.value:
             if p_hand == HandEnum.PINCH_OUT.value and direction == DirectionEnum.VERTICAL.value:
-                print("降順ソート関数実行")
-                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
+                print("昇順ソート関数実行")
+                self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
             else:
                 # print("降順ソート前状態に遷移")
-                self.change_feedback.emit("SORT", "", direction)
+                self.change_feedback.emit("Reverse", "", direction)
 
         elif n_hand == HandEnum.PALM.value:
             if p_hand == HandEnum.GRIP.value:
@@ -226,9 +229,9 @@ class HandListener(QtCore.QThread, Listener):
             else:
                 # print("コピー，カット前状態に遷移")
                 if len(self.preHands) > 1:
-                    self.change_feedback.emit("COPY", "", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("Both Palm", "", DirectionEnum.VERTICAL.value)
                 else:
-                    self.change_feedback.emit("CUT", "", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("One Palm", "", DirectionEnum.VERTICAL.value)
 
         elif n_hand == HandEnum.GRIP.value:
             if p_hand == HandEnum.PALM.value:
@@ -241,7 +244,7 @@ class HandListener(QtCore.QThread, Listener):
 
             else:
                 # print("ペースト前状態に遷移")
-                self.change_feedback.emit("PASTE", "", DirectionEnum.VERTICAL.value)
+                self.change_feedback.emit("Grip", "", DirectionEnum.VERTICAL.value)
 
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode
