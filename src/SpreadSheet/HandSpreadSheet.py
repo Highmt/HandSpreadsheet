@@ -39,7 +39,7 @@
 ##
 #############################################################################
 
-from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
@@ -117,7 +117,9 @@ class HandSpreadSheet(QMainWindow):
         self.show()
 
     def createStatusBar(self):
-        self.leapLabel = QLabel("LeapMotion is disconnecting")
+
+        self.leapLabel = QLabel("")
+        # self.leapLabel = QLabel("LeapMotion is disconnecting")
         self.leapLabel.setAlignment(Qt.AlignLeft)
         self.leapLabel.setMinimumSize(self.leapLabel.sizeHint())
 
@@ -404,14 +406,14 @@ class HandSpreadSheet(QMainWindow):
         self.active_Point.setEnabled(False)
         self.negative_Point.setEnabled(True)
         self.overlayGraphics.setTargetMode(True)
-        self.pointStatusLabel.setText("Pointing mode: active")
+        # self.pointStatusLabel.setText("Pointing mode: active")
 
     def negativePointing(self):
         self.listener.setPointingMode(False)
         self.negative_Point.setEnabled(False)
         self.active_Point.setEnabled(True)
         self.overlayGraphics.setTargetMode(False)
-        self.pointStatusLabel.setText("Pointing mode: negative")
+        # self.pointStatusLabel.setText("Pointing mode: negative")
 
     def changeLeap(self, toConnect):
         if toConnect:
@@ -419,14 +421,14 @@ class HandSpreadSheet(QMainWindow):
             self.end_Leap.setEnabled(True)
             self.pointMenu.setEnabled(True)
             self.active_Point.setEnabled(True)
-            self.leapLabel.setText("LeapMotion: connecting")
-            self.pointStatusLabel.setText("Pointing mode: negative")
+            # self.leapLabel.setText("LeapMotion: connecting")
+            # self.pointStatusLabel.setText("Pointing mode: negative")
         else:
             self.end_Leap.setEnabled(False)
             self.start_Leap.setEnabled(True)
             self.pointMenu.setEnabled(False)
             self.negative_Point.setEnabled(False)
-            self.leapLabel.setText("LeapMotion: disconnecting")
+            # self.leapLabel.setText("LeapMotion: disconnecting")
             self.overlayGraphics.hide()
             self.pointStatusLabel.setText("")
 
@@ -437,8 +439,35 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
         self.overlayGraphics.isSelected = True
 
+
+    def action_feedback_slot(self):
+        print("insert")
+
     def actionOperate(self, act, direction):
         self.table.actionOperate(act, direction)
+        if self.table.selectedItems():
+            if act == ActionEnum.INSERT.value:
+                QTimer.singleShot(1000, self.action_feedback_slot)
+            # elif act == ActionEnum.DELETE.value:
+            #     self.deleteCell(direction)
+            #     self.parent().statusBar().showMessage("delete", 1000)
+            #
+            # elif act == ActionEnum.SORT.value:
+            #     self.sortCells(direction)
+            #     self.parent().statusBar().showMessage("sort", 1000)
+            #
+            # elif act == ActionEnum.COPY.value:
+            #     self.copyCells()
+            #     self.parent().statusBar().showMessage("copy", 1000)
+            #
+            # elif act == ActionEnum.CUT.value:
+            #     self.cutCells()
+            #     self.parent().statusBar().showMessage("cut", 1000)
+            #
+            # else:
+            #     if self.clipRanges is not None:
+            #
+
         if self.end_Leap.isEnabled():
             self.listener.resetHand()
 
