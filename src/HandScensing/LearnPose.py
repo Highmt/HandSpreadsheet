@@ -22,7 +22,7 @@ np.random.seed(1671)  # for reproducibility
 
 # network and training
 DROPOUT = 0.2
-version = "p8"
+version = "p15"
 # data: shuffled and split between train and test sets
 read_data0 = pd.read_csv('../../res/data/' + version + '/0_FREE.csv', sep=',', index_col=0)
 read_data1 = pd.read_csv('../../res/data/' + version + '/1_PINCH_IN.csv', sep=',', index_col=0)
@@ -91,7 +91,6 @@ model = "KNN"
 
 print(clf.best_estimator_)
 print(classification_report(test_label, clf.predict(test_data)))
-model += '_a0'
 pickle.dump(clf, open('../../res/learningModel/HandDetectModel_{}.pkl'.format(model), 'wb'))
 
 # モデルを読み込む --- (*4)
