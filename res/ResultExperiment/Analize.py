@@ -1,16 +1,21 @@
 import math
 
 import pandas as pd
-from matplotlib import gridspec
+from matplotlib import gridspec, rcParams
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from res.SSEnum import OperationEnum
 
+# -----JP------
+rcParams['font.family'] = 'Hiragino Maru Gothic Pro'
+rcParams['pdf.fonttype'] = 42
+OPERATION_NAMES = OperationEnum.OperationName_LIST_JP.value
+# -------------
+# # En
+# OPERATION_NAMES = OperationEnum.OperationName_LIST.value
 
-OPERATION_NAMES = OperationEnum.OperationName_LIST.value
-hfont = {'fontname': 'Times New Roman'}
 def transformData(data, label):
     data.loc[(data[label + "_manipulation"] == 0) & (data[label + "_direction"] == 0), label] = OperationEnum.Ir.value
     data.loc[(data[label + "_manipulation"] == 0) & (data[label + "_direction"] == 1), label] = OperationEnum.Id.value
@@ -76,7 +81,7 @@ def main():
     print("gesture std: {0:2f}\nshortcut std: {1:2f}\n".format(((1-gestureRateDf).sum()/len(gestureRateDf)).std(), ((1-shortcutRateDf).sum()/len(shortcutRateDf)).std()))
 
     show_CM(all_data)
-    show_Bar(all_data, "time")
+    # show_Bar(all_data, "time")
 
 def show_Bar(data, column):
     all_gestures = data[data['mode'] == 0]
@@ -99,11 +104,11 @@ def show_Bar(data, column):
     ax1.errorbar(x2, aveDf.loc["shortcut"].values, yerr=stdDf.loc["shortcut"].values, ecolor='black', markeredgecolor="black", fmt='None', capsize=3, alpha=0.5)
     ax1.set_xticks(x)
     ax1.set_ylim(0, 25)
-    ax1.set_xticklabels(OPERATION_NAMES, fontsize=13, **hfont)  # X軸のラベル
+    ax1.set_xticklabels(OPERATION_NAMES, fontsize=13)  # X軸のラベル
     ax1.set_yticks(np.linspace(0, 25, 6))
 
     ax1.tick_params(bottom=False, labelsize=13)
-    ax1.set_ylabel('{0} ({1})'.format(column.capitalize(), "s"), **hfont, fontsize=15)
+    ax1.set_ylabel('{0} ({1})'.format(column.capitalize(), "s"), fontsize=15)
 
     ax1.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.5, fontsize=8)
 
@@ -126,13 +131,13 @@ def show_CM(data):
 
     fig, (ax1, ax2) = plt.subplots(figsize=(16, 7), ncols=2, gridspec_kw={'width_ratios': [6, 7]})
     labelNum = int(len(all_gestures) / len(OPERATION_NAMES))  # 各ラベルの数
-    ax1.set_title("Gesture", fontsize=30, **hfont)
-    ax2.set_title("Shortcut key", fontsize=30, **hfont)
+    ax1.set_title("Gesture", fontsize=30)
+    ax2.set_title("Shortcut key", fontsize=30)
 
-    ax1.set_xticklabels(OPERATION_NAMES, fontsize=20, **hfont)
-    ax1.set_yticklabels(OPERATION_NAMES, fontsize=20, **hfont)
-    ax2.set_xticklabels(OPERATION_NAMES, fontsize=20, **hfont)
-    ax2.set_yticklabels(OPERATION_NAMES, fontsize=20, **hfont)
+    ax1.set_xticklabels(OPERATION_NAMES, fontsize=20)
+    ax1.set_yticklabels(OPERATION_NAMES, fontsize=20)
+    ax2.set_xticklabels(OPERATION_NAMES, fontsize=20)
+    ax2.set_yticklabels(OPERATION_NAMES, fontsize=20)
 
     sns.set(font_scale=2)
     sns.heatmap(cm_g / labelNum, annot=True, cmap="Blues", fmt='.2f', ax=ax1, cbar=None, annot_kws={"size": 16})  # 正規化したものを表示
