@@ -129,19 +129,15 @@ def show_CM(data):
     # print("gesture recognition: {0:2f} %\nshortcut recognition: {1:2f} %".format((1 - g_error.sum() / len(g_error)) * 100, (1 - s_error.sum() / len(s_error)) * 100))
     # print("gesture std: {0:2f}\nshortcut std: {1:2f}".format(g_error.std(), s_error.std()))
 
-    fig, (ax1, ax2) = plt.subplots(figsize=(16, 7), ncols=2, gridspec_kw={'width_ratios': [6, 7]})
+    fig, ax1 = plt.subplots(figsize=(8, 7))
     labelNum = int(len(all_gestures) / len(OPERATION_NAMES))  # 各ラベルの数
-    ax1.set_title("Gesture", fontsize=30)
-    ax2.set_title("Shortcut key", fontsize=30)
+    # ax1.set_title("Gesture", fontsize=30)
 
-    ax1.set_xticklabels(OPERATION_NAMES, fontsize=20)
-    ax1.set_yticklabels(OPERATION_NAMES, fontsize=20)
-    ax2.set_xticklabels(OPERATION_NAMES, fontsize=20)
-    ax2.set_yticklabels(OPERATION_NAMES, fontsize=20)
+    ax1.set_xticklabels(OPERATION_NAMES, fontsize=12)
+    ax1.set_yticklabels(OPERATION_NAMES, fontsize=12)
 
     sns.set(font_scale=2)
-    sns.heatmap(cm_g / labelNum, annot=True, cmap="Blues", fmt='.2f', ax=ax1, cbar=None, annot_kws={"size": 16})  # 正規化したものを表示
-    sns.heatmap(cm_s / labelNum, annot=True, cmap="Blues", fmt='.2f', ax=ax2, annot_kws={"size": 16})  # 正規化したものを表示
+    sns.heatmap(cm_g / labelNum, annot=True, cmap="Blues", fmt='.2f', ax=ax1, annot_kws={"size": 12})  # 正規化したものを表示
     plt.tight_layout()
     fig.subplots_adjust(wspace=10)
     plt.show()
