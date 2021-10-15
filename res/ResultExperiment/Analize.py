@@ -118,14 +118,9 @@ def show_Bar(data, column):
 
 def show_CM(data):
     all_gestures = data[data['mode'] == 0]
-    all_shortcuts = data[data['mode'] == 1]
     cm_gesture = confusion_matrix(all_gestures['true'].values, all_gestures['select'].values)
     cm_g = pd.DataFrame(cm_gesture, columns=OPERATION_NAMES, index=OPERATION_NAMES)
-    cm_shortcut = confusion_matrix(all_shortcuts['true'].values, all_shortcuts['select'].values)
-    cm_s = pd.DataFrame(cm_shortcut, columns=OPERATION_NAMES, index=OPERATION_NAMES)
 
-    g_error = all_gestures["error"]
-    s_error = all_shortcuts["error"]
     # print("gesture recognition: {0:2f} %\nshortcut recognition: {1:2f} %".format((1 - g_error.sum() / len(g_error)) * 100, (1 - s_error.sum() / len(s_error)) * 100))
     # print("gesture std: {0:2f}\nshortcut std: {1:2f}".format(g_error.std(), s_error.std()))
 
@@ -137,7 +132,8 @@ def show_CM(data):
     ax1.set_yticklabels(OPERATION_NAMES, fontsize=12)
 
     sns.set(font_scale=2)
-    sns.heatmap(cm_g / labelNum, annot=True, cmap="Blues", fmt='.2f', ax=ax1, annot_kws={"size": 12})  # 正規化したものを表示
+    sns.heatmap(cm_g / labelNum, annot=True, cmap="Blues", fmt='.2f', ax=ax1, annot_kws={"size": 12}, vmin=0, vmax=1)  # 正規化したものを表示
+    plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     fig.subplots_adjust(wspace=10)
     plt.show()
