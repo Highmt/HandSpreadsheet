@@ -3,3 +3,6 @@
 *.pkl
 *.png
 *.pdf
+
+venv
+venv/
