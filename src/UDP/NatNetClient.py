@@ -777,7 +777,7 @@ class NatNetClient:
             data_dict["is_recording"] = is_recording
             data_dict["tracked_models_changed"] = tracked_models_changed
 
-            self.new_frame_listener(data_dict)
+            self.new_frame_listener(mocap_data)
         trace_mf("MoCap Frame End\n-----------------")
         return offset, mocap_data
 
@@ -1446,6 +1446,15 @@ class NatNetClient:
         ## Request the model definitions
         # self.send_request(self.command_socket, self.NAT_REQUEST_MODELDEF, "",  (self.server_ip_address, self.command_port) )
         return True
+
+    def stop(self):
+        print("stop thread")
+        self.stop_threads = True
+
+    def restart(self):
+        if self.stop_threads:
+            print("restart thread")
+            self.stop_threads = False
 
     def shutdown(self):
         print("shutdown called")
