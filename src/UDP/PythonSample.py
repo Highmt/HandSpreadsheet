@@ -152,7 +152,7 @@ def my_parse_args(arg_list, args_dict):
 if __name__ == "__main__":
 
     optionsDict = {}
-    optionsDict["clientAddress"] = "172.16.0.46"
+    optionsDict["clientAddress"] = "172.16.0.8"
     optionsDict["serverAddress"] = "172.16.0.100"
     optionsDict["use_multicast"] = False
 
