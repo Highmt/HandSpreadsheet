@@ -38,20 +38,24 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
-
+import sys
+import time
 from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup)
 
-from lib.LeapMotion import Leap
 from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.HandListener import HandListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
 from lib.sample.spreadsheetitem import SpreadSheetItem
 from lib.sample.util import encode_pos
+from src.UDP.NatNetClient import NatNetClient
+from src.UDP import DataDescriptions
+from src.UDP import MoCapData
+from src.UDP.PythonSample import print_message, print_configuration
 
 
 # class circleWidget(QWidget):
@@ -63,6 +67,7 @@ from lib.sample.util import encode_pos
 #         painter.setPen(Qt.red)
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
+
 
 class HandSpreadSheet(QMainWindow):
     def __init__(self, rows, cols, parent=None):
@@ -108,12 +113,50 @@ class HandSpreadSheet(QMainWindow):
 
         # Create a sample listener and controller
         self.listener = HandListener()
-        self.controller = Leap.Controller()
         self.setLeapSignal()
 
-        self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
+        # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
         self.show()
+        self.init_OptiTrack()
+
+    def init_OptiTrack(self):
+        optionsDict = {}
+        optionsDict["clientAddress"] = "172.16.0.8"
+        optionsDict["serverAddress"] = "172.16.0.100"
+        optionsDict["use_multicast"] = False
+
+        streaming_client = NatNetClient()
+        streaming_client.set_client_address(optionsDict["clientAddress"])
+        streaming_client.set_server_address(optionsDict["serverAddress"])
+        streaming_client.set_use_multicast(optionsDict["use_multicast"])
+
+        # TODO: connect listener
+        streaming_client.new_frame_listener = self.frameListener
+        print_configuration(streaming_client)
+
+        is_running = streaming_client.run()
+        if not is_running:
+            print("ERROR: Could not start streaming client.")
+            try:
+                sys.exit(1)
+            except SystemExit:
+                print("...")
+            finally:
+                print("exiting")
+
+        if streaming_client.connected() is False:
+            print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
+            try:
+                sys.exit(2)
+            except SystemExit:
+                print("...")
+            finally:
+                print("exiting")
+
+    def frameListener(self, mocap_data=MoCapData.MoCapData()):
+        # TODO This is listener
+        pass
 
     def createStatusBar(self):
 
