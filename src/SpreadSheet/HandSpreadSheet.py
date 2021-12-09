@@ -118,24 +118,24 @@ class HandSpreadSheet(QMainWindow):
         # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
         self.show()
-        self.init_OptiTrack()
+        self.initOptiTrack()
 
-    def init_OptiTrack(self):
+    def initOptiTrack(self):
         optionsDict = {}
         optionsDict["clientAddress"] = "172.16.0.8"
         optionsDict["serverAddress"] = "172.16.0.100"
         optionsDict["use_multicast"] = False
 
-        streaming_client = NatNetClient()
-        streaming_client.set_client_address(optionsDict["clientAddress"])
-        streaming_client.set_server_address(optionsDict["serverAddress"])
-        streaming_client.set_use_multicast(optionsDict["use_multicast"])
+        self.streaming_client = NatNetClient()
+        self.streaming_client.set_client_address(optionsDict["clientAddress"])
+        self.streaming_client.set_server_address(optionsDict["serverAddress"])
+        self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
 
         # TODO: connect listener
-        streaming_client.new_frame_listener = self.frameListener
-        print_configuration(streaming_client)
+        self.streaming_client.new_frame_listener = self.listener.frameListener()
+        print_configuration(self.streaming_client)
 
-        is_running = streaming_client.run()
+        is_running = self.streaming_client.run()
         if not is_running:
             print("ERROR: Could not start streaming client.")
             try:
@@ -145,7 +145,7 @@ class HandSpreadSheet(QMainWindow):
             finally:
                 print("exiting")
 
-        if streaming_client.connected() is False:
+        if self.streaming_client.connected() is False:
             print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
             try:
                 sys.exit(2)
@@ -153,10 +153,6 @@ class HandSpreadSheet(QMainWindow):
                 print("...")
             finally:
                 print("exiting")
-
-    def frameListener(self, mocap_data=MoCapData.MoCapData()):
-        # TODO This is listener
-        pass
 
     def createStatusBar(self):
 
@@ -437,10 +433,10 @@ class HandSpreadSheet(QMainWindow):
 
     def startLeap(self):
         # Have the sample listener receive events from the controller
-        self.controller.add_listener(self.listener)
+        self.streaming_client.restart()
 
     def endLeap(self):
-        self.controller.remove_listener(self.listener)
+        self.streaming_client.stop()
 
     def activePointing(self):
         self.listener.setPointingMode(True)
@@ -474,7 +470,7 @@ class HandSpreadSheet(QMainWindow):
             self.pointStatusLabel.setText("")
 
     def closeEvent(self, event):
-        self.controller.remove_listener(self.listener)
+        self.streaming_client.shutdown()
 
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
