@@ -1448,8 +1448,9 @@ class NatNetClient:
         return True
 
     def stop(self):
-        print("stop thread")
-        self.stop_threads = True
+        if not self.stop_threads:
+            print("stop thread")
+            self.stop_threads = True
 
     def restart(self):
         if self.stop_threads:
