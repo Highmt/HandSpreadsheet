@@ -2,16 +2,42 @@ import statistics
 import sys
 import pyautogui
 
-from lib.LeapMotion.Leap import Listener, Vector, Finger
 from src.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
+from src.UDP.MoCapData import MoCapData, RigidBody
+
 DIS_SIZE = pyautogui.size()
 memorySize = 30
 
+class HandData():
+    def __init__(self):
+        self.isLeft = None
+        self.hand_pos = [0, 0, 0]
+        self.rot = [0, 0, 0, 0]
+        self.finger_label = [0, 1, 2]
+        self.thumb_pos = [0, 0, 0]
+        self.index_pos = [0, 0, 0]
+        self.pinky_pos = [0, 0, 0]
 
-class HandListener(QtCore.QThread, Listener):
+    def setIsLeft(self, bool):
+        self.isLeft = bool
+
+    def setPalm(self, rigid_body=RigidBody()):
+        self.hand_pos = rigid_body.pos
+        self.rot = rigid_body.rot
+
+    def setFingerLabel(self):
+        #TODO: ここにunlabeledMarkerから適切なマーカの位置データをセット
+
+        # self.thumb_pos =
+        # self.index_pos =
+        # self.pinky_pos =
+        pass
+
+
+class HandListener(QtCore.QThread):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
     change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
@@ -27,6 +53,7 @@ class HandListener(QtCore.QThread, Listener):
         self.memoryHands = {}
         self.preHands = {}
 
+    # TODO: caribration ここで指先のマーカラベルを登録する + 画面領域を決定 + 完了したらframeListenerをframeListener()に変換
     def on_caribration(self, controller):
         print("Do caribration")
         print("Point upper-left on display")
@@ -125,9 +152,24 @@ class HandListener(QtCore.QThread, Listener):
         print("Exited")
         self.startorend_leap.emit(False)
 
-    def on_frame(self, controller):
+    def exportHands(self, mocap_data=MoCapData()):
+
+        leftHand = HandData()
+        rightHand = HandData()
+
+        hands = [leftHand, rightHand]
+        return hands
+
+    def rigidBodyListener(self, rigid_body):
+        pass
+
+    # TODO: This function has to be fixed for Opti version
+    def frameListener(self, mocap_data=MoCapData()):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
+
+        # フレームデータから手のデータを抽出
+        hands = self.exportHands(mocap_data)
 
         for handid in list(self.preHands.keys()):
             if not frame.hand(handid).is_valid:
@@ -139,9 +181,11 @@ class HandListener(QtCore.QThread, Listener):
         if frame.hands.is_empty:
             self.hide_feedback.emit()
 
+
+
         # 認識した手の形状を識別する
         else:
-            for hand in frame.hands:
+            for hand in hands:
                 handlist = self.memoryHands.get(hand.id)
                 prehand = self.preHands.get(hand.id)
 
