@@ -561,12 +561,12 @@ class MoCapData:
     def __init__(self):
         # Packet Parts
         self.prefix_data = None
-        self.marker_set_data = None
-        self.rigid_body_data = None
-        self.skeleton_data = None
-        self.labeled_marker_data = None
-        self.force_plate_data = None
-        self.device_data = None
+        self.marker_set_data: MarkerSetData = None
+        self.rigid_body_data: RigidBodyData = None
+        self.skeleton_data: SkeletonData = None
+        self.labeled_marker_data: LabeledMarkerData = None
+        self.force_plate_data: ForcePlateData = None
+        self.device_data: DeviceData = None
         self.suffix_data = None
 
     def set_prefix_data(self, new_prefix_data):
