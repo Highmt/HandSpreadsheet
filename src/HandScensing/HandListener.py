@@ -59,7 +59,7 @@ class HandListener(QtCore.QThread):
         self.current_mocap_data: MoCapData = None
         self.hands_dict = {'l': HandData(), 'r': HandData()}
         handlist = []
-        for i in range(memorySize - 1):
+        for i in range(memorySize):
             handlist.append(HandEnum.FREE.value)
 
         self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
@@ -257,28 +257,26 @@ class HandListener(QtCore.QThread):
 
             # 認識した手の形状を識別する
             for key in self.hands_dict.keys():
-                self.memoryHands.get(key)
-                prehand = self.preHands.get(hand.id)
+                handlist = self.memoryHands.get(key)
+                prehand = self.preHands.get(key)
 
-                if len(handlist) == memorySize:  # 記憶サイズいっぱいだったらFirst out
-                    handlist.pop(0)
-
-                hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
+                handlist.pop(0)
+                hand_state = self.predictor.handPredict(self.hands_dict.get(key))  # 学習機で手形状識別
 
                 # print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
 
-                # 識別手形状とメモリのて形状リストから現在の手形状を決定
+                # 識別手形状とメモリの手形状リストから現在の手形状を決定
                 try:
                     currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
                 except:
-                    currentStatus = hand_state
+                    currentStatus = prehand
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
-                self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
+                self.memoryHands[key] = handlist  # 手形状のメモリを更新
                 # print(self.isHolizon(hand)) 向きが横か出力
                 if prehand != currentStatus:
-                    self.action(prehand, currentStatus, hand)
-                    self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
+                    self.action(prehand, currentStatus, self.hands_dict.get(key))
+                    self.preHands[key] = currentStatus  # １つ前の手形状を更新
 
     def isHolizon(self, hand):
         # 親指第一関節と人差し指の第二関節の位置を識別
