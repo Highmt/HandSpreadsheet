@@ -1,3 +1,4 @@
+import copy
 import heapq
 import statistics
 import sys
@@ -13,7 +14,7 @@ from src.UDP.PythonSample import print_configuration
 
 DIS_SIZE = pyautogui.size()
 memorySize = 30
-
+z_threshold = 30
 class HandData():
     def __init__(self):
         self.rb_id = 0
@@ -55,11 +56,15 @@ class HandListener(QtCore.QThread):
         self.finger_dis_size = [0, 0]
         self.isPointingMode = False
         self.predictor = Predictor("KNN")  # 学習モデル
-        self.memoryHands = {}
-        self.preHands = {}
         self.current_mocap_data: MoCapData = None
-        self.left_hand = HandData()
-        self.right_hand = HandData()
+        self.hands_dict = {'l': HandData(), 'r': HandData()}
+        handlist = []
+        for i in range(memorySize - 1):
+            handlist.append(HandEnum.FREE.value)
+
+        self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
+        self.preHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
+
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -99,12 +104,10 @@ class HandListener(QtCore.QThread):
         self.current_mocap_data = mocap_data
 
     def getCurrentData(self):
-        mocap_data = self.current_mocap_data
-        while self.judgeDataComplete(mocap_data):
+        while not self.judgeDataComplete(self.current_mocap_data):
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
-            mocap_data = self.getCurrentData()
-        return mocap_data
+        return copy.deepcopy(self.getCurrentData())
 
     def judgeDataComplete(self, mocap_data: MoCapData):
         return mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
@@ -136,29 +139,33 @@ class HandListener(QtCore.QThread):
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
         # TODO: 左右どちらの手にするかは要チェック基本左手
-        dis_ul = self.left_hand.fingers_pos[1]
+        dis_ul = self.hands_dict['l'].fingers_pos[1]
         print(dis_ul)
+
         print("Point to lower-left on display\nPush Enter key\n")
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
         # TODO: 左右どちらの手にするかは要チェック
-        dis_ll = self.left_hand.fingers_pos[1]
+        dis_ll = self.hands_dict['l'].fingers_pos[1]
         print(dis_ll)
+
         print("Point to upper-right on display\nPush Enter key\n")
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
         # TODO: 左右どちらの手にするかは要チェック
-        dis_lr = self.left_hand.fingers_pos[1]
+        dis_lr = self.hands_dict['l'].fingers_pos[1]
         print(dis_lr)
+
         print("Point to lower-right on display\nPush Enter key\n")
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
         # TODO: 左右どちらの手にするかは要チェック
-        dis_ur = self.left_hand.fingers_pos[1]
+        dis_ur = self.hands_dict['l'].fingers_pos[1]
         print(dis_ur)
+
         # 四隅の値の平均を上下左右の値とする
         self.finger_dis_dim["up"] = (dis_ul[1] + dis_ur[1]) / 2
         self.finger_dis_dim["low"] = (dis_ll[1] + dis_lr[1]) / 2
@@ -179,20 +186,20 @@ class HandListener(QtCore.QThread):
             for id in range(len(marker_pos_x_list)):
                 if sorted_list[key] == (marker_pos_x_list[id]):
                     if key < len(HandData().fingers_pos):
-                        self.left_hand.finger_marker_dict[id] = abs(key - len(HandData().fingers_pos) + 1)
-                        # self.left_hand.fingers_pos[key] = marker_list[id]
+                        self.hands_dict['l'].finger_marker_dict[id] = abs(key - len(HandData().fingers_pos) + 1)
+                        # self.hands_dict['l'].fingers_pos[key] = marker_list[id]
                     else:
-                        self.right_hand.finger_marker_dict[id] = key - len(HandData().fingers_pos)
-                        # self.right_hand.fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
+                        self.hands_dict['r'].finger_marker_dict[id] = key - len(HandData().fingers_pos)
+                        # self.hands_dict['r'].fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
 
     def settingRigidbodyID(self, mocap_data):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
         if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
-            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
-            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
+            self.hands_dict['l'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
+            self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
         else:
-            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
+            self.hands_dict['l'].rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
+            self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
 
     def on_caribrationTest(self):
         dis_ul = Vector(-120, 215, 0)
@@ -228,14 +235,14 @@ class HandListener(QtCore.QThread):
 
     def setHandData(self, mocap_data:MoCapData):
         for body in mocap_data.rigid_body_data.rigid_body_list:
-            if self.left_hand.rb_id == body.id_num:
-                self.left_hand.setPalm(body)
-            elif self.right_hand.rb_id == body.id_num:
-                self.right_hand.setPalm(body)
+            if self.hands_dict['l'].rb_id == body.id_num:
+                self.hands_dict['l'].setPalm(body)
+            elif self.hands_dict['r'].rb_id == body.id_num:
+                self.hands_dict['r'].setPalm(body)
 
         marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        self.left_hand.setFingerPos(marker_list=marker_list)
-        self.right_hand.setFingerPos(marker_list=marker_list)
+        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list))
+        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list))
 
     # TODO: This function has to be fixed for Opti version
     def frameListener(self, mocap_data:MoCapData):
@@ -243,49 +250,35 @@ class HandListener(QtCore.QThread):
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
 
-            for handid in list(self.preHands.keys()):
-                if not frame.hand(handid).is_valid:
-                    # 現フレームに存在しない手のデータを削除
-                    del self.memoryHands[handid]
-                    del self.preHands[handid]
-
-            # 手が認識されない時フィードバックを非表示
-            if frame.hands.is_empty:
+            # 左右両方の手の位置が閾値より低い時フィードバックを非表示
+            if self.hands_dict['l'].hand_pos[2] < z_threshold and self.hands_dict['r'].hand_pos[2] < z_threshold:
                 self.hide_feedback.emit()
-
-
+                return
 
             # 認識した手の形状を識別する
-            else:
-                for hand in hands:
-                    handlist = self.memoryHands.get(hand.id)
-                    prehand = self.preHands.get(hand.id)
+            for key in self.hands_dict.keys():
+                self.memoryHands.get(key)
+                prehand = self.preHands.get(hand.id)
 
-                    if handlist is None:  # 新規の手だったら追加
-                        handlist = []
-                        for i in range(memorySize - 1):
-                            handlist.append(HandEnum.FREE.value)
-                        prehand = HandEnum.FREE.value  # １つ前の手形状にFREE状態をセット
+                if len(handlist) == memorySize:  # 記憶サイズいっぱいだったらFirst out
+                    handlist.pop(0)
 
-                    if len(handlist) == memorySize:  # 記憶サイズいっぱいだったらFirst out
-                        handlist.pop(0)
+                hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
 
-                    hand_state = self.predictor.handPredict(hand)  # 学習機で手形状識別
+                # print(hand_state)
+                handlist.append(hand_state)   # 手形状のメモリに新規追加
 
-                    # print(hand_state)
-                    handlist.append(hand_state)   # 手形状のメモリに新規追加
-
-                    # 識別手形状とメモリのて形状リストから現在の手形状を決定
-                    try:
-                        currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
-                    except:
-                        currentStatus = hand_state
-                    # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
-                    self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
-                    # print(self.isHolizon(hand)) 向きが横か出力
-                    if prehand != currentStatus:
-                        self.action(prehand, currentStatus, hand)
-                        self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
+                # 識別手形状とメモリのて形状リストから現在の手形状を決定
+                try:
+                    currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
+                except:
+                    currentStatus = hand_state
+                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
+                self.memoryHands[hand.id] = handlist  # 手形状のメモリを更新
+                # print(self.isHolizon(hand)) 向きが横か出力
+                if prehand != currentStatus:
+                    self.action(prehand, currentStatus, hand)
+                    self.preHands[hand.id] = currentStatus  # １つ前の手形状を更新
 
     def isHolizon(self, hand):
         # 親指第一関節と人差し指の第二関節の位置を識別
