@@ -102,6 +102,7 @@ class HandListener(QtCore.QThread):
         data = self.current_mocap_data
         return data
 
+
     def do_calibration(self):
         print("Do caribration")
         self.streaming_client.new_frame_listener = self.calibrationListener
@@ -114,35 +115,13 @@ class HandListener(QtCore.QThread):
             sys.stdin.readline()
 
         mocap_data = self.getCurrentData()
+        self.settingRigidbodyID(mocap_data)
+        self.settingUnlabeledMarkerID(mocap_data)
+        print("Complete both hands setting calibration!")
 
-        # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
-        if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
-            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
-            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-        else:
-            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
-
-        # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
-        marker_pos_x_list = []
-        marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        for marker in marker_list:
-            marker_pos_x_list.append(marker.pos[0])
-
-        sorted_list = sorted(marker_pos_x_list)
-        for key in range(len(marker_pos_x_list)):
-            for id in range(len(marker_pos_x_list)):
-                if sorted_list[key] == (marker_pos_x_list[id]):
-                    if key < len(HandData().fingers_pos):
-                        self.left_hand.finger_marker_dict[id] = abs(key-len(HandData().fingers_pos)+1)
-                        # self.left_hand.fingers_pos[key] = marker_list[id]
-                    else:
-                        self.right_hand.finger_marker_dict[id] = key-len(HandData().fingers_pos)
-                        # self.right_hand.fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
-
-
-        # TODO: 画面領域を決定 +
-        print("Point upper-left on display")
+        # TODO: 画面領域を決定
+        print("\nNext, screan size caribration")
+        print("Point to upper-left on display\nPush Enter key\n")
         sys.stdin.readline()
         frame = controller.frame()
         fingers = frame.fingers
@@ -155,7 +134,7 @@ class HandListener(QtCore.QThread):
         dis_ul = f_finger.joint_position(f_finger.JOINT_TIP)
         print(dis_ul)
 
-        print("Point lower-left on display")
+        print("Point to lower-left on display")
         sys.stdin.readline()
         frame = controller.frame()
         fingers = frame.fingers
@@ -168,7 +147,7 @@ class HandListener(QtCore.QThread):
         dis_ll = f_finger.joint_position(f_finger.JOINT_TIP)
         print(dis_ll)
 
-        print("Point upper-right on display")
+        print("Point to upper-right on display")
         sys.stdin.readline()
         frame = controller.frame()
         fingers = frame.fingers
@@ -181,7 +160,7 @@ class HandListener(QtCore.QThread):
         dis_lr = f_finger.joint_position(f_finger.JOINT_TIP)
         print(dis_lr)
 
-        print("Point lower-right on display")
+        print("Point to lower-right on display")
         sys.stdin.readline()
         frame = controller.frame()
         fingers = frame.fingers
@@ -205,6 +184,32 @@ class HandListener(QtCore.QThread):
 
         print("\nComplete caribration")
         sys.stdin.readline()
+
+    def settingUnlabeledMarkerID(self, mocap_data):
+        # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
+        marker_pos_x_list = []
+        marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
+        for marker in marker_list:
+            marker_pos_x_list.append(marker.pos[0])
+        sorted_list = sorted(marker_pos_x_list)
+        for key in range(len(marker_pos_x_list)):
+            for id in range(len(marker_pos_x_list)):
+                if sorted_list[key] == (marker_pos_x_list[id]):
+                    if key < len(HandData().fingers_pos):
+                        self.left_hand.finger_marker_dict[id] = abs(key - len(HandData().fingers_pos) + 1)
+                        # self.left_hand.fingers_pos[key] = marker_list[id]
+                    else:
+                        self.right_hand.finger_marker_dict[id] = key - len(HandData().fingers_pos)
+                        # self.right_hand.fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
+
+    def settingRigidbodyID(self, mocap_data):
+        # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
+        if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
+            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
+            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
+        else:
+            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
+            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
 
     def on_caribrationTest(self):
         dis_ul = Vector(-120, 215, 0)
