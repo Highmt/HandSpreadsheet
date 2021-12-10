@@ -1,3 +1,4 @@
+import heapq
 import statistics
 import sys
 import pyautogui
@@ -15,7 +16,7 @@ memorySize = 30
 
 class HandData():
     def __init__(self):
-        self.isLeft = None
+        self.rb_id = 0
         self.hand_pos = [0, 0, 0]
         self.rot = [0, 0, 0, 0]
         self.finger_marker_dict = {}
@@ -23,10 +24,6 @@ class HandData():
         self.thumb_pos = [0, 0, 0]
         self.index_pos = [0, 0, 0]
         self.pinky_pos = [0, 0, 0]
-
-
-    def setIsLeft(self, bool):
-        self.isLeft = bool
 
     def setPalm(self, rigid_body: RigidBody):
         self.hand_pos = rigid_body.pos
@@ -39,6 +36,9 @@ class HandData():
         for marker in marker_list:
             if marker.id_num in self.finger_marker_dict.keys():
                 self.fingers_pos[self.finger_marker_dict[marker.id_num]] = marker.pos
+
+    def getFingerPos(self, id):
+        return self.fingers_pos[self.finger_marker_dict[id]]
 
     #TODO: マーカーロストの処理
 
@@ -57,8 +57,9 @@ class HandListener(QtCore.QThread):
         self.predictor = Predictor("KNN")  # 学習モデル
         self.memoryHands = {}
         self.preHands = {}
-        self.type_hands = {}
         self.current_mocap_data: MoCapData = None
+        self.left_hand = HandData()
+        self.right_hand = HandData()
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -97,27 +98,49 @@ class HandListener(QtCore.QThread):
     def calibrationListener(self, mocap_data: MoCapData):
         self.current_mocap_data = mocap_data
 
+    def getCurrentData(self):
+        data = self.current_mocap_data
+        return data
+
     def do_calibration(self):
         print("Do caribration")
         self.streaming_client.new_frame_listener = self.calibrationListener
 
         print("Please stay hand on home position\nPush Enter key\n")
         sys.stdin.readline()
-        while self.current_mocap_data.rigid_body_data.get_rigid_body_count() < 2:
+        while self.current_mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
+                self.current_mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos)*2:
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
 
-        mocap_data = self.current_mocap_data
+        mocap_data = self.getCurrentData()
 
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
         if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
-            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[0].id_num] = 'l'
-            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[1].id_num] = 'r'
+            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
+            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
         else:
-            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[0].id_num] = 'r'
-            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[1].id_num] = 'l'
+            self.left_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
+            self.right_hand.rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
 
-        # TODO: unlabeledMarkerのlabelを登録する < type_unlabeled[type_hands[rididbody.num_id]][0] =
+        # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
+        marker_pos_x_list = []
+        marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
+        for marker in marker_list:
+            marker_pos_x_list.append(marker.pos[0])
+
+        sorted_list = sorted(marker_pos_x_list)
+        for key in range(len(marker_pos_x_list)):
+            for id in range(len(marker_pos_x_list)):
+                if sorted_list[key] == (marker_pos_x_list[id]):
+                    if key < len(HandData().fingers_pos):
+                        self.left_hand.finger_marker_dict[id] = abs(key-len(HandData().fingers_pos)+1)
+                        # self.left_hand.fingers_pos[key] = marker_list[id]
+                    else:
+                        self.right_hand.finger_marker_dict[id] = key-len(HandData().fingers_pos)
+                        # self.right_hand.fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
+
+
         # TODO: 画面領域を決定 +
         print("Point upper-left on display")
         sys.stdin.readline()
@@ -216,28 +239,21 @@ class HandListener(QtCore.QThread):
         self.startorend_leap.emit(False)
 
     def exportHands(self, mocap_data:MoCapData):
-        left_hand = HandData()
-        right_hand = HandData()
         for body in mocap_data.rigid_body_data.rigid_body_list:
-            rigid_body: RigidBody = body
-            hand = HandData()
-            hand.setPalm(rigid_body)
-            if self.type_hands[rigid_body.id_num] == 'l':
-                left_hand = hand
-            elif self.type_hands[rigid_body.id_num] == 'r':
-                right_hand = hand
+            if self.left_hand.rb_id == body.id_num:
+                self.left_hand.setPalm(body)
+            elif self.right_hand.rb_id == body.id_num:
+                self.right_hand.setPalm(body)
 
         marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        left_hand.setFingerPos(marker_list=marker_list)
-        right_hand.setFingerPos(marker_list=marker_list)
-
-        return [left_hand, right_hand]
+        self.left_hand.setFingerPos(marker_list=marker_list)
+        self.right_hand.setFingerPos(marker_list=marker_list)
 
     # TODO: This function has to be fixed for Opti version
     def frameListener(self, mocap_data:MoCapData):
         if not mocap_data.rigid_body_data.get_rigid_body_count() > 1:
             # フレームデータから手のデータを抽出
-            hands = self.exportHands(mocap_data)
+            self.exportHands(mocap_data)
 
             for handid in list(self.preHands.keys()):
                 if not frame.hand(handid).is_valid:
