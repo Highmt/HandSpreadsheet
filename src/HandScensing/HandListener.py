@@ -99,8 +99,16 @@ class HandListener(QtCore.QThread):
         self.current_mocap_data = mocap_data
 
     def getCurrentData(self):
-        data = self.current_mocap_data
-        return data
+        mocap_data = self.current_mocap_data
+        while self.judgeDataComplete(mocap_data):
+            print("Sorry, the system is not ready\nPush Enter key again\n")
+            sys.stdin.readline()
+            mocap_data = self.getCurrentData()
+        return mocap_data
+
+    def judgeDataComplete(self, mocap_data: MoCapData):
+        return mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
+               mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos)*2
 
 
     def do_calibration(self):
@@ -109,81 +117,56 @@ class HandListener(QtCore.QThread):
 
         print("Please stay hand on home position\nPush Enter key\n")
         sys.stdin.readline()
-        while self.current_mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
-                self.current_mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos)*2:
-            print("Sorry, the system is not ready\nPush Enter key again\n")
-            sys.stdin.readline()
-
         mocap_data = self.getCurrentData()
         self.settingRigidbodyID(mocap_data)
         self.settingUnlabeledMarkerID(mocap_data)
         print("Complete both hands setting calibration!")
 
-        # TODO: 画面領域を決定
+        self.settingScrean()
+        print("\nComplete caribration")
+
+        self.streaming_client.new_frame_listener = self.frameListener
+        sys.stdin.readline()
+
+    def settingScrean(self):
+        # 画面領域を決定
         print("\nNext, screan size caribration")
         print("Point to upper-left on display\nPush Enter key\n")
         sys.stdin.readline()
-        frame = controller.frame()
-        fingers = frame.fingers
-        while fingers.is_empty:
-            print("Non fingers so tyr again")
-            sys.stdin.readline()
-            frame = controller.frame()
-            fingers = frame.fingers
-        f_finger = fingers.frontmost
-        dis_ul = f_finger.joint_position(f_finger.JOINT_TIP)
+        mocap_data = self.getCurrentData()
+        self.setHandData(mocap_data)
+        # TODO: 左右どちらの手にするかは要チェック基本左手
+        dis_ul = self.left_hand.fingers_pos[1]
         print(dis_ul)
-
-        print("Point to lower-left on display")
+        print("Point to lower-left on display\nPush Enter key\n")
         sys.stdin.readline()
-        frame = controller.frame()
-        fingers = frame.fingers
-        while fingers.is_empty:
-            print("Non fingers so tyr again")
-            sys.stdin.readline()
-            frame = controller.frame()
-            fingers = frame.fingers
-        f_finger = fingers.frontmost
-        dis_ll = f_finger.joint_position(f_finger.JOINT_TIP)
+        mocap_data = self.getCurrentData()
+        self.setHandData(mocap_data)
+        # TODO: 左右どちらの手にするかは要チェック
+        dis_ll = self.left_hand.fingers_pos[1]
         print(dis_ll)
-
-        print("Point to upper-right on display")
+        print("Point to upper-right on display\nPush Enter key\n")
         sys.stdin.readline()
-        frame = controller.frame()
-        fingers = frame.fingers
-        while fingers.is_empty:
-            print("Non fingers so tyr again")
-            sys.stdin.readline()
-            frame = controller.frame()
-            fingers = frame.fingers
-        f_finger = fingers.frontmost
-        dis_lr = f_finger.joint_position(f_finger.JOINT_TIP)
+        mocap_data = self.getCurrentData()
+        self.setHandData(mocap_data)
+        # TODO: 左右どちらの手にするかは要チェック
+        dis_lr = self.left_hand.fingers_pos[1]
         print(dis_lr)
-
-        print("Point to lower-right on display")
+        print("Point to lower-right on display\nPush Enter key\n")
         sys.stdin.readline()
-        frame = controller.frame()
-        fingers = frame.fingers
-        while fingers.is_empty:
-            print("Non fingers so tyr again")
-            sys.stdin.readline()
-            frame = controller.frame()
-            fingers = frame.fingers
-        f_finger = fingers.frontmost
-        dis_ur = f_finger.joint_position(f_finger.JOINT_TIP)
+        mocap_data = self.getCurrentData()
+        self.setHandData(mocap_data)
+        # TODO: 左右どちらの手にするかは要チェック
+        dis_ur = self.left_hand.fingers_pos[1]
         print(dis_ur)
-
         # 四隅の値の平均を上下左右の値とする
-        self.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
-        self.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
-        self.finger_dis_dim["left"] = (dis_ul.x + dis_ll.x) / 2
-        self.finger_dis_dim["right"] = (dis_ur.x + dis_lr.x) / 2
+        self.finger_dis_dim["up"] = (dis_ul[1] + dis_ur[1]) / 2
+        self.finger_dis_dim["low"] = (dis_ll[1] + dis_lr[1]) / 2
+        self.finger_dis_dim["left"] = (dis_ul[0] + dis_ll[0]) / 2
+        self.finger_dis_dim["right"] = (dis_ur[0] + dis_lr[0]) / 2
         self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
-
-        print("\nComplete caribration")
-        sys.stdin.readline()
 
     def settingUnlabeledMarkerID(self, mocap_data):
         # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
@@ -243,7 +226,7 @@ class HandListener(QtCore.QThread):
         print("Exited")
         self.startorend_leap.emit(False)
 
-    def exportHands(self, mocap_data:MoCapData):
+    def setHandData(self, mocap_data:MoCapData):
         for body in mocap_data.rigid_body_data.rigid_body_list:
             if self.left_hand.rb_id == body.id_num:
                 self.left_hand.setPalm(body)
@@ -256,9 +239,9 @@ class HandListener(QtCore.QThread):
 
     # TODO: This function has to be fixed for Opti version
     def frameListener(self, mocap_data:MoCapData):
-        if not mocap_data.rigid_body_data.get_rigid_body_count() > 1:
+        if self.judgeDataComplete(mocap_data):
             # フレームデータから手のデータを抽出
-            self.exportHands(mocap_data)
+            self.setHandData(mocap_data)
 
             for handid in list(self.preHands.keys()):
                 if not frame.hand(handid).is_valid:
