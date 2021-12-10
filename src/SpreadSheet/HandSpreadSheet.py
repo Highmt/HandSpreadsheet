@@ -113,46 +113,12 @@ class HandSpreadSheet(QMainWindow):
 
         # Create a sample listener and controller
         self.listener = HandListener()
+        self.listener.initOptiTrack()
         self.setLeapSignal()
 
         # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
         self.show()
-        self.initOptiTrack()
-
-    def initOptiTrack(self):
-        optionsDict = {}
-        optionsDict["clientAddress"] = "172.16.0.8"
-        optionsDict["serverAddress"] = "172.16.0.100"
-        optionsDict["use_multicast"] = False
-
-        self.streaming_client = NatNetClient()
-        self.streaming_client.set_client_address(optionsDict["clientAddress"])
-        self.streaming_client.set_server_address(optionsDict["serverAddress"])
-        self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
-
-        # TODO: connect listener
-        self.streaming_client.new_frame_listener = self.listener.frameListener()
-        print_configuration(self.streaming_client)
-
-        is_running = self.streaming_client.run()
-        if not is_running:
-            print("ERROR: Could not start streaming client.")
-            try:
-                sys.exit(1)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
-
-        if self.streaming_client.connected() is False:
-            print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
-            try:
-                sys.exit(2)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
 
     def createStatusBar(self):
 
