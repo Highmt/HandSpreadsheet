@@ -7,6 +7,8 @@ from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
 from src.UDP.MoCapData import MoCapData, RigidBody, MarkerSetData
+from src.UDP.NatNetClient import NatNetClient
+from src.UDP.PythonSample import print_configuration
 
 DIS_SIZE = pyautogui.size()
 memorySize = 30
@@ -22,6 +24,7 @@ class HandData():
         self.index_pos = [0, 0, 0]
         self.pinky_pos = [0, 0, 0]
 
+
     def setIsLeft(self, bool):
         self.isLeft = bool
 
@@ -29,12 +32,15 @@ class HandData():
         self.hand_pos = rigid_body.pos
         self.rot = rigid_body.rot
 
+    def setFingerMarkerDict(self, key, value):
+        self.finger_marker_dict[key] = value
+
     def setFingerPos(self, marker_list):
-        #TODO: ここにunlabeledMarkerから適切なマーカの位置データをセット
         for marker in marker_list:
             if marker.id_num in self.finger_marker_dict.keys():
                 self.fingers_pos[self.finger_marker_dict[marker.id_num]] = marker.pos
 
+    #TODO: マーカーロストの処理
 
 class HandListener(QtCore.QThread):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -52,15 +58,67 @@ class HandListener(QtCore.QThread):
         self.memoryHands = {}
         self.preHands = {}
         self.type_hands = {}
-        self.finger_marker_dict = {'l': {}, 'r': {}}
+        self.current_mocap_data: MoCapData = None
 
-    # TODO: caribration
-    #       指先の左右の手のrididbodyIDを登録 < type_hands[rididbody.num_id] = 'l'> +
-    #       unlabeledMarkerのlabelを登録する < type_unlabeled[type_hands[rididbody.num_id]][0] =
-    #       画面領域を決定 +
-    #       frameListenerをframeListener()に変換
-    def on_caribration(self, controller):
+    def initOptiTrack(self):
+        optionsDict = {}
+        optionsDict["clientAddress"] = "172.16.0.8"
+        optionsDict["serverAddress"] = "172.16.0.100"
+        optionsDict["use_multicast"] = False
+
+        self.streaming_client = NatNetClient()
+        self.streaming_client.set_client_address(optionsDict["clientAddress"])
+        self.streaming_client.set_server_address(optionsDict["serverAddress"])
+        self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
+        print_configuration(self.streaming_client)
+
+        is_running = self.streaming_client.run()
+        if not is_running:
+            print("ERROR: Could not start streaming client.")
+            try:
+                sys.exit(1)
+            except SystemExit:
+                print("...")
+            finally:
+                print("exiting")
+
+        if self.streaming_client.connected() is False:
+            print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
+            try:
+                sys.exit(2)
+            except SystemExit:
+                print("...")
+            finally:
+                print("exiting")
+
+        self.do_calibration()
+        self.streaming_client.new_frame_listener = self.frameListener
+
+    def calibrationListener(self, mocap_data: MoCapData):
+        self.current_mocap_data = mocap_data
+
+    def do_calibration(self):
         print("Do caribration")
+        self.streaming_client.new_frame_listener = self.calibrationListener
+
+        print("Please stay hand on home position\nPush Enter key\n")
+        sys.stdin.readline()
+        while self.current_mocap_data.rigid_body_data.get_rigid_body_count() < 2:
+            print("Sorry, the system is not ready\nPush Enter key again\n")
+            sys.stdin.readline()
+
+        mocap_data = self.current_mocap_data
+
+        # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
+        if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
+            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[0].id_num] = 'l'
+            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[1].id_num] = 'r'
+        else:
+            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[0].id_num] = 'r'
+            self.type_hands[mocap_data.rigid_body_data.rigid_body_list[1].id_num] = 'l'
+
+        # TODO: unlabeledMarkerのlabelを登録する < type_unlabeled[type_hands[rididbody.num_id]][0] =
+        # TODO: 画面領域を決定 +
         print("Point upper-left on display")
         sys.stdin.readline()
         frame = controller.frame()
@@ -177,7 +235,7 @@ class HandListener(QtCore.QThread):
 
     # TODO: This function has to be fixed for Opti version
     def frameListener(self, mocap_data:MoCapData):
-        if not mocap_data.rigid_body_data == None:
+        if not mocap_data.rigid_body_data.get_rigid_body_count() > 1:
             # フレームデータから手のデータを抽出
             hands = self.exportHands(mocap_data)
 
