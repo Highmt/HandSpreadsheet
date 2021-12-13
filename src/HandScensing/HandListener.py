@@ -18,12 +18,14 @@ z_threshold = 30
 
 
 class HandData:
-    def __init__(self):
+    def __init__(self, is_left: bool = None):
         self.rb_id = 0
+        self.is_left = is_left
         self.position = [0, 0, 0]
         self.rotation = [0, 0, 0, 0]
         self.finger_marker_dict = {}
         self.fingers_pos = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+
 
     def setPalm(self, rigid_body: RigidBody):
         self.position = rigid_body.pos
@@ -57,7 +59,7 @@ class HandListener(QtCore.QThread):
         self.isPointingMode = False
         self.predictor = Predictor("KNN")  # 学習モデル
         self.current_mocap_data: MoCapData = None
-        self.hands_dict = {'l': HandData(), 'r': HandData()}
+        self.hands_dict = {'l': HandData(is_left=False), 'r': HandData(is_left=False)}
         handlist = []
         for i in range(memorySize):
             handlist.append(HandEnum.FREE.value)
@@ -102,7 +104,7 @@ class HandListener(QtCore.QThread):
     def calibrationListener(self, mocap_data: MoCapData):
         self.current_mocap_data = mocap_data
 
-    def getCurrentData(self):
+    def getCurrentData(self) -> HandData:
         while not self.judgeDataComplete(self.current_mocap_data):
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
@@ -125,9 +127,7 @@ class HandListener(QtCore.QThread):
 
         self.settingScrean()
         print("\nComplete caribration")
-
-        self.streaming_client.new_frame_listener = self.frameListener
-        sys.stdin.readline()
+        self.streaming_client.new_frame_listener = None
 
     def settingScrean(self):
         # 画面領域を決定
@@ -249,21 +249,21 @@ class HandListener(QtCore.QThread):
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時フィードバックを非表示
-            if self.hands_dict['l'].hand_pos[2] < z_threshold and self.hands_dict['r'].hand_pos[2] < z_threshold:
+            if self.hands_dict['l'].position[2] < z_threshold and self.hands_dict['r'].position[2] < z_threshold:
                 self.hide_feedback.emit()
                 return
 
             # 認識した手の形状を識別する
             for key in self.hands_dict.keys():
                 handlist = self.memoryHands.get(key)
-                prehand = self.preHands.get(key)
+                prehand: int = self.preHands.get(key)
 
                 handlist.pop(0)
 
-                if self.hands_dict.get(key).hand_pos[2] < z_threshold:
+                if self.hands_dict.get(key).position[2] < z_threshold:
                     hand_state = HandEnum.FREE.value
                 else:
-                    hand_state = self.predictor.handPredict(self.hands_dict.get(key))  # 学習機で手形状識別
+                    hand_state = self.predictor.handPredict(hand=self.hands_dict.get(key))  # 学習機で手形状識別
                 # print(hand_state)
                 handlist.append(hand_state)  # 手形状のメモリに新規追加
                 self.memoryHands[key] = handlist  # 手形状のメモリを更新
@@ -328,7 +328,7 @@ class HandListener(QtCore.QThread):
                 # print("降順ソート前状態に遷移")
                 self.change_feedback.emit("Reverse", "", direction)
 
-        elif n_hand == HandEnum.PALM.value:
+        elif n_hand == HandEnum.OPEN.value:
             if p_hand == HandEnum.GRIP.value:
                 print("ペースト関数実行")
                 self.action_operation.emit(ActionEnum.PASTE.value, DirectionEnum.NONE.value)
@@ -341,8 +341,8 @@ class HandListener(QtCore.QThread):
                     self.change_feedback.emit("One Palm", "", DirectionEnum.VERTICAL.value)
 
         elif n_hand == HandEnum.GRIP.value:
-            if p_hand == HandEnum.PALM.value:
-                if list(self.preHands.values()).count(HandEnum.PALM.value) > 1:
+            if p_hand == HandEnum.OPEN.value:
+                if list(self.preHands.values()).count(HandEnum.OPEN.value) > 1:
                     print("コピー関数実行")
                     self.action_operation.emit(ActionEnum.COPY.value, DirectionEnum.NONE.value)
                 else:
