@@ -202,15 +202,15 @@ class HandListener(QtCore.QThread):
             self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
 
     def on_caribrationTest(self):
-        dis_ul = Vector(-120, 215, 0)
-        dis_ll = Vector(-130, 90, 0)
-        dis_lr = Vector(130, 90, 0)
-        dis_ur = Vector(120, 215, 0)
+        dis_ul = [-120, 215, 0]
+        dis_ll = [-130, 90, 0]
+        dis_lr = [130, 90, 0]
+        dis_ur = [120, 215, 0]
 
-        self.finger_dis_dim["up"] = (dis_ul.y + dis_ur.y) / 2
-        self.finger_dis_dim["low"] = (dis_ll.y + dis_lr.y) / 2
-        self.finger_dis_dim["left"] = (dis_ul.x + dis_ll.x) / 2
-        self.finger_dis_dim["right"] = (dis_ur.x + dis_lr.x) / 2
+        self.finger_dis_dim["up"] = (dis_ul[1] + dis_ur[1]) / 2
+        self.finger_dis_dim["low"] = (dis_ll[1] + dis_lr[1]) / 2
+        self.finger_dis_dim["left"] = (dis_ul[0] + dis_ll[0]) / 2
+        self.finger_dis_dim["right"] = (dis_ur[0] + dis_lr[0]) / 2
         self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
@@ -284,13 +284,11 @@ class HandListener(QtCore.QThread):
         # 親指第一関節と人差し指の第二関節の位置を識別
         # TODO 45度を閾値としているが調査の必要あり
         thumb_pos = hand.fingers_pos[0]
-        # thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_DIP)
         index_pos = hand.fingers_pos[1]
-        # index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_PIP)
         dif_vec = [index_pos[0] - thumb_pos[0], index_pos[1] - thumb_pos[1]]
         return dif_vec[1] * dif_vec[1] / dif_vec[0] / dif_vec[0] < 1
 
-    def action(self, p_hand, n_hand, hand):
+    def action(self, p_hand: int, n_hand: int, hand: HandData):
         if self.isHolizon(hand):
             direction = DirectionEnum.HORIZON.value
         else:
