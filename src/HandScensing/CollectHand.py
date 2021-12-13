@@ -5,109 +5,41 @@
 # https://developer.leapmotion.com/sdk_agreement, or another agreement         #
 # between Leap Motion and you, your company or other organization.             #
 ################################################################################
-
-from lib.LeapMotion.Leap import *
+import copy
 import sys
 
 import pandas as pd
 from datetime import datetime
 
-from res.SSEnum import HandEnum
+from res.SSEnum import HandEnum, FeatureEnum
+from src.HandScensing.HandListener import HandListener, HandData
+from src.UDP.MoCapData import MoCapData
+from src.UDP.NatNetClient import NatNetClient
+from src.UDP.PythonSample import print_configuration
 
 version = "master"
 #　収集する手形状のラベル（）
-label = HandEnum.PINCH_IN.value
-names = HandEnum.NAME_LIST.value
+labels = HandEnum.NAME_LIST.value
+streaming_client = NatNetClient()
 collect_data_num = 2000
-data_count = 0
-
-hand_position_x = []
-hand_position_y = []
-hand_position_z = []
-pitch_list = []
-roll_list = []
-yaw_list = []
-arm_direction_x = []
-arm_direction_y = []
-arm_direction_z = []
-wrist_position_x = []
-wrist_position_y = []
-wrist_position_z = []
-elbow_position_x = []
-elbow_position_y = []
-elbow_position_z = []
-
-Thumb_fin_meta_direction_x = []
-Thumb_fin_meta_direction_y = []
-Thumb_fin_meta_direction_z = []
-Thumb_fin_prox_direction_x = []
-Thumb_fin_prox_direction_y = []
-Thumb_fin_prox_direction_z = []
-Thumb_fin_inter_direction_x = []
-Thumb_fin_inter_direction_y = []
-Thumb_fin_inter_direction_z = []
-Thumb_fin_dist_direction_x = []
-Thumb_fin_dist_direction_y = []
-Thumb_fin_dist_direction_z = []
-
-Index_fin_meta_direction_x = []
-Index_fin_meta_direction_y = []
-Index_fin_meta_direction_z = []
-Index_fin_prox_direction_x = []
-Index_fin_prox_direction_y = []
-Index_fin_prox_direction_z = []
-Index_fin_inter_direction_x = []
-Index_fin_inter_direction_y = []
-Index_fin_inter_direction_z = []
-Index_fin_dist_direction_x = []
-Index_fin_dist_direction_y = []
-Index_fin_dist_direction_z = []
-
-Middle_fin_meta_direction_x = []
-Middle_fin_meta_direction_y = []
-Middle_fin_meta_direction_z = []
-Middle_fin_prox_direction_x = []
-Middle_fin_prox_direction_y = []
-Middle_fin_prox_direction_z = []
-Middle_fin_inter_direction_x = []
-Middle_fin_inter_direction_y = []
-Middle_fin_inter_direction_z = []
-Middle_fin_dist_direction_x = []
-Middle_fin_dist_direction_y = []
-Middle_fin_dist_direction_z = []
-
-Ring_fin_meta_direction_x = []
-Ring_fin_meta_direction_y = []
-Ring_fin_meta_direction_z = []
-Ring_fin_prox_direction_x = []
-Ring_fin_prox_direction_y = []
-Ring_fin_prox_direction_z = []
-Ring_fin_inter_direction_x = []
-Ring_fin_inter_direction_y = []
-Ring_fin_inter_direction_z = []
-Ring_fin_dist_direction_x = []
-Ring_fin_dist_direction_y = []
-Ring_fin_dist_direction_z = []
-
-Pinky_fin_meta_direction_x = []
-Pinky_fin_meta_direction_y = []
-Pinky_fin_meta_direction_z = []
-Pinky_fin_prox_direction_x = []
-Pinky_fin_prox_direction_y = []
-Pinky_fin_prox_direction_z = []
-Pinky_fin_inter_direction_x = []
-Pinky_fin_inter_direction_y = []
-Pinky_fin_inter_direction_z = []
-Pinky_fin_dist_direction_x = []
-Pinky_fin_dist_direction_y = []
-Pinky_fin_dist_direction_z = []
-
-label_list = []
+z_threshold = 30
+finger_labels = ['Thumb', 'Index', 'Pinky']
+pos_labels = ["x", "y", "z"]
+rot_labels = ["pitch", "roll", "yaw"]
 
 
-class CollectListener(Listener):
-    finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-    bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
+class CollectListener(HandListener):
+    def __init__(self):
+        super().__init__()
+        self.current_correct_id = 0
+        self.enables = [False, False]
+        self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
+        self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='x')
+        self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='x')
+
+    def reset_df(self):
+        self.left_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
+        self.right_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
 
     def on_init(self, controller):
         print("Initialized")
@@ -122,276 +54,127 @@ class CollectListener(Listener):
     def on_exit(self, controller):
         print("Exited")
 
-    def on_frame(self, controller):
-        global data_count, collect_data_num
+    def initOptiTrack(self):
+        optionsDict = {}
+        optionsDict["clientAddress"] = "172.16.0.8"
+        optionsDict["serverAddress"] = "172.16.0.100"
+        optionsDict["use_multicast"] = False
+
+        self.streaming_client = NatNetClient()
+        self.streaming_client.set_client_address(optionsDict["clientAddress"])
+        self.streaming_client.set_server_address(optionsDict["serverAddress"])
+        self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
+        print_configuration(self.streaming_client)
+
+        is_running = self.streaming_client.run()
+        if not is_running:
+            print("ERROR: Could not start streaming client.")
+            try:
+                sys.exit(1)
+            except SystemExit:
+                print("...")
+            finally:
+                print("exiting")
+
+        if self.streaming_client.connected() is False:
+            print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
+            try:
+                sys.exit(2)
+            except SystemExit:
+                print("...")
+            finally:
+                print("exiting")
+
+        self.do_calibration()
+
+    def frameListener(self, mocap_data: MoCapData):
         # Get the most recent frame and report some basic information
+        if self.judgeDataComplete(mocap_data=mocap_data):
+            self.setHandData(mocap_data=mocap_data)
 
-        # 　データ収集が完了すると終了
-        if (data_count >= collect_data_num):
-            controller.remove_listener(self)
-            print("\n\n\n\n\n\nPush Enter to Finish")
-            data_save_pandas()
-        frame = controller.frame()
+            for hand in self.hands_dict.values():
+                # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
+                if (hand.is_left and self.left_enable or not hand.is_left and self.right_enable) and \
+                        hand.position[2] < z_threshold:
+                    continue
 
-        # Get hands
-        for hand in frame.hands:
-            data_count = data_count + 1
-            print("Frame id: %d, timestamp: %d, hands: %d, fingers: %d" % (
-                frame.id, frame.timestamp, len(frame.hands), len(frame.fingers)))
-            handType = "Left hand" if hand.is_left else "Right hand"
+                print("timestamp: %d" %(mocap_data.suffix_data.timestamp))
+                ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
+                # Get the hand's normal vector and direction
 
-            print("  %s, id %d, position: %s" % (
-                handType, hand.id, hand.palm_position))
+                ps["position_x", "position_y", "position_z"] = hand.position
+                ps["pitch", "roll", "yaw"] = hand.rotation
+                # Calculate the hand's pitch, roll, and yaw angles
 
-            # Get the hand's normal vector and direction
-            normal = hand.palm_normal
-            direction = hand.direction
+                # Get fingers
+                for finger_id in len(hand.fingers_pos):
+                    for pos in range(3):
+                        ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]] = hand.fingers_pos[pos]
+                        ps[finger_labels[finger_id] + "dir" + pos_labels[pos]] = hand.fingers_pos[pos] - hand.position[pos]
 
-            pitch = direction.pitch * RAD_TO_DEG
-            roll = normal.roll * RAD_TO_DEG
-            yaw = direction.yaw * RAD_TO_DEG
+                # 　データ収集が完了すると終了
+                if hand.is_left:
+                    self.dfs[0] = self.dfs[0].append(ps, ignore_index=True)
+                    if (len(self.dfs[0]) >= collect_data_num):
+                        self.enables[0] = False
+                        self.data_save_pandas(lr="left", data=copy.deepcopy(self.dfs[0]))
+                        print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "left"))
+                else:
+                    self.dfs[1] = self.dfs[1].append(ps, ignore_index=True)
+                    if (len(self.dfs[1]) >= collect_data_num):
+                        self.enables[1] = False
+                        self.data_save_pandas(lr="right", data=copy.deepcopy(self.dfs[1]))
+                        print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "right"))
 
-            # Calculate the hand's pitch, roll, and yaw angles
-            print("  pitch: %f degrees, roll: %f degrees, yaw: %f degrees" % (
-                pitch,
-                roll,
-                yaw))
+        if not (self.enables[0] or self.enables[1]):
+            self.streaming_client.stop()
+            print("Finished to correct {} shape data\nPlease press Enter key for next".format(labels[self.current_correct_id]))
 
-            # Get arm bone
-            arm = hand.arm
-            print("  Arm direction: %s, wrist position: %s, elbow position: %s" % (
-                arm.direction,
-                arm.wrist_position,
-                arm.elbow_position))
-
-            # Get fingers
-
-            for finger in hand.fingers:
-
-                print("    %s finger, id: %d, length: %fmm, width: %fmm" % (
-                    self.finger_names[finger.type],
-                    finger.id,
-                    finger.length,
-                    finger.width))
-
-                # Get bones
-                for b in range(0, 4):
-                    bone = finger.bone(b)
-                    print("      Bone: %s, start: %s, end: %s, direction: %s" % (
-                        self.bone_names[bone.type],
-                        bone.prev_joint,
-                        bone.next_joint,
-                        bone.direction))
-
-                    if self.finger_names[finger.type] == 'Thumb':
-                        if self.bone_names[bone.type] == 'Metacarpal':
-                            Thumb_fin_meta_direction_x.append(bone.direction.x)
-                            Thumb_fin_meta_direction_y.append(bone.direction.y)
-                            Thumb_fin_meta_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Proximal':
-                            Thumb_fin_prox_direction_x.append(bone.direction.x)
-                            Thumb_fin_prox_direction_y.append(bone.direction.y)
-                            Thumb_fin_prox_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Intermediate':
-                            Thumb_fin_inter_direction_x.append(bone.direction.x)
-                            Thumb_fin_inter_direction_y.append(bone.direction.y)
-                            Thumb_fin_inter_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Distal':
-                            Thumb_fin_dist_direction_x.append(bone.direction.x)
-                            Thumb_fin_dist_direction_y.append(bone.direction.y)
-                            Thumb_fin_dist_direction_z.append(bone.direction.z)
-                    if self.finger_names[finger.type] == 'Index':
-                        if self.bone_names[bone.type] == 'Metacarpal':
-                            Index_fin_meta_direction_x.append(bone.direction.x)
-                            Index_fin_meta_direction_y.append(bone.direction.y)
-                            Index_fin_meta_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Proximal':
-                            Index_fin_prox_direction_x.append(bone.direction.x)
-                            Index_fin_prox_direction_y.append(bone.direction.y)
-                            Index_fin_prox_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Intermediate':
-                            Index_fin_inter_direction_x.append(bone.direction.x)
-                            Index_fin_inter_direction_y.append(bone.direction.y)
-                            Index_fin_inter_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Distal':
-                            Index_fin_dist_direction_x.append(bone.direction.x)
-                            Index_fin_dist_direction_y.append(bone.direction.y)
-                            Index_fin_dist_direction_z.append(bone.direction.z)
-                    if self.finger_names[finger.type] == 'Middle':
-                        if self.bone_names[bone.type] == 'Metacarpal':
-                            Middle_fin_meta_direction_x.append(bone.direction.x)
-                            Middle_fin_meta_direction_y.append(bone.direction.y)
-                            Middle_fin_meta_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Proximal':
-                            Middle_fin_prox_direction_x.append(bone.direction.x)
-                            Middle_fin_prox_direction_y.append(bone.direction.y)
-                            Middle_fin_prox_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Intermediate':
-                            Middle_fin_inter_direction_x.append(bone.direction.x)
-                            Middle_fin_inter_direction_y.append(bone.direction.y)
-                            Middle_fin_inter_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Distal':
-                            Middle_fin_dist_direction_x.append(bone.direction.x)
-                            Middle_fin_dist_direction_y.append(bone.direction.y)
-                            Middle_fin_dist_direction_z.append(bone.direction.z)
-                    if self.finger_names[finger.type] == 'Ring':
-                        if self.bone_names[bone.type] == 'Metacarpal':
-                            Ring_fin_meta_direction_x.append(bone.direction.x)
-                            Ring_fin_meta_direction_y.append(bone.direction.y)
-                            Ring_fin_meta_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Proximal':
-                            Ring_fin_prox_direction_x.append(bone.direction.x)
-                            Ring_fin_prox_direction_y.append(bone.direction.y)
-                            Ring_fin_prox_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Intermediate':
-                            Ring_fin_inter_direction_x.append(bone.direction.x)
-                            Ring_fin_inter_direction_y.append(bone.direction.y)
-                            Ring_fin_inter_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Distal':
-                            Ring_fin_dist_direction_x.append(bone.direction.x)
-                            Ring_fin_dist_direction_y.append(bone.direction.y)
-                            Ring_fin_dist_direction_z.append(bone.direction.z)
-                    if self.finger_names[finger.type] == 'Pinky':
-                        if self.bone_names[bone.type] == 'Metacarpal':
-                            Pinky_fin_meta_direction_x.append(bone.direction.x)
-                            Pinky_fin_meta_direction_y.append(bone.direction.y)
-                            Pinky_fin_meta_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Proximal':
-                            Pinky_fin_prox_direction_x.append(bone.direction.x)
-                            Pinky_fin_prox_direction_y.append(bone.direction.y)
-                            Pinky_fin_prox_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Intermediate':
-                            Pinky_fin_inter_direction_x.append(bone.direction.x)
-                            Pinky_fin_inter_direction_y.append(bone.direction.y)
-                            Pinky_fin_inter_direction_z.append(bone.direction.z)
-                        if self.bone_names[bone.type] == 'Distal':
-                            Pinky_fin_dist_direction_x.append(bone.direction.x)
-                            Pinky_fin_dist_direction_y.append(bone.direction.y)
-                            Pinky_fin_dist_direction_z.append(bone.direction.z)
-
-            hand_position_x.append(hand.palm_position.x)
-            hand_position_y.append(hand.palm_position.y)
-            hand_position_z.append(hand.palm_position.z)
-            pitch_list.append(pitch)
-            roll_list.append(roll)
-            yaw_list.append(yaw)
-            arm_direction_x.append(arm.direction.x)
-            arm_direction_y.append(arm.direction.y)
-            arm_direction_z.append(arm.direction.z)
-            wrist_position_x.append(arm.wrist_position.x)
-            wrist_position_y.append(arm.wrist_position.y)
-            wrist_position_z.append(arm.wrist_position.z)
-            elbow_position_x.append(arm.elbow_position.x)
-            elbow_position_y.append(arm.elbow_position.y)
-            elbow_position_z.append(arm.elbow_position.z)
-            label_list.append(label)
-
-        # if frame.hands.is_empty:
-        #     print("no hand")
-
-
-def data_save_pandas():
-    df = pd.DataFrame({
-        # "hand_position_x" : hand_position_x,
-        # "hand_position_y" : hand_position_y,
-        # "hand_position_z" : hand_position_z,
-        # "pitch" : pitch_list,
-        # "roll" : roll_list,
-        # "yaw" : yaw_list,
-        # "wrist_position_x" : wrist_position_x,
-        # "wrist_position_y" : wrist_position_y,
-        # "wrist_position_z" : wrist_position_z,
-        # "elbow_position_x" : elbow_position_x,
-        # "elbow_position_y" : elbow_position_y,
-        # "elbow_position_z" : elbow_position_z,
-        "arm_direction_x": arm_direction_x,
-        "arm_direction_y": arm_direction_y,
-        "arm_direction_z": arm_direction_z,
-        "Thumb_fin_meta_direction_x": Thumb_fin_meta_direction_x,
-        "Thumb_fin_meta_direction_y": Thumb_fin_meta_direction_y,
-        "Thumb_fin_meta_direction_z": Thumb_fin_meta_direction_z,
-        "Thumb_fin_prox_direction_x": Thumb_fin_prox_direction_x,
-        "Thumb_fin_prox_direction_y": Thumb_fin_prox_direction_y,
-        "Thumb_fin_prox_direction_z": Thumb_fin_prox_direction_z,
-        "Thumb_fin_inter_direction_x": Thumb_fin_inter_direction_x,
-        "Thumb_fin_inter_direction_y": Thumb_fin_inter_direction_y,
-        "Thumb_fin_inter_direction_z": Thumb_fin_inter_direction_z,
-        "Thumb_fin_dist_direction_x": Thumb_fin_dist_direction_x,
-        "Thumb_fin_dist_direction_y": Thumb_fin_dist_direction_y,
-        "Thumb_fin_dist_direction_z": Thumb_fin_dist_direction_z,
-        "Index_fin_meta_direction_x": Index_fin_meta_direction_x,
-        "Index_fin_meta_direction_y": Index_fin_meta_direction_y,
-        "Index_fin_meta_direction_z": Index_fin_meta_direction_z,
-        "Index_fin_prox_direction_x": Index_fin_prox_direction_x,
-        "Index_fin_prox_direction_y": Index_fin_prox_direction_y,
-        "Index_fin_prox_direction_z": Index_fin_prox_direction_z,
-        "Index_fin_inter_direction_x": Index_fin_inter_direction_x,
-        "Index_fin_inter_direction_y": Index_fin_inter_direction_y,
-        "Index_fin_inter_direction_z": Index_fin_inter_direction_z,
-        "Index_fin_dist_direction_x": Index_fin_dist_direction_x,
-        "Index_fin_dist_direction_y": Index_fin_dist_direction_y,
-        "Index_fin_dist_direction_z": Index_fin_dist_direction_z,
-        "Middle_fin_meta_direction_x": Middle_fin_meta_direction_x,
-        "Middle_fin_meta_direction_y": Middle_fin_meta_direction_y,
-        "Middle_fin_meta_direction_z": Middle_fin_meta_direction_z,
-        "Middle_fin_prox_direction_x": Middle_fin_prox_direction_x,
-        "Middle_fin_prox_direction_y": Middle_fin_prox_direction_y,
-        "Middle_fin_prox_direction_z": Middle_fin_prox_direction_z,
-        "Middle_fin_inter_direction_x": Middle_fin_inter_direction_x,
-        "Middle_fin_inter_direction_y": Middle_fin_inter_direction_y,
-        "Middle_fin_inter_direction_z": Middle_fin_inter_direction_z,
-        "Middle_fin_dist_direction_x": Middle_fin_dist_direction_x,
-        "Middle_fin_dist_direction_y": Middle_fin_dist_direction_y,
-        "Middle_fin_dist_direction_z": Middle_fin_dist_direction_z,
-        "Ring_fin_meta_direction_x": Ring_fin_meta_direction_x,
-        "Ring_fin_meta_direction_y": Ring_fin_meta_direction_y,
-        "Ring_fin_meta_direction_z": Ring_fin_meta_direction_z,
-        "Ring_fin_prox_direction_x": Ring_fin_prox_direction_x,
-        "Ring_fin_prox_direction_y": Ring_fin_prox_direction_y,
-        "Ring_fin_prox_direction_z": Ring_fin_prox_direction_z,
-        "Ring_fin_inter_direction_x": Ring_fin_inter_direction_x,
-        "Ring_fin_inter_direction_y": Ring_fin_inter_direction_y,
-        "Ring_fin_inter_direction_z": Ring_fin_inter_direction_z,
-        "Ring_fin_dist_direction_x": Ring_fin_dist_direction_x,
-        "Ring_fin_dist_direction_y": Ring_fin_dist_direction_y,
-        "Ring_fin_dist_direction_z": Ring_fin_dist_direction_z,
-        "Pinky_fin_meta_direction_x": Pinky_fin_meta_direction_x,
-        "Pinky_fin_meta_direction_y": Pinky_fin_meta_direction_y,
-        "Pinky_fin_meta_direction_z": Pinky_fin_meta_direction_z,
-        "Pinky_fin_prox_direction_x": Pinky_fin_prox_direction_x,
-        "Pinky_fin_prox_direction_y": Pinky_fin_prox_direction_y,
-        "Pinky_fin_prox_direction_z": Pinky_fin_prox_direction_z,
-        "Pinky_fin_inter_direction_x": Pinky_fin_inter_direction_x,
-        "Pinky_fin_inter_direction_y": Pinky_fin_inter_direction_y,
-        "Pinky_fin_inter_direction_z": Pinky_fin_inter_direction_z,
-        "Pinky_fin_dist_direction_x": Pinky_fin_dist_direction_x,
-        "Pinky_fin_dist_direction_y": Pinky_fin_dist_direction_y,
-        "Pinky_fin_dist_direction_z": Pinky_fin_dist_direction_z,
-        "label": label_list,
-    })
-    
-    df.to_csv("../../res/data/{0}/{1}_{2}.csv".format(version, label, names.pop(label)))
+    def data_save_pandas(self, lr: str, data: pd.DataFrame):
+        data["label"] = self.current_correct_id
+        data.to_csv("../../res/data/{}Data_{}.csv".format(lr, version), mode='a', header=False)
 
 def main():
-    # Create a sample listener and controller
     listener = CollectListener()
-    controller = Controller()
+    listener.initOptiTrack()
+    listener.streaming_client.stop()
+    listener.streaming_client.new_frame_listener = listener.frameListener
 
     # Have the sample listener receive events from the controller
     print("Press Enter to start collecting hand data")
-    print("Press Enter again to quit...")
     sys.stdin.readline()
-    controller.add_listener(listener)
+    for label_id in range(len(labels)):
+        listener.current_correct_id = label_id
+        print("Please make {} hand shape".format(labels[label_id]))
+        listener.enables[0] = True
+        listener.enables[1] = True
+        if label_id == HandEnum.FREE.value:
+            print("First, use left hand")
+            print("Press Enter key to start")
+            listener.enables[0] = True
+            listener.enables[1] = False
+            sys.stdin.readline()
+            listener.streaming_client.restart()
+            sys.stdin.readline()
+
+            print("Next, use right hand")
+            print("Press Enter key to start")
+            listener.enables[0] = False
+            listener.enables[1] = True
+            sys.stdin.readline()
+            listener.streaming_client.restart()
+            sys.stdin.readline()
+        else:
+            print("use both hands at same time")
+            print("Press Enter key to start")
+            sys.stdin.readline()
+            listener.streaming_client.restart()
+            sys.stdin.readline()
+
 
     # Keep this process running until Enter is pressed
-
-    try:
-        sys.stdin.readline()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        # Remove the sample listener when done
-        controller.remove_listener(listener)
+    # Remove the sample listener when done
+    streaming_client.shutdown()
 
 
 if __name__ == "__main__":
