@@ -261,10 +261,14 @@ class HandListener(QtCore.QThread):
                 prehand = self.preHands.get(key)
 
                 handlist.pop(0)
-                hand_state = self.predictor.handPredict(self.hands_dict.get(key))  # 学習機で手形状識別
 
+                if self.hands_dict.get(key).hand_pos[2] < z_threshold:
+                    hand_state = HandEnum.FREE.value
+                else:
+                    hand_state = self.predictor.handPredict(self.hands_dict.get(key))  # 学習機で手形状識別
                 # print(hand_state)
                 handlist.append(hand_state)   # 手形状のメモリに新規追加
+                self.memoryHands[key] = handlist  # 手形状のメモリを更新
 
                 # 識別手形状とメモリの手形状リストから現在の手形状を決定
                 try:
@@ -272,19 +276,19 @@ class HandListener(QtCore.QThread):
                 except:
                     currentStatus = prehand
                 # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
-                self.memoryHands[key] = handlist  # 手形状のメモリを更新
-                # print(self.isHolizon(hand)) 向きが横か出力
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, self.hands_dict.get(key))
                     self.preHands[key] = currentStatus  # １つ前の手形状を更新
 
-    def isHolizon(self, hand):
+    def isHolizon(self, hand: HandData):
         # 親指第一関節と人差し指の第二関節の位置を識別
         # TODO 45度を閾値としているが調査の必要あり
-        thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_DIP)
-        index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_PIP)
-        dif_vec = Vector(index_pos.x - thumb_pos.x, index_pos.y - thumb_pos.y, 0)
-        return dif_vec.y * dif_vec.y / dif_vec.x / dif_vec.x < 1
+        thumb_pos = hand.fingers_pos[0]
+        # thumb_pos = hand.fingers.finger_type(Finger.TYPE_THUMB)[0].joint_position(Finger.JOINT_DIP)
+        index_pos = hand.fingers_pos[1]
+        # index_pos = hand.fingers.finger_type(Finger.TYPE_INDEX)[0].joint_position(Finger.JOINT_PIP)
+        dif_vec = [index_pos[0] - thumb_pos[0], index_pos[1] - thumb_pos[1]]
+        return dif_vec[1] * dif_vec[1] / dif_vec[0] / dif_vec[0] < 1
 
     def action(self, p_hand, n_hand, hand):
         if self.isHolizon(hand):
