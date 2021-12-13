@@ -583,7 +583,7 @@ class MoCapData:
         self.labeled_marker_data: LabeledMarkerData = None
         self.force_plate_data: ForcePlateData = None
         self.device_data: DeviceData = None
-        self.suffix_data = None
+        self.suffix_data: FrameSuffixData = None
 
     def set_prefix_data(self, new_prefix_data):
         self.prefix_data = new_prefix_data
