@@ -14,7 +14,7 @@ class HandEnum(Enum):
     PINCH_IN = 1
     PINCH_OUT = 2
     REVERSE = 3
-    PALM = 4
+    OPEN = 4
     GRIP = 5
     NAME_LIST = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "OPEN", "GRIP"]
 
