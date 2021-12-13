@@ -15,13 +15,15 @@ from src.UDP.PythonSample import print_configuration
 DIS_SIZE = pyautogui.size()
 memorySize = 30
 z_threshold = 30
+
+
 class HandData():
     def __init__(self):
         self.rb_id = 0
         self.hand_pos = [0, 0, 0]
         self.rot = [0, 0, 0, 0]
         self.finger_marker_dict = {}
-        self.fingers_pos =[ [0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        self.fingers_pos = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
         self.thumb_pos = [0, 0, 0]
         self.index_pos = [0, 0, 0]
         self.pinky_pos = [0, 0, 0]
@@ -41,7 +43,8 @@ class HandData():
     def getFingerPos(self, id):
         return self.fingers_pos[self.finger_marker_dict[id]]
 
-    #TODO: マーカーロストの処理
+    # TODO: マーカーロストの処理
+
 
 class HandListener(QtCore.QThread):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -64,7 +67,6 @@ class HandListener(QtCore.QThread):
 
         self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
         self.preHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
-
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -111,8 +113,7 @@ class HandListener(QtCore.QThread):
 
     def judgeDataComplete(self, mocap_data: MoCapData):
         return mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
-               mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos)*2
-
+               mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
 
     def do_calibration(self):
         print("Do caribration")
@@ -233,7 +234,7 @@ class HandListener(QtCore.QThread):
         print("Exited")
         self.startorend_leap.emit(False)
 
-    def setHandData(self, mocap_data:MoCapData):
+    def setHandData(self, mocap_data: MoCapData):
         for body in mocap_data.rigid_body_data.rigid_body_list:
             if self.hands_dict['l'].rb_id == body.id_num:
                 self.hands_dict['l'].setPalm(body)
@@ -245,7 +246,7 @@ class HandListener(QtCore.QThread):
         self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list))
 
     # TODO: This function has to be fixed for Opti version
-    def frameListener(self, mocap_data:MoCapData):
+    def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
@@ -267,7 +268,7 @@ class HandListener(QtCore.QThread):
                 else:
                     hand_state = self.predictor.handPredict(self.hands_dict.get(key))  # 学習機で手形状識別
                 # print(hand_state)
-                handlist.append(hand_state)   # 手形状のメモリに新規追加
+                handlist.append(hand_state)  # 手形状のメモリに新規追加
                 self.memoryHands[key] = handlist  # 手形状のメモリを更新
 
                 # 識別手形状とメモリの手形状リストから現在の手形状を決定
