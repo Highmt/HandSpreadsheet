@@ -17,20 +17,17 @@ memorySize = 30
 z_threshold = 30
 
 
-class HandData():
+class HandData:
     def __init__(self):
         self.rb_id = 0
-        self.hand_pos = [0, 0, 0]
-        self.rot = [0, 0, 0, 0]
+        self.position = [0, 0, 0]
+        self.rotation = [0, 0, 0, 0]
         self.finger_marker_dict = {}
         self.fingers_pos = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-        self.thumb_pos = [0, 0, 0]
-        self.index_pos = [0, 0, 0]
-        self.pinky_pos = [0, 0, 0]
 
     def setPalm(self, rigid_body: RigidBody):
-        self.hand_pos = rigid_body.pos
-        self.rot = rigid_body.rot
+        self.position = rigid_body.pos
+        self.rotation = rigid_body.rot
 
     def setFingerMarkerDict(self, key, value):
         self.finger_marker_dict[key] = value
@@ -40,8 +37,8 @@ class HandData():
             if marker.id_num in self.finger_marker_dict.keys():
                 self.fingers_pos[self.finger_marker_dict[marker.id_num]] = marker.pos
 
-    def getFingerPos(self, id):
-        return self.fingers_pos[self.finger_marker_dict[id]]
+    def getFingerPos(self, finger_id: int):
+        return self.fingers_pos[self.finger_marker_dict[finger_id]]
 
     # TODO: マーカーロストの処理
 
