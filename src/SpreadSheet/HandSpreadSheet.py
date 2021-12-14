@@ -52,10 +52,6 @@ from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
 from lib.sample.spreadsheetitem import SpreadSheetItem
 from lib.sample.util import encode_pos
-from src.UDP.NatNetClient import NatNetClient
-from src.UDP import DataDescriptions
-from src.UDP import MoCapData
-from src.UDP.PythonSample import print_message, print_configuration
 
 
 # class circleWidget(QWidget):
@@ -114,6 +110,8 @@ class HandSpreadSheet(QMainWindow):
         # Create a sample listener and controller
         self.listener = AppListener()
         self.listener.initOptiTrack()
+        self.listener.do_calibration()
+        self.listener.streaming_client.new_frame_listener = self.listener.frameListener
         self.setLeapSignal()
 
         # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
