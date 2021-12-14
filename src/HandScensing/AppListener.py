@@ -45,7 +45,7 @@ class HandData:
     # TODO: マーカーロストの処理
 
 
-class HandListener(QtCore.QThread):
+class AppListener(QtCore.QThread):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
     change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
@@ -53,7 +53,7 @@ class HandListener(QtCore.QThread):
     startorend_leap = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
 
     def __init__(self):
-        super(HandListener, self).__init__()
+        super(AppListener, self).__init__()
         self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
         self.finger_dis_size = [0, 0]
         self.isPointingMode = False

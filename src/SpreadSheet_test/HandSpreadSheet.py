@@ -52,7 +52,7 @@ from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
 
 from lib.LeapMotion import Leap
 from res.SSEnum import *
-from src.HandScensing.HandListener import HandListener
+from src.HandScensing.AppListener import AppListener
 from src.SpreadSheet_test.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet_test.myTable import myTable
 from lib.sample.spreadsheetitem import SpreadSheetItem
@@ -115,7 +115,7 @@ class HandSpreadSheet(QMainWindow):
         self.overlayLayout.addWidget(self.overlayGraphics)
 
         # Create a sample listener and controller
-        self.listener = HandListener()
+        self.listener = AppListener()
         self.controller = Leap.Controller()
         self.setLeapSignal()
 

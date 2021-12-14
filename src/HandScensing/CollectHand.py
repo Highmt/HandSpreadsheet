@@ -12,7 +12,7 @@ import pandas as pd
 from datetime import datetime
 
 from res.SSEnum import HandEnum, FeatureEnum
-from src.HandScensing.HandListener import HandListener, HandData
+from src.HandScensing.AppListener import AppListener, HandData
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 from src.UDP.PythonSample import print_configuration
@@ -28,7 +28,7 @@ pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
 
 
-class CollectListener(HandListener):
+class CollectListener(AppListener):
     def __init__(self):
         super().__init__()
         self.current_correct_id = 0

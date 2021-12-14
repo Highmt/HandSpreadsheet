@@ -47,7 +47,7 @@ from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QVBoxLayout, QButtonGroup)
 
 from res.SSEnum import ActionEnum, DirectionEnum
-from src.HandScensing.HandListener import HandListener
+from src.HandScensing.AppListener import AppListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
 from lib.sample.spreadsheetitem import SpreadSheetItem
@@ -112,7 +112,7 @@ class HandSpreadSheet(QMainWindow):
         self.overlayLayout.addWidget(self.overlayGraphics)
 
         # Create a sample listener and controller
-        self.listener = HandListener()
+        self.listener = AppListener()
         self.listener.initOptiTrack()
         self.setLeapSignal()
 

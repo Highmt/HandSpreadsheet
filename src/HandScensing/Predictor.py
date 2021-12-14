@@ -19,7 +19,7 @@ class Predictor():
         self.df = self.create_emptypandas()
         self.dfs = self.create_emptypandas()
 
-    def handPredict(self, hand: HandData):
+    def handPredict(self, hand):
 
         for finger_id in len(hand.fingers_pos):
             for pos in range(3):
