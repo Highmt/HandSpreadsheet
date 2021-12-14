@@ -12,10 +12,9 @@ import pandas as pd
 from datetime import datetime
 
 from res.SSEnum import HandEnum, FeatureEnum
-from src.HandScensing.AppListener import AppListener, HandData
+from src.HandScensing.HandListener import HandListener
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
-from src.UDP.PythonSample import print_configuration
 
 version = "master"
 #　収集する手形状のラベル（）
@@ -28,14 +27,14 @@ pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
 
 
-class CollectListener(AppListener):
+class CollectListener(HandListener):
     def __init__(self):
         super().__init__()
         self.current_correct_id = 0
         self.enables = [False, False]
         self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
-        self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='x')
-        self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='x')
+        self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='w')
+        self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='w')
 
     def reset_df(self):
         self.left_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
@@ -53,39 +52,6 @@ class CollectListener(AppListener):
 
     def on_exit(self, controller):
         print("Exited")
-
-    def initOptiTrack(self):
-        optionsDict = {}
-        optionsDict["clientAddress"] = "172.16.0.8"
-        optionsDict["serverAddress"] = "172.16.0.100"
-        optionsDict["use_multicast"] = False
-
-        self.streaming_client = NatNetClient()
-        self.streaming_client.set_client_address(optionsDict["clientAddress"])
-        self.streaming_client.set_server_address(optionsDict["serverAddress"])
-        self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
-        print_configuration(self.streaming_client)
-
-        is_running = self.streaming_client.run()
-        if not is_running:
-            print("ERROR: Could not start streaming client.")
-            try:
-                sys.exit(1)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
-
-        if self.streaming_client.connected() is False:
-            print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
-            try:
-                sys.exit(2)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
-
-        self.do_calibration()
 
     def frameListener(self, mocap_data: MoCapData):
         # Get the most recent frame and report some basic information
@@ -137,6 +103,7 @@ class CollectListener(AppListener):
 def main():
     listener = CollectListener()
     listener.initOptiTrack()
+    listener.do_calibration()
     listener.streaming_client.stop()
     listener.streaming_client.new_frame_listener = listener.frameListener
 

@@ -4,6 +4,7 @@ import statistics
 import sys
 import pyautogui
 
+from src.HandScensing.HandListener import HandListener
 from src.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
@@ -45,7 +46,7 @@ class HandData:
     # TODO: マーカーロストの処理
 
 
-class AppListener(QtCore.QThread):
+class AppListener(QtCore.QThread, HandListener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
     change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
@@ -53,166 +54,15 @@ class AppListener(QtCore.QThread):
     startorend_leap = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
 
     def __init__(self):
-        super(AppListener, self).__init__()
-        self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
-        self.finger_dis_size = [0, 0]
+        super().__init__()
         self.isPointingMode = False
         self.predictor = Predictor("KNN")  # 学習モデル
-        self.current_mocap_data: MoCapData = None
-        self.hands_dict = {'l': HandData(is_left=False), 'r': HandData(is_left=False)}
         handlist = []
         for i in range(memorySize):
             handlist.append(HandEnum.FREE.value)
 
         self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
         self.preHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
-
-    def initOptiTrack(self):
-        optionsDict = {}
-        optionsDict["clientAddress"] = "172.16.0.8"
-        optionsDict["serverAddress"] = "172.16.0.100"
-        optionsDict["use_multicast"] = False
-
-        self.streaming_client = NatNetClient()
-        self.streaming_client.set_client_address(optionsDict["clientAddress"])
-        self.streaming_client.set_server_address(optionsDict["serverAddress"])
-        self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
-        print_configuration(self.streaming_client)
-
-        is_running = self.streaming_client.run()
-        if not is_running:
-            print("ERROR: Could not start streaming client.")
-            try:
-                sys.exit(1)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
-
-        if self.streaming_client.connected() is False:
-            print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
-            try:
-                sys.exit(2)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
-
-        self.do_calibration()
-        self.streaming_client.new_frame_listener = self.frameListener
-
-    def calibrationListener(self, mocap_data: MoCapData):
-        self.current_mocap_data = mocap_data
-
-    def getCurrentData(self) -> HandData:
-        while not self.judgeDataComplete(self.current_mocap_data):
-            print("Sorry, the system is not ready\nPush Enter key again\n")
-            sys.stdin.readline()
-        return copy.deepcopy(self.getCurrentData())
-
-    def judgeDataComplete(self, mocap_data: MoCapData):
-        return mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
-               mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
-
-    def do_calibration(self):
-        print("Do caribration")
-        self.streaming_client.new_frame_listener = self.calibrationListener
-
-        print("Please stay hand on home position\nPush Enter key\n")
-        sys.stdin.readline()
-        mocap_data = self.getCurrentData()
-        self.settingRigidbodyID(mocap_data)
-        self.settingUnlabeledMarkerID(mocap_data)
-        print("Complete both hands setting calibration!")
-
-        self.settingScrean()
-        print("\nComplete caribration")
-        self.streaming_client.new_frame_listener = None
-
-    def settingScrean(self):
-        # 画面領域を決定
-        print("\nNext, screan size caribration")
-        print("Point to upper-left on display\nPush Enter key\n")
-        sys.stdin.readline()
-        mocap_data = self.getCurrentData()
-        self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック基本左手
-        dis_ul = self.hands_dict['l'].fingers_pos[1]
-        print(dis_ul)
-
-        print("Point to lower-left on display\nPush Enter key\n")
-        sys.stdin.readline()
-        mocap_data = self.getCurrentData()
-        self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック
-        dis_ll = self.hands_dict['l'].fingers_pos[1]
-        print(dis_ll)
-
-        print("Point to upper-right on display\nPush Enter key\n")
-        sys.stdin.readline()
-        mocap_data = self.getCurrentData()
-        self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック
-        dis_lr = self.hands_dict['l'].fingers_pos[1]
-        print(dis_lr)
-
-        print("Point to lower-right on display\nPush Enter key\n")
-        sys.stdin.readline()
-        mocap_data = self.getCurrentData()
-        self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック
-        dis_ur = self.hands_dict['l'].fingers_pos[1]
-        print(dis_ur)
-
-        # 四隅の値の平均を上下左右の値とする
-        self.finger_dis_dim["up"] = (dis_ul[1] + dis_ur[1]) / 2
-        self.finger_dis_dim["low"] = (dis_ll[1] + dis_lr[1]) / 2
-        self.finger_dis_dim["left"] = (dis_ul[0] + dis_ll[0]) / 2
-        self.finger_dis_dim["right"] = (dis_ur[0] + dis_lr[0]) / 2
-        self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
-        self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
-        print(self.finger_dis_size)
-
-    def settingUnlabeledMarkerID(self, mocap_data):
-        # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
-        marker_pos_x_list = []
-        marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        for marker in marker_list:
-            marker_pos_x_list.append(marker.pos[0])
-        sorted_list = sorted(marker_pos_x_list)
-        for key in range(len(marker_pos_x_list)):
-            for id in range(len(marker_pos_x_list)):
-                if sorted_list[key] == (marker_pos_x_list[id]):
-                    if key < len(HandData().fingers_pos):
-                        self.hands_dict['l'].finger_marker_dict[id] = abs(key - len(HandData().fingers_pos) + 1)
-                        # self.hands_dict['l'].fingers_pos[key] = marker_list[id]
-                    else:
-                        self.hands_dict['r'].finger_marker_dict[id] = key - len(HandData().fingers_pos)
-                        # self.hands_dict['r'].fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
-
-    def settingRigidbodyID(self, mocap_data):
-        # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
-        if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
-            self.hands_dict['l'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
-            self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-        else:
-            self.hands_dict['l'].rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-            self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
-
-    def on_caribrationTest(self):
-        dis_ul = [-120, 215, 0]
-        dis_ll = [-130, 90, 0]
-        dis_lr = [130, 90, 0]
-        dis_ur = [120, 215, 0]
-
-        self.finger_dis_dim["up"] = (dis_ul[1] + dis_ur[1]) / 2
-        self.finger_dis_dim["low"] = (dis_ll[1] + dis_lr[1]) / 2
-        self.finger_dis_dim["left"] = (dis_ul[0] + dis_ll[0]) / 2
-        self.finger_dis_dim["right"] = (dis_ur[0] + dis_lr[0]) / 2
-        self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
-        self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
-        print(self.finger_dis_size)
-        print("Complete test caribration")
 
     def on_init(self, controller):
         print("Initialized")
@@ -230,17 +80,6 @@ class AppListener(QtCore.QThread):
     def on_exit(self, controller):
         print("Exited")
         self.startorend_leap.emit(False)
-
-    def setHandData(self, mocap_data: MoCapData):
-        for body in mocap_data.rigid_body_data.rigid_body_list:
-            if self.hands_dict['l'].rb_id == body.id_num:
-                self.hands_dict['l'].setPalm(body)
-            elif self.hands_dict['r'].rb_id == body.id_num:
-                self.hands_dict['r'].setPalm(body)
-
-        marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list))
-        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list))
 
     # TODO: This function has to be fixed for Opti version
     def frameListener(self, mocap_data: MoCapData):
