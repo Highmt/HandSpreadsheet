@@ -24,8 +24,8 @@ from src.UDP import MoCapData, DataDescriptions
 
 def trace(*args):
     # uncomment the one you want to use
-    print("".join(map(str, args)))
-    # pass
+    # print("".join(map(str, args)))
+    pass
 
 
 # Used for Data Description functions
@@ -1115,10 +1115,10 @@ class NatNetClient:
                 trace_dd("Type: 5 Camera")
                 offset_tmp, data_tmp = self.__unpack_camera_description(data[offset:], major, minor)
             else:
-                print("Type: " + str(data_type) + " UNKNOWN")
-                print("ERROR: Type decode failure")
-                print("\t" + str(i + 1) + " datasets processed of " + str(dataset_count))
-                print("\t " + str(offset) + " bytes processed of " + str(packet_size))
+                trace("Type: " + str(data_type) + " UNKNOWN")
+                trace("ERROR: Type decode failure")
+                trace("\t" + str(i + 1) + " datasets processed of " + str(dataset_count))
+                trace("\t " + str(offset) + " bytes processed of " + str(packet_size))
                 print("\tPACKET DECODE STOPPED")
                 return offset
             offset += offset_tmp
@@ -1199,7 +1199,7 @@ class NatNetClient:
                 return 3
             except  socket.timeout:
                 if (self.use_multicast):
-                    print("ERROR: command socket access timeout occurred. Server not responding")
+                    trace("ERROR: command socket access timeout occurred. Server not responding")
                     # return 4
 
             if len(data) > 0:
@@ -1295,22 +1295,22 @@ class NatNetClient:
 
             offset_tmp, mocap_data = self.__unpack_mocap_data(data[offset:], packet_size, major, minor)
             offset += offset_tmp
-            print("MoCap Frame: %d\n" % (mocap_data.prefix_data.frame_number))
+            trace("MoCap Frame: %d\n" % (mocap_data.prefix_data.frame_number))
             # get a string version of the data for output
             mocap_data_str = mocap_data.get_as_string()
             if print_level >= 1:
-                print("%s\n" % mocap_data_str)
+                trace("%s\n" % mocap_data_str)
 
         elif message_id == self.NAT_MODELDEF:
             trace("Message ID  : %3.1d NAT_MODELDEF" % message_id)
             trace("Packet Size : %d" % packet_size)
             offset_tmp, data_descs = self.__unpack_data_descriptions(data[offset:], packet_size, major, minor)
             offset += offset_tmp
-            print("Data Descriptions:\n")
+            trace("Data Descriptions:\n")
             # get a string version of the data for output
             data_descs_str = data_descs.get_as_string()
             if print_level > 0:
-                print("%s\n" % (data_descs_str))
+                trace("%s\n" % (data_descs_str))
 
         elif message_id == self.NAT_SERVERINFO:
             trace("Message ID  : %3.1d NAT_SERVERINFO" % message_id)
@@ -1391,7 +1391,7 @@ class NatNetClient:
         for sz_command in tmpCommands:
             return_code = self.send_command(sz_command)
             if (print_results):
-                print("Command: %s - return_code: %d" % (sz_command, return_code))
+                trace("Command: %s - return_code: %d" % (sz_command, return_code))
 
     def send_keep_alive(self, in_socket, server_ip_address, server_port):
         return self.send_request(in_socket, self.NAT_KEEPALIVE, "", (server_ip_address, server_port))
