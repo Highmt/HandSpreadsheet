@@ -28,12 +28,9 @@ class AppListener(QtCore.QThread, HandListener):
         super().__init__()
         self.isPointingMode = False
         self.predictor = Predictor("KNN")  # 学習モデル
-        handlist = []
-        for i in range(memorySize):
-            handlist.append(HandEnum.FREE.value)
-
-        self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
-        self.preHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
+        self.memoryHands = {}
+        self.preHands = {}
+        self.resetHand()
 
     def on_init(self, controller):
         print("Initialized")
@@ -52,7 +49,6 @@ class AppListener(QtCore.QThread, HandListener):
         print("Exited")
         self.startorend_leap.emit(False)
 
-    # TODO: This function has to be fixed for Opti version
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
             # フレームデータから手のデータを抽出
@@ -166,8 +162,9 @@ class AppListener(QtCore.QThread, HandListener):
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode
 
-    # TODO: fixed
     def resetHand(self):
-        for handid in list(self.preHands.keys()):
-            del self.memoryHands[handid]
-            del self.preHands[handid]  # １つ前の手形状にFREE状態をセット
+        handlist = []
+        for i in range(memorySize):
+            handlist.append(HandEnum.FREE.value)
+        self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
+        self.preHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
