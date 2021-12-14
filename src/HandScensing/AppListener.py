@@ -4,7 +4,7 @@ import statistics
 import sys
 import pyautogui
 
-from src.HandScensing.HandListener import HandListener
+from src.HandScensing.HandListener import HandListener, HandData
 from src.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
@@ -167,6 +167,7 @@ class AppListener(QtCore.QThread, HandListener):
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode
 
+    # TODO: fixed
     def resetHand(self):
         for handid in list(self.preHands.keys()):
             del self.memoryHands[handid]
