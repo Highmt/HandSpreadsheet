@@ -18,34 +18,6 @@ memorySize = 30
 z_threshold = 30
 
 
-class HandData:
-    def __init__(self, is_left: bool = None):
-        self.rb_id = 0
-        self.is_left = is_left
-        self.position = [0, 0, 0]
-        self.rotation = [0, 0, 0, 0]
-        self.finger_marker_dict = {}
-        self.fingers_pos = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-
-
-    def setPalm(self, rigid_body: RigidBody):
-        self.position = rigid_body.pos
-        self.rotation = rigid_body.rot
-
-    def setFingerMarkerDict(self, key, value):
-        self.finger_marker_dict[key] = value
-
-    def setFingerPos(self, marker_list):
-        for marker in marker_list:
-            if marker.id_num in self.finger_marker_dict.keys():
-                self.fingers_pos[self.finger_marker_dict[marker.id_num]] = marker.pos
-
-    def getFingerPos(self, finger_id: int):
-        return self.fingers_pos[self.finger_marker_dict[finger_id]]
-
-    # TODO: マーカーロストの処理
-
-
 class AppListener(QtCore.QThread, HandListener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
