@@ -7,7 +7,6 @@ from src.UDP.MoCapData import MoCapData, RigidBody
 from src.UDP.NatNetClient import NatNetClient
 
 DIS_SIZE = pyautogui.size()
-memorySize = 30
 z_threshold = 30
 
 def print_configuration(natnet_client: NatNetClient):
@@ -43,10 +42,10 @@ class HandData:
     def __init__(self, is_left: bool = None):
         self.rb_id = 0
         self.is_left = is_left
-        self.position = [0, 0, 0]
-        self.rotation = [0, 0, 0, 0]
+        self.position = [0.0, 0.0, 0.0]
+        self.rotation = [0.0, 0.0, 0.0, 0.0]
         self.finger_marker_dict = {}
-        self.fingers_pos = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        self.fingers_pos = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 
 
     def setPalm(self, rigid_body: RigidBody):
@@ -56,10 +55,11 @@ class HandData:
     def setFingerMarkerDict(self, key, value):
         self.finger_marker_dict[key] = value
 
-    def setFingerPos(self, marker_list):
+    def setFingerPos(self, marker_list, offset):
         for marker in marker_list:
             if marker.id_num in self.finger_marker_dict.keys():
-                self.fingers_pos[self.finger_marker_dict[marker.id_num]] = marker.pos
+                for axis in range(len(offset)):
+                    self.fingers_pos[self.finger_marker_dict[marker.id_num]][axis] = marker.pos[axis] - offset[axis]
 
     def getFingerPos(self, finger_id: int):
         return self.fingers_pos[self.finger_marker_dict[finger_id]]
@@ -72,6 +72,7 @@ class HandListener:
         self.finger_dis_size = [0, 0]
         self.current_mocap_data: MoCapData = None
         self.hands_dict = {'l': HandData(is_left=False), 'r': HandData(is_left=False)}
+        self.hand_offset = [0.0, 0.0, 0.0]
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -127,9 +128,14 @@ class HandListener:
         mocap_data = self.getCurrentData()
         self.settingRigidbodyID(mocap_data)
         self.settingUnlabeledMarkerID(mocap_data)
+
+        # offsetを設定
+        for axis in range(len(self.hand_offset)):
+            self.hand_offset[axis] = (self.hands_dict['l'].position[axis] + self.hands_dict['r'].position[axis]) / 2
+
         print("Complete both hands setting calibration!")
 
-        self.settingScrean()
+        # self.settingScrean()
         print("\nComplete caribration")
 
     def settingScrean(self):
@@ -225,5 +231,5 @@ class HandListener:
                 self.hands_dict['r'].setPalm(body)
 
         marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list))
-        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list))
+        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list), offset=self.hand_offset)
+        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list), offset=self.hand_offset)
