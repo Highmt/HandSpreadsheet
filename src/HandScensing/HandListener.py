@@ -7,8 +7,7 @@ from src.UDP.MoCapData import MoCapData, RigidBody
 from src.UDP.NatNetClient import NatNetClient
 
 DIS_SIZE = pyautogui.size()
-z_threshold = 30
-
+Y_THRESHOLD = 0.2
 def print_configuration(natnet_client: NatNetClient):
     print("Connection Configuration:")
     print("  Client:          %s"% natnet_client.local_ip_address)

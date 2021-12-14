@@ -12,7 +12,7 @@ import pandas as pd
 from datetime import datetime
 
 from res.SSEnum import HandEnum, FeatureEnum
-from src.HandScensing.HandListener import HandListener
+from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
@@ -21,7 +21,6 @@ version = "master"
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
 collect_data_num = 2000
-z_threshold = 30
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
@@ -33,6 +32,7 @@ class CollectListener(HandListener):
         self.current_correct_id = 0
         self.enables = [False, False]
         self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
+        # TODO: change mode to 'x' for study
         self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='w')
         self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='w')
 
@@ -61,7 +61,7 @@ class CollectListener(HandListener):
             for hand in self.hands_dict.values():
                 # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
                 if (hand.is_left and self.left_enable or not hand.is_left and self.right_enable) and \
-                        hand.position[2] < z_threshold:
+                        hand.position[1] < Y_THRESHOLD:
                     continue
 
                 print("timestamp: %d" %(mocap_data.suffix_data.timestamp))

@@ -4,7 +4,7 @@ import statistics
 import sys
 import pyautogui
 
-from src.HandScensing.HandListener import HandListener, HandData
+from src.HandScensing.HandListener import HandListener, HandData, Y_THRESHOLD
 from src.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
@@ -15,7 +15,6 @@ from src.UDP.PythonSample import print_configuration
 
 DIS_SIZE = pyautogui.size()
 memorySize = 30
-z_threshold = 30
 
 
 class AppListener(QtCore.QThread, HandListener):
@@ -60,7 +59,7 @@ class AppListener(QtCore.QThread, HandListener):
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時フィードバックを非表示
-            if self.hands_dict['l'].position[2] < z_threshold and self.hands_dict['r'].position[2] < z_threshold:
+            if self.hands_dict['l'].position[1] < Y_THRESHOLD and self.hands_dict['r'].position[1] < Y_THRESHOLD:
                 self.hide_feedback.emit()
                 return
 
@@ -71,7 +70,7 @@ class AppListener(QtCore.QThread, HandListener):
 
                 handlist.pop(0)
 
-                if self.hands_dict.get(key).position[2] < z_threshold:
+                if self.hands_dict.get(key).position[1] < Y_THRESHOLD:
                     hand_state = HandEnum.FREE.value
                 else:
                     hand_state = self.predictor.handPredict(hand=self.hands_dict.get(key))  # 学習機で手形状識別
