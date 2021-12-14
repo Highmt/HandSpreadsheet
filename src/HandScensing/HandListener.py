@@ -112,10 +112,10 @@ class HandListener:
         while not self.judgeDataComplete(self.current_mocap_data):
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
-        return copy.deepcopy(self.getCurrentData())
+        return copy.deepcopy(self.current_mocap_data)
 
     def judgeDataComplete(self, mocap_data: MoCapData):
-        return mocap_data.rigid_body_data.get_rigid_body_count() < 2 and \
+        return mocap_data.rigid_body_data.get_rigid_body_count() < 3 and \
                mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
 
     def do_calibration(self):
