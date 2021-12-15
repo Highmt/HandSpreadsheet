@@ -29,30 +29,16 @@ rot_labels = ["pitch", "roll", "yaw"]
 class CollectListener(HandListener):
     def __init__(self):
         super().__init__()
-        self.current_correct_id = 0
+        self.current_collect_id = 0
         self.enables = [False, False]
         self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
         # TODO: change mode to 'x' for study
         self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='w')
         self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='w')
-        self.isCalibration = True
 
     def reset_df(self):
         self.left_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
         self.right_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
-
-    def on_init(self, controller):
-        print("Initialized")
-
-    def on_connect(self, controller):
-        print("Connected")
-
-    def on_disconnect(self, controller):
-        # Note: not dispatched when running in a debugger.
-        print("Disconnected")
-
-    def on_exit(self, controller):
-        print("Exited")
 
     def frameListener(self, mocap_data: MoCapData):
         # Get the most recent frame and report some basic information
@@ -82,20 +68,20 @@ class CollectListener(HandListener):
                         if (len(self.dfs[0]) >= collect_data_num):
                             self.enables[0] = False
                             self.data_save_pandas(lr="left", data=copy.deepcopy(self.dfs[0]))
-                            print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "left"))
+                            print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], "left"))
                     else:
                         self.dfs[1] = self.dfs[1].append(ps, ignore_index=True)
                         if (len(self.dfs[1]) >= collect_data_num):
                             self.enables[1] = False
                             self.data_save_pandas(lr="right", data=copy.deepcopy(self.dfs[1]))
-                            print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "right"))
+                            print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], "right"))
 
         if not (self.enables[0] or self.enables[1]):
             self.streaming_client.stop()
-            print("Finished to correct {} shape data\nPlease press Enter key for next".format(labels[self.current_correct_id]))
+            print("Finished to correct {} shape data\nPlease press Enter key for next".format(labels[self.current_collect_id]))
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
-        data["label"] = self.current_correct_id
+        data["label"] = self.current_collect_id
         data.to_csv("../../res/data/{}Data_{}.csv".format(lr, version), mode='a', header=False)
 
     def setListener(self):
@@ -112,7 +98,7 @@ def main():
     print("Press Enter to start collecting hand data session")
     sys.stdin.readline()
     for label_id in range(len(labels)):
-        listener.current_correct_id = label_id
+        listener.current_collect_id = label_id
         print("Please make {} hand shape".format(labels[label_id]))
         listener.enables[0] = True
         listener.enables[1] = True
