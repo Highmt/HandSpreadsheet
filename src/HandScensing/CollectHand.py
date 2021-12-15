@@ -69,7 +69,7 @@ class CollectListener(HandListener):
                 # Get the hand's normal vector and direction
 
                 ps["position_x", "position_y", "position_z"] = hand.position
-                ps["pitch", "roll", "yaw"] = hand.rotation
+                ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
                 # Calculate the hand's pitch, roll, and yaw angles
 
                 # Get fingers
