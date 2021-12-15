@@ -1,5 +1,7 @@
 import copy
 import sys
+import time
+
 import pyautogui
 
 
@@ -42,26 +44,34 @@ class HandData:
         self.rb_id = 0
         self.is_left = is_left
         self.position = [0.0, 0.0, 0.0]
+        self.position_offset = [0.0, 0.0, 0.0]
         self.rotation = [0.0, 0.0, 0.0, 0.0]
+        self.rotation_offset = [0.0, 0.0, 0.0, 0.0]
         self.finger_marker_dict = {}
         self.fingers_pos = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 
 
-    def setPalm(self, rigid_body: RigidBody):
-        self.position = rigid_body.pos
-        self.rotation = rigid_body.rot
+    def setHand(self, rigid_body: RigidBody):
+        for axis in range(len(self.position)):
+            self.position[axis] = rigid_body.pos[axis] - self.position_offset[axis]
+            self.rotation[axis] = rigid_body.rot[axis] - self.rotation_offset[axis]
 
     def setFingerMarkerDict(self, key, value):
         self.finger_marker_dict[key] = value
 
-    def setFingerPos(self, marker_list, offset):
+    def setFingerPos(self, marker_list):
         for marker in marker_list:
             if marker.id_num in self.finger_marker_dict.keys():
-                for axis in range(len(offset)):
-                    self.fingers_pos[self.finger_marker_dict[marker.id_num]][axis] = marker.pos[axis] - offset[axis]
+                for axis in range(len(self.position)):
+                    self.fingers_pos[self.finger_marker_dict[marker.id_num]][axis] = marker.pos[axis] - self.position_offset[axis]
 
     def getFingerPos(self, finger_id: int):
         return self.fingers_pos[self.finger_marker_dict[finger_id]]
+
+    def setOffset(self, position, rotation):
+        # offsetを設定
+        self.position_offset = copy.deepcopy(position)
+        self.rotation_offset = copy.deepcopy(rotation)
 
     # TODO: マーカーロストの処理
 
@@ -71,12 +81,11 @@ class HandListener:
         self.finger_dis_size = [0, 0]
         self.current_mocap_data: MoCapData = None
         self.hands_dict = {'l': HandData(is_left=False), 'r': HandData(is_left=False)}
-        self.hand_offset = [0.0, 0.0, 0.0]
 
     def initOptiTrack(self):
         optionsDict = {}
-        optionsDict["clientAddress"] = "172.16.0.80"
-        optionsDict["serverAddress"] = "172.16.0.100"
+        optionsDict["clientAddress"] = "172.17.1.102"
+        optionsDict["serverAddress"] = "172.17.1.101"
         optionsDict["use_multicast"] = False
 
         self.streaming_client = NatNetClient()
@@ -88,21 +97,26 @@ class HandListener:
         is_running = self.streaming_client.run()
         if not is_running:
             print("ERROR: Could not start streaming client.")
-            try:
-                sys.exit(1)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
+            print("system end.")
+            sys.exit(3)
+            # try:
+            #     sys.exit(1)
+            # except SystemExit:
+            #     print("...")
+            # finally:
+            #     print("exiting")
 
+        time.sleep(1)
         if self.streaming_client.connected() is False:
             print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
-            try:
-                sys.exit(2)
-            except SystemExit:
-                print("...")
-            finally:
-                print("exiting")
+            print("system end.")
+            sys.exit(3)
+            # try:
+            #     sys.exit(2)
+            # except SystemExit:
+            #     print("...")
+            # finally:
+            #     print("exiting")
 
 
     def calibrationListener(self, mocap_data: MoCapData):
@@ -125,12 +139,8 @@ class HandListener:
         print("Please stay hand on home position\nPush Enter key\n")
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
-        self.settingRigidbodyID(mocap_data)
+        self.settingRigidbody(mocap_data)
         self.settingUnlabeledMarkerID(mocap_data)
-
-        # offsetを設定
-        for axis in range(len(self.hand_offset)):
-            self.hand_offset[axis] = (self.hands_dict['l'].position[axis] + self.hands_dict['r'].position[axis]) / 2
 
         print("Complete both hands setting calibration!")
 
@@ -152,7 +162,6 @@ class HandListener:
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック
         dis_ll = self.hands_dict['l'].fingers_pos[1]
         print(dis_ll)
 
@@ -160,7 +169,6 @@ class HandListener:
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック
         dis_lr = self.hands_dict['l'].fingers_pos[1]
         print(dis_lr)
 
@@ -168,7 +176,6 @@ class HandListener:
         sys.stdin.readline()
         mocap_data = self.getCurrentData()
         self.setHandData(mocap_data)
-        # TODO: 左右どちらの手にするかは要チェック
         dis_ur = self.hands_dict['l'].fingers_pos[1]
         print(dis_ur)
 
@@ -181,7 +188,7 @@ class HandListener:
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
 
-    def settingUnlabeledMarkerID(self, mocap_data):
+    def settingUnlabeledMarkerID(self, mocap_data: MoCapData):
         # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
         marker_pos_x_list = []
         marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
@@ -198,37 +205,25 @@ class HandListener:
                         self.hands_dict['r'].finger_marker_dict[id] = key - len(HandData().fingers_pos)
                         # self.hands_dict['r'].fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
 
-    def settingRigidbodyID(self, mocap_data):
+    def settingRigidbody(self, mocap_data: MoCapData):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
-        if mocap_data.rigid_body_data.rigid_body_list[0].pos[0] < mocap_data.rigid_body_data.rigid_body_list[1].pos[1]:
-            self.hands_dict['l'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
-            self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-        else:
-            self.hands_dict['l'].rb_id = mocap_data.rigid_body_data.rigid_body_list[1].id_num
-            self.hands_dict['r'].rb_id = mocap_data.rigid_body_data.rigid_body_list[0].id_num
+        leftHand: RigidBody = mocap_data.rigid_body_data.rigid_body_list[0]
+        rightHand: RigidBody = mocap_data.rigid_body_data.rigid_body_list[1]
+        if leftHand.pos[0] > rightHand.pos[0]:
+            leftHand, rightHand = rightHand, leftHand
 
-    def on_caribrationTest(self):
-        dis_ul = [-120, 215, 0]
-        dis_ll = [-130, 90, 0]
-        dis_lr = [130, 90, 0]
-        dis_ur = [120, 215, 0]
-
-        self.finger_dis_dim["up"] = (dis_ul[1] + dis_ur[1]) / 2
-        self.finger_dis_dim["low"] = (dis_ll[1] + dis_lr[1]) / 2
-        self.finger_dis_dim["left"] = (dis_ul[0] + dis_ll[0]) / 2
-        self.finger_dis_dim["right"] = (dis_ur[0] + dis_lr[0]) / 2
-        self.finger_dis_size[0] = self.finger_dis_dim["right"] - self.finger_dis_dim["left"]
-        self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
-        print(self.finger_dis_size)
-        print("Complete test caribration")
+        self.hands_dict['l'].rb_id = leftHand.id_num
+        self.hands_dict['l'].setOffset(leftHand.pos, leftHand.rot)
+        self.hands_dict['r'].rb_id = rightHand.id_num
+        self.hands_dict['r'].setOffset(rightHand.pos, rightHand.rot)
 
     def setHandData(self, mocap_data: MoCapData):
         for body in mocap_data.rigid_body_data.rigid_body_list:
             if self.hands_dict['l'].rb_id == body.id_num:
-                self.hands_dict['l'].setPalm(body)
+                self.hands_dict['l'].setHand(body)
             elif self.hands_dict['r'].rb_id == body.id_num:
-                self.hands_dict['r'].setPalm(body)
+                self.hands_dict['r'].setHand(body)
 
         marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list), offset=self.hand_offset)
-        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list), offset=self.hand_offset)
+        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list))
+        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list))

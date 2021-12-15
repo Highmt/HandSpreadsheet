@@ -33,8 +33,8 @@ def receive_new_frame(mocap_data=MoCapData.MoCapData()):
 # This is a callback function that gets connected to the NatNet client. It is called once per rigid body per frame
 def receive_rigid_body_frame( new_id, position, rotation ):
     print("---------------Rigid Body---------------------------")
-    #print( "Received frame for rigid body", new_id )
-    #print( "Received frame for rigid body", new_id," ",position," ",rotation )
+    print( "Received frame for rigid body", new_id )
+    print( "Received frame for rigid body", new_id," ",position," ",rotation )
 
 def add_lists(totals, totals_tmp):
     totals[0]+=totals_tmp[0]
@@ -252,8 +252,8 @@ def print_message(streaming_client):
 if __name__ == "__main__":
 
     optionsDict = {}
-    optionsDict["clientAddress"] = "172.16.0.8"
-    optionsDict["serverAddress"] = "172.16.0.100"
+    optionsDict["clientAddress"] = "172.17.1.102"
+    optionsDict["serverAddress"] = "172.17.1.101"
     optionsDict["use_multicast"] = False
 
     # This will create a new NatNet client
@@ -280,5 +280,5 @@ if __name__ == "__main__":
         finally:
             print("exiting")
 
-    time.sleep(1)
+    # time.sleep(1)
     print_message(streaming_client)
