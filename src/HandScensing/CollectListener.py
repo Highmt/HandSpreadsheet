@@ -35,6 +35,7 @@ class CollectListener(HandListener):
         # TODO: change mode to 'x' for study
         self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='w')
         self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='w')
+        self.isCalibration = True
 
     def reset_df(self):
         self.left_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
@@ -60,37 +61,34 @@ class CollectListener(HandListener):
 
             for hand in self.hands_dict.values():
                 # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
-                if (hand.is_left and self.left_enable or not hand.is_left and self.right_enable) and \
-                        hand.position[1] < Y_THRESHOLD:
-                    continue
+                if (self.enables[0] if hand.is_left else self.enables[1]) and hand.position[1] > Y_THRESHOLD:
+                    print("timestamp: %d" %(mocap_data.suffix_data.timestamp))
+                    ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
+                    # Get the hand's normal vector and direction
 
-                print("timestamp: %d" %(mocap_data.suffix_data.timestamp))
-                ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
-                # Get the hand's normal vector and direction
+                    ps["position_x", "position_y", "position_z"] = hand.position
+                    ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
+                    # Calculate the hand's pitch, roll, and yaw angles
 
-                ps["position_x", "position_y", "position_z"] = hand.position
-                ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
-                # Calculate the hand's pitch, roll, and yaw angles
+                    # Get fingers
+                    for finger_id in range(len(hand.fingers_pos)):
+                        for pos in range(3):
+                            ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos]
+                            ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.position[pos]
 
-                # Get fingers
-                for finger_id in len(hand.fingers_pos):
-                    for pos in range(3):
-                        ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]] = hand.fingers_pos[pos]
-                        ps[finger_labels[finger_id] + "dir" + pos_labels[pos]] = hand.fingers_pos[pos] - hand.position[pos]
-
-                # 　データ収集が完了すると終了
-                if hand.is_left:
-                    self.dfs[0] = self.dfs[0].append(ps, ignore_index=True)
-                    if (len(self.dfs[0]) >= collect_data_num):
-                        self.enables[0] = False
-                        self.data_save_pandas(lr="left", data=copy.deepcopy(self.dfs[0]))
-                        print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "left"))
-                else:
-                    self.dfs[1] = self.dfs[1].append(ps, ignore_index=True)
-                    if (len(self.dfs[1]) >= collect_data_num):
-                        self.enables[1] = False
-                        self.data_save_pandas(lr="right", data=copy.deepcopy(self.dfs[1]))
-                        print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "right"))
+                    # 　データ収集が完了すると終了
+                    if hand.is_left:
+                        self.dfs[0] = self.dfs[0].append(ps, ignore_index=True)
+                        if (len(self.dfs[0]) >= collect_data_num):
+                            self.enables[0] = False
+                            self.data_save_pandas(lr="left", data=copy.deepcopy(self.dfs[0]))
+                            print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "left"))
+                    else:
+                        self.dfs[1] = self.dfs[1].append(ps, ignore_index=True)
+                        if (len(self.dfs[1]) >= collect_data_num):
+                            self.enables[1] = False
+                            self.data_save_pandas(lr="right", data=copy.deepcopy(self.dfs[1]))
+                            print("Finished to correct {} shape {} hand data".format(labels[self.current_correct_id], "right"))
 
         if not (self.enables[0] or self.enables[1]):
             self.streaming_client.stop()
@@ -100,15 +98,18 @@ class CollectListener(HandListener):
         data["label"] = self.current_correct_id
         data.to_csv("../../res/data/{}Data_{}.csv".format(lr, version), mode='a', header=False)
 
+    def setListener(self):
+        self.streaming_client.new_frame_listener = self.frameListener
 def main():
     listener = CollectListener()
     listener.initOptiTrack()
     listener.do_calibration()
     listener.streaming_client.stop()
-    listener.streaming_client.new_frame_listener = listener.frameListener
+    listener.setListener()
+    # listener.streaming_client.new_frame_listener = listener.frameListener
 
     # Have the sample listener receive events from the controller
-    print("Press Enter to start collecting hand data")
+    print("Press Enter to start collecting hand data session")
     sys.stdin.readline()
     for label_id in range(len(labels)):
         listener.current_correct_id = label_id
