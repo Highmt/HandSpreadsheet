@@ -9,7 +9,7 @@ from src.UDP.MoCapData import MoCapData, RigidBody
 from src.UDP.NatNetClient import NatNetClient
 
 DIS_SIZE = pyautogui.size()
-Y_THRESHOLD = 0.2
+Y_THRESHOLD = 0.0
 def print_configuration(natnet_client: NatNetClient):
     print("Connection Configuration:")
     print("  Client:          %s"% natnet_client.local_ip_address)
@@ -80,7 +80,7 @@ class HandListener:
         self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
         self.finger_dis_size = [0, 0]
         self.current_mocap_data: MoCapData = None
-        self.hands_dict = {'l': HandData(is_left=False), 'r': HandData(is_left=False)}
+        self.hands_dict = {'l': HandData(is_left=True), 'r': HandData(is_left=False)}
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -135,7 +135,6 @@ class HandListener:
     def do_calibration(self):
         print("Do caribration")
         self.streaming_client.new_frame_listener = self.calibrationListener
-
         print("Please stay hand on home position\nPush Enter key\n")
         sys.stdin.readline()
         mocap_data = self.getCurrentData()

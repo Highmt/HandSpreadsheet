@@ -110,6 +110,7 @@ class NatNetClient:
         self.data_socket = None
 
         self.stop_threads = False
+        self.temp_stop_threads = False
 
     # Client/server message ids
     NAT_CONNECT = 0
@@ -1175,7 +1176,7 @@ class NatNetClient:
                  , str(self.__server_version[3]))
         return offset
 
-    def __command_thread_function(self, in_socket, stop, gprint_level):
+    def __command_thread_function(self, in_socket, stop, temp_stop, gprint_level):
         message_id_dict = {}
         if not self.use_multicast:
             in_socket.settimeout(2.0)
@@ -1183,6 +1184,8 @@ class NatNetClient:
         # 64k buffer size
         recv_buffer_size = 64 * 1024
         while not stop():
+            if temp_stop():
+                continue
             # Block for input
             try:
                 data, addr = in_socket.recvfrom(recv_buffer_size)
@@ -1226,7 +1229,7 @@ class NatNetClient:
                     self.send_keep_alive(in_socket, self.server_ip_address, self.command_port)
         return 0
 
-    def __data_thread_function(self, in_socket, stop, gprint_level):
+    def __data_thread_function(self, in_socket, stop, temp_stop, gprint_level):
         message_id_dict = {}
         data = bytearray(0)
         # 64k buffer size
@@ -1234,6 +1237,9 @@ class NatNetClient:
 
         while not stop():
             # Block for input
+            if temp_stop():
+                continue
+
             try:
                 data, addr = in_socket.recvfrom(recv_buffer_size)
             except socket.error as msg:
@@ -1426,14 +1432,15 @@ class NatNetClient:
         self.__is_locked = True
 
         self.stop_threads = False
+        self.temp_stop_threads = False
         # Create a separate thread for receiving data packets
         self.data_thread = Thread(target=self.__data_thread_function,
-                                  args=(self.data_socket, lambda: self.stop_threads, lambda: self.print_level,))
+                                  args=(self.data_socket, lambda: self.stop_threads, lambda: self.temp_stop_threads, lambda: self.print_level,))
         self.data_thread.start()
 
         # Create a separate thread for receiving command packets
         self.command_thread = Thread(target=self.__command_thread_function,
-                                     args=(self.command_socket, lambda: self.stop_threads, lambda: self.print_level,))
+                                     args=(self.command_socket, lambda: self.stop_threads, lambda: self.temp_stop_threads, lambda: self.print_level,))
         self.command_thread.start()
 
         # Required for setup
@@ -1448,14 +1455,14 @@ class NatNetClient:
         return True
 
     def stop(self):
-        if not self.stop_threads:
+        if not self.temp_stop_threads:
             print("stop thread")
-            self.stop_threads = True
+            self.temp_stop_threads = True
 
     def restart(self):
-        if self.stop_threads:
+        if self.temp_stop_threads:
             print("restart thread")
-            self.stop_threads = False
+            self.temp_stop_threads = False
 
     def shutdown(self):
         print("shutdown called")
