@@ -122,22 +122,36 @@ class HandListener:
     def calibrationListener(self, mocap_data: MoCapData):
         self.current_mocap_data = mocap_data
 
-    def getCurrentData(self) -> HandData:
+    def getEnoughData(self) -> MoCapData:
         while not self.judgeDataComplete(self.current_mocap_data):
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
+        return copy.deepcopy(self.current_mocap_data)
+
+    def getCurrentData(self) -> MoCapData:
         return copy.deepcopy(self.current_mocap_data)
 
     def judgeDataComplete(self, mocap_data: MoCapData):
         return mocap_data.rigid_body_data.get_rigid_body_count() < 3 and \
                mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
 
+    def printHandData(self, hand: HandData):
+        tab = "  "
+        print("\n----------hand data----------")
+        print("hand type: {}".format("Left" if hand.is_left else "Right"))
+        print("{}pos: {}, {}, {}".format(tab, hand.position[0], hand.position[1], hand.position[2]))
+        print("{}rot: {}, {}, {}, {}".format(tab, hand.rotation[0], hand.rotation[1], hand.rotation[2], hand.rotation[3]))
+        print("{}finger:".format(tab))
+        print("{}thumb: {}, {}, {}".format(tab*2, hand.fingers_pos[0][0], hand.fingers_pos[0][1], hand.fingers_pos[0][2]))
+        print("{}index: {}, {}, {}".format(tab*2, hand.fingers_pos[1][0], hand.fingers_pos[1][1], hand.fingers_pos[1][2]))
+        print("{}pinky: {}, {}, {}".format(tab*2, hand.fingers_pos[2][0], hand.fingers_pos[2][1], hand.fingers_pos[2][2]))
+
     def do_calibration(self):
         print("Do caribration")
         self.streaming_client.new_frame_listener = self.calibrationListener
         print("Please stay hand on home position\nPush Enter key\n")
         sys.stdin.readline()
-        mocap_data = self.getCurrentData()
+        mocap_data = self.getEnoughData()
         self.settingRigidbody(mocap_data)
         self.settingUnlabeledMarkerID(mocap_data)
 
@@ -151,7 +165,7 @@ class HandListener:
         print("\nNext, screan size caribration")
         print("Point to upper-left on display\nPush Enter key\n")
         sys.stdin.readline()
-        mocap_data = self.getCurrentData()
+        mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
         # TODO: 左右どちらの手にするかは要チェック基本左手
         dis_ul = self.hands_dict['l'].fingers_pos[1]
@@ -159,21 +173,21 @@ class HandListener:
 
         print("Point to lower-left on display\nPush Enter key\n")
         sys.stdin.readline()
-        mocap_data = self.getCurrentData()
+        mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
         dis_ll = self.hands_dict['l'].fingers_pos[1]
         print(dis_ll)
 
         print("Point to upper-right on display\nPush Enter key\n")
         sys.stdin.readline()
-        mocap_data = self.getCurrentData()
+        mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
         dis_lr = self.hands_dict['l'].fingers_pos[1]
         print(dis_lr)
 
         print("Point to lower-right on display\nPush Enter key\n")
         sys.stdin.readline()
-        mocap_data = self.getCurrentData()
+        mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
         dis_ur = self.hands_dict['l'].fingers_pos[1]
         print(dis_ur)
@@ -198,10 +212,10 @@ class HandListener:
             for id in range(len(marker_pos_x_list)):
                 if sorted_list[key] == (marker_pos_x_list[id]):
                     if key < len(HandData().fingers_pos):
-                        self.hands_dict['l'].finger_marker_dict[id] = abs(key - len(HandData().fingers_pos) + 1)
+                        self.hands_dict['l'].finger_marker_dict[id+1] = abs(key - len(HandData().fingers_pos) + 1)
                         # self.hands_dict['l'].fingers_pos[key] = marker_list[id]
                     else:
-                        self.hands_dict['r'].finger_marker_dict[id] = key - len(HandData().fingers_pos)
+                        self.hands_dict['r'].finger_marker_dict[id+1] = key - len(HandData().fingers_pos)
                         # self.hands_dict['r'].fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
 
     def settingRigidbody(self, mocap_data: MoCapData):
