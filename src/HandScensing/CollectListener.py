@@ -7,6 +7,7 @@
 ################################################################################
 import copy
 import sys
+from pathlib import Path
 
 import pandas as pd
 from datetime import datetime
@@ -24,7 +25,7 @@ collect_data_num = 20
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
-
+output_dir = "../../res/data/{}".format(version)
 
 class CollectListener(HandListener):
     def __init__(self):
@@ -33,8 +34,10 @@ class CollectListener(HandListener):
         self.enables = [False, False]
         self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
         # TODO: change mode to 'x' for study
-        self.dfs[0].to_csv("../../res/data/leftData_{}.csv".format(version), mode='w')
-        self.dfs[1].to_csv("../../res/data/rightData_{}.csv".format(version), mode='w')
+        dir = Path(output_dir)
+        dir.mkdir(parents=True, exist_ok=True)
+        self.dfs[0].to_csv("{}/leftData.csv".format(output_dir), mode='w')
+        self.dfs[1].to_csv("{}/rightData.csv".format(output_dir), mode='w')
 
     def reset_df(self):
         self.left_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
