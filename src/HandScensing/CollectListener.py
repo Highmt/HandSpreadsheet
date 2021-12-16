@@ -20,7 +20,7 @@ version = "master"
 #　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
-collect_data_num = 2000
+collect_data_num = 20
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
@@ -44,14 +44,14 @@ class CollectListener(HandListener):
         # Get the most recent frame and report some basic information
         if self.judgeDataComplete(mocap_data=mocap_data):
             self.setHandData(mocap_data=mocap_data)
-
+            print("timestamp: %8.4d" %(mocap_data.suffix_data.timestamp))
             for hand in self.hands_dict.values():
                 # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
+
                 if (self.enables[0] if hand.is_left else self.enables[1]) and hand.position[1] > Y_THRESHOLD:
-                    print("timestamp: %d" %(mocap_data.suffix_data.timestamp))
                     ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
                     # Get the hand's normal vector and direction
-
+                    self.printHandData(hand)
                     ps["position_x", "position_y", "position_z"] = hand.position
                     ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
                     # Calculate the hand's pitch, roll, and yaw angles
@@ -82,7 +82,8 @@ class CollectListener(HandListener):
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
         data["label"] = self.current_collect_id
-        data.to_csv("../../res/data/{}Data_{}.csv".format(lr, version), mode='a', header=False)
+
+        data.to_csv("../../res/data/{}Data_{}.csv".format(lr, version), mode='a', header=False, index=False)
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
@@ -92,7 +93,6 @@ def main():
     listener.do_calibration()
     listener.streaming_client.stop()
     listener.setListener()
-    # listener.streaming_client.new_frame_listener = listener.frameListener
 
     # Have the sample listener receive events from the controller
     print("Press Enter to start collecting hand data session")
@@ -128,7 +128,7 @@ def main():
 
     # Keep this process running until Enter is pressed
     # Remove the sample listener when done
-    streaming_client.shutdown()
+    listener.streaming_client.shutdown()
 
 
 if __name__ == "__main__":
