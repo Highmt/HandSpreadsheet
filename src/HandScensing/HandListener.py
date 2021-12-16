@@ -53,7 +53,7 @@ class HandData:
 
     def setHand(self, rigid_body: RigidBody):
         for axis in range(len(self.position)):
-            self.position[axis] = rigid_body.pos[axis] - self.position_offset[axis]
+            self.position[axis] = (rigid_body.pos[axis] - self.position_offset[axis])*1000
             self.rotation[axis] = rigid_body.rot[axis] - self.rotation_offset[axis]
 
     def setFingerMarkerDict(self, key, value):
@@ -63,7 +63,7 @@ class HandData:
         for marker in marker_list:
             if marker.id_num in self.finger_marker_dict.keys():
                 for axis in range(len(self.position)):
-                    self.fingers_pos[self.finger_marker_dict[marker.id_num]][axis] = marker.pos[axis] - self.position_offset[axis]
+                    self.fingers_pos[self.finger_marker_dict[marker.id_num]][axis] = (marker.pos[axis] - self.position_offset[axis])*1000
 
     def getFingerPos(self, finger_id: int):
         return self.fingers_pos[self.finger_marker_dict[finger_id]]
