@@ -17,11 +17,11 @@ from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "test"
+version = "test1"
 #　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
-collect_data_num = 20
+collect_data_num = 200
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
@@ -32,18 +32,17 @@ class CollectListener(HandListener):
         super().__init__()
         self.current_collect_id = 0
         self.enables = [False, False]
-        self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
+        self.df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
 
         # ディレクトリが存在しない場合作成
         dir = Path(output_dir)
         dir.mkdir(parents=True, exist_ok=True)
         # TODO: change mode to 'x' for study
-        self.dfs[0].to_csv("{}/leftData.csv".format(output_dir), mode='w')
-        self.dfs[1].to_csv("{}/rightData.csv".format(output_dir), mode='w')
+        self.df.to_csv("{}/leftData.csv".format(output_dir), mode='w', index=False)
+        self.df.to_csv("{}/rightData.csv".format(output_dir), mode='w', index=False)
 
     def reset_df(self):
-        self.left_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
-        self.right_df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
+        self.df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
 
     def frameListener(self, mocap_data: MoCapData):
         # Get the most recent frame and report some basic information
@@ -52,14 +51,14 @@ class CollectListener(HandListener):
                 self.settingUnlabeledMarkerID(mocap_data=mocap_data)
 
             self.setHandData(mocap_data=mocap_data)
-            print("timestamp: %8.4d" %(mocap_data.suffix_data.timestamp))
             for hand in self.hands_dict.values():
 
                 # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
                 if (self.enables[0] if hand.is_left else self.enables[1]) and hand.position[1] > Y_THRESHOLD:
                     ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
                     # Get the hand's normal vector and direction
-                    self.printHandData(hand)
+                    # self.printHandData(hand)
+                    print(len(self.df))
                     ps["position_x", "position_y", "position_z"] = hand.position
                     ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
                     # Calculate the hand's pitch, roll, and yaw angles
@@ -71,32 +70,30 @@ class CollectListener(HandListener):
                             ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.position[pos]
 
                     # 　データ収集が完了すると終了
-                    if hand.is_left:
-                        self.dfs[0] = self.dfs[0].append(ps, ignore_index=True)
-                        if (len(self.dfs[0]) >= collect_data_num):
-                            self.enables[0] = False
-                            self.data_save_pandas(lr="left", data=copy.deepcopy(self.dfs[0]))
-                            print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], "left"))
-                    else:
-                        self.dfs[1] = self.dfs[1].append(ps, ignore_index=True)
-                        if (len(self.dfs[1]) >= collect_data_num):
-                            self.enables[1] = False
-                            self.data_save_pandas(lr="right", data=copy.deepcopy(self.dfs[1]))
-                            print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], "right"))
+
+                    self.df = self.df.append(ps, ignore_index=True)
+                    if (len(self.df) >= collect_data_num):
+                        (lr, i) = ("left", 0) if hand.is_left else ("right", 1)
+                        self.enables[i] = False
+                        self.data_save_pandas(lr=lr, data=copy.deepcopy(self.df))
+                        print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], lr))
+                        self.reset_df()
+
 
             # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
             if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
                 self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+                print(".")
 
         else:
             self.is_markerlosted = True
 
         if not (self.enables[0] or self.enables[1]):
             self.streaming_client.stop()
-            print("Finished to correct {} shape data\nPlease press Enter key for next".format(labels[self.current_collect_id]))
+            print("Saved data\nPlease press Enter key for next")
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
-        data["label"] = self.current_collect_id
+        data["Label"] = self.current_collect_id
 
         data.to_csv("{}/{}Data.csv".format(output_dir,lr), mode='a', header=False, index=False)
 
@@ -115,30 +112,22 @@ def main():
     for label_id in range(len(labels)):
         listener.current_collect_id = label_id
         print("Please make {} hand shape".format(labels[label_id]))
-        listener.enables[0] = True
-        listener.enables[1] = True
-        if label_id == HandEnum.FREE.value:
-            print("First, use left hand")
-            print("Press Enter key to start")
-            listener.enables[0] = True
-            listener.enables[1] = False
-            sys.stdin.readline()
-            listener.streaming_client.restart()
-            sys.stdin.readline()
 
-            print("Next, use right hand")
-            print("Press Enter key to start")
-            listener.enables[0] = False
-            listener.enables[1] = True
-            sys.stdin.readline()
-            listener.streaming_client.restart()
-            sys.stdin.readline()
-        else:
-            print("use both hands at same time")
-            print("Press Enter key to start")
-            sys.stdin.readline()
-            listener.streaming_client.restart()
-            sys.stdin.readline()
+        print("First, use left hand")
+        print("Press Enter key to start")
+        listener.enables[0] = True
+        listener.enables[1] = False
+        sys.stdin.readline()
+        listener.streaming_client.restart()
+        sys.stdin.readline()
+
+        print("Next, use right hand")
+        print("Press Enter key to start")
+        listener.enables[0] = False
+        listener.enables[1] = True
+        sys.stdin.readline()
+        listener.streaming_client.restart()
+        sys.stdin.readline()
 
 
     # Keep this process running until Enter is pressed
