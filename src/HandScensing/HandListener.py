@@ -79,6 +79,7 @@ class HandListener:
         self.finger_dis_size = [0, 0]
         self.current_mocap_data: MoCapData = None
         self.hands_dict = {'l': HandData(is_left=True), 'r': HandData(is_left=False)}
+        self.is_markerlosted = False
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -115,10 +116,6 @@ class HandListener:
             #     print("...")
             # finally:
             #     print("exiting")
-
-    # TODO: マーカーロストの処理
-    def resetMarkers(self):
-        pass
 
     def calibrationListener(self, mocap_data: MoCapData):
         self.current_mocap_data = mocap_data
@@ -204,21 +201,19 @@ class HandListener:
         print(self.finger_dis_size)
 
     def settingUnlabeledMarkerID(self, mocap_data: MoCapData):
-        # unlabeledMarkerのlabelを登録する <HandData().finger_marker_dict[id] -> finger_pos.key>
-        marker_pos_x_list = []
-        marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        for marker in marker_list:
-            marker_pos_x_list.append(marker.pos[0])
-        sorted_list = sorted(marker_pos_x_list)
-        for key in range(len(marker_pos_x_list)):
-            for id in range(len(marker_pos_x_list)):
-                if sorted_list[key] == (marker_pos_x_list[id]):
-                    if key < len(HandData().fingers_pos):
-                        self.hands_dict['l'].finger_marker_dict[id+1] = abs(key - len(HandData().fingers_pos) + 1)
-                        # self.hands_dict['l'].fingers_pos[key] = marker_list[id]
-                    else:
-                        self.hands_dict['r'].finger_marker_dict[id+1] = key - len(HandData().fingers_pos)
-                        # self.hands_dict['r'].fingers_pos[key-len(HandData().fingers_pos)] = marker_list[id]
+        if mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2:
+            marker_pos_x_list = []
+            marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
+            for marker in marker_list:
+                marker_pos_x_list.append(marker.pos[0])
+            sorted_list = sorted(marker_pos_x_list)
+            for key in range(len(marker_pos_x_list)):
+                for id in range(len(marker_pos_x_list)):
+                    if sorted_list[key] == (marker_pos_x_list[id]):
+                        if key < len(HandData().fingers_pos):
+                            self.hands_dict['l'].setFingerMarkerDict(id+1, abs(key - len(HandData().fingers_pos) + 1))
+                        else:
+                            self.hands_dict['r'].setFingerMarkerDict(id+1, key % len(HandData().fingers_pos))
 
     def settingRigidbody(self, mocap_data: MoCapData):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>

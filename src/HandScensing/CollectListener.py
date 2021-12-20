@@ -48,6 +48,10 @@ class CollectListener(HandListener):
     def frameListener(self, mocap_data: MoCapData):
         # Get the most recent frame and report some basic information
         if self.judgeDataComplete(mocap_data=mocap_data):
+            if self.is_markerlosted:
+                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+                self.is_markerlosted = False
+
             self.setHandData(mocap_data=mocap_data)
             print("timestamp: %8.4d" %(mocap_data.suffix_data.timestamp))
             for hand in self.hands_dict.values():
@@ -80,6 +84,13 @@ class CollectListener(HandListener):
                             self.enables[1] = False
                             self.data_save_pandas(lr="right", data=copy.deepcopy(self.dfs[1]))
                             print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], "right"))
+
+            # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
+            if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
+                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+
+        else:
+            self.is_markerlosted = True
 
         if not (self.enables[0] or self.enables[1]):
             self.streaming_client.stop()

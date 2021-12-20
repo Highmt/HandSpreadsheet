@@ -15,7 +15,7 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 
-from src.HandScensing.HandListener import HandListener
+from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
@@ -91,13 +91,14 @@ try:
     while True:
         mocap_data: MoCapData = listener.getCurrentData()
         if listener.judgeDataComplete(mocap_data=mocap_data):
+            if listener.is_markerlosted:
+                listener.settingUnlabeledMarkerID(mocap_data=mocap_data)
             listener.setHandData(mocap_data=mocap_data)
             for hand in listener.hands_dict.values():
-                listener.printHandData(hand)
                 if hand.is_left:
-                    l_y_vec['x'][-1] = hand.position[0]
-                    l_y_vec['y'][-1] = hand.position[1]
-                    l_y_vec['z'][-1] = hand.position[2]
+                    l_y_vec['x'][-1] = hand.fingers_pos[0][0]
+                    l_y_vec['y'][-1] = hand.fingers_pos[1][0]
+                    l_y_vec['z'][-1] = hand.fingers_pos[2][0]
                     line1 = live_plotter(x_vec, l_y_vec, line1)
                     l_y_vec['x'] = np.append(l_y_vec['x'][1:], 0.0)
                     l_y_vec['y'] = np.append(l_y_vec['y'][1:], 0.0)
@@ -110,7 +111,12 @@ try:
                     r_y_vec['x'] = np.append(r_y_vec['x'][1:], 0.0)
                     r_y_vec['y'] = np.append(r_y_vec['y'][1:], 0.0)
                     r_y_vec['z'] = np.append(r_y_vec['z'][1:], 0.0)
+            # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
+            if listener.hands_dict['l'].position[1] <= Y_THRESHOLD and listener.hands_dict['r'].position[1] <= Y_THRESHOLD:
+                listener.settingUnlabeledMarkerID(mocap_data=mocap_data)
             time.sleep(0.05)
+        else:
+            listener.is_markerlosted = True
 except KeyboardInterrupt:
     print("\n\nexit...")
     sys.exit()

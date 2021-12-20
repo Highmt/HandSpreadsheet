@@ -51,12 +51,16 @@ class AppListener(QtCore.QThread, HandListener):
 
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
+            if self.is_markerlosted:
+                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+                self.is_markerlosted = False
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
 
-            # 左右両方の手の位置が閾値より低い時フィードバックを非表示
-            if self.hands_dict['l'].position[1] < Y_THRESHOLD and self.hands_dict['r'].position[1] < Y_THRESHOLD:
+            # 左右両方の手の位置が閾値より低い時フィードバックを非表示かつマーカ再設定
+            if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
                 self.hide_feedback.emit()
+                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
                 return
 
             # 認識した手の形状を識別する
@@ -83,6 +87,9 @@ class AppListener(QtCore.QThread, HandListener):
                 if prehand != currentStatus:
                     self.action(prehand, currentStatus, self.hands_dict.get(key))
                     self.preHands[key] = currentStatus  # １つ前の手形状を更新
+                    # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
+        else:
+            self.is_markerlosted = True
 
     def isHolizon(self, hand: HandData):
         # 親指第一関節と人差し指の第二関節の位置を識別
