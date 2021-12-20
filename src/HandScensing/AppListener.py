@@ -107,6 +107,7 @@ class AppListener(QtCore.QThread, HandListener):
         if n_hand == HandEnum.FREE.value:
             # if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):  //　絶対入らない
             self.hide_feedback.emit()
+            return
 
         elif n_hand == HandEnum.PINCH_IN.value:
             if p_hand == HandEnum.PINCH_OUT.value:
@@ -164,6 +165,8 @@ class AppListener(QtCore.QThread, HandListener):
             else:
                 # print("ペースト前状態に遷移")
                 self.change_feedback.emit("Grip", "", DirectionEnum.VERTICAL.value)
+
+        self.resetHand()
 
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode

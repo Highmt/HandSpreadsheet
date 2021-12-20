@@ -38,8 +38,8 @@ class CollectListener(HandListener):
         dir = Path(output_dir)
         dir.mkdir(parents=True, exist_ok=True)
         # TODO: change mode to 'x' for study
-        self.df.to_csv("{}/leftData.csv".format(output_dir), mode='w', index=False)
-        self.df.to_csv("{}/rightData.csv".format(output_dir), mode='w', index=False)
+        self.df.to_csv("{}/leftData.csv".format(output_dir), mode='w')
+        self.df.to_csv("{}/rightData.csv".format(output_dir), mode='w')
 
     def reset_df(self):
         self.df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
@@ -94,11 +94,11 @@ class CollectListener(HandListener):
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
         data["Label"] = self.current_collect_id
-
-        data.to_csv("{}/{}Data.csv".format(output_dir,lr), mode='a', header=False, index=False)
+        data.to_csv("{}/{}Data.csv".format(output_dir, lr), mode='a', header=False)
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
+
 def main():
     listener = CollectListener()
     listener.initOptiTrack()
@@ -109,11 +109,10 @@ def main():
     # Have the sample listener receive events from the controller
     print("Press Enter to start collecting hand data session")
     sys.stdin.readline()
+    print("First, use left hand")
     for label_id in range(len(labels)):
         listener.current_collect_id = label_id
         print("Please make {} hand shape".format(labels[label_id]))
-
-        print("First, use left hand")
         print("Press Enter key to start")
         listener.enables[0] = True
         listener.enables[1] = False
@@ -121,7 +120,10 @@ def main():
         listener.streaming_client.restart()
         sys.stdin.readline()
 
-        print("Next, use right hand")
+    print("Next, use right hand")
+    for label_id in range(len(labels)):
+        listener.current_collect_id = label_id
+        print("Please make {} hand shape".format(labels[label_id]))
         print("Press Enter key to start")
         listener.enables[0] = False
         listener.enables[1] = True

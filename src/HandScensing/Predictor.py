@@ -7,39 +7,38 @@ from res.SSEnum import FeatureEnum
 from src.HandScensing.HandListener import HandData
 
 model_pass = '../../res/learningModel/'
-ver = 'a0'
+ver = ''
+
+
+pos_labels = ["x", "y", "z"]
+rot_labels = ["pitch", "roll", "yaw"]
+state_labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "OPEN", "GRIP"]
+finger_labels = ['Thumb', 'Index', 'Pinky']
+
 class Predictor():
     def __init__(self, alg: str):
-        self.left_model = pickle.load(open('{}LeftModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
-        self.right_model = pickle.load(open('{}RightModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
-        self.finger_labels = ['Thumb', 'Index', 'Pinky']
-        self.state_labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE_PINCH_OUT", "PALM", "GRIP"]
-        self.pos_labels = ["x", "y", "z"]
-        self.rot_labels = ["pitch", "roll", "yaw"]
-        self.df = self.create_emptypandas()
-        self.dfs = self.create_emptypandas()
+        self.left_model = pickle.load(open('{}leftModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
+        self.right_model = pickle.load(open('{}rightModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
 
     def handPredict(self, hand):
+        df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
+        ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
+        ps["position_x", "position_y", "position_z"] = hand.position
+        ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
+        # Calculate the hand's pitch, roll, and yaw angles
 
-        for finger_id in len(hand.fingers_pos):
+        # Get fingers
+        for finger_id in range(len(hand.fingers_pos)):
             for pos in range(3):
-                self.df.at[0, self.finger_labels[finger_id] + "_pos_" + self.pos_labels[pos]] = hand.fingers_pos[pos]
-                self.df.at[0, self.finger_labels[finger_id] + "dir" + self.pos_labels[pos]] = hand.fingers_pos[pos] - hand.position[pos]
+                ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos]
+                ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.position[pos]
 
-        for pos in range(3):
-            self.df.at[0, self.pos_labels[pos]] = hand.position[pos]
-            self.df.at[0, self.rot_labels[pos]] = hand.rotation[pos]
-
-
-        self.dfs = pd.concat([self.dfs, self.df], ignore_index=True)
-
+        df = df.append(ps, ignore_index=True)
+        df = df.drop(columns="Label")
         if hand.is_left:
-            pred = self.left_model.predict(self.df.values)
+            pred = self.left_model.predict(df.values)
         else:
-            pred = self.right_model.predict(self.df.values)
+            pred = self.right_model.predict(ps.values)
         # print(self.model.decision_function(self.df.values))　# SVCのみ
         # print(pred)
         return pred[0]
-
-    def create_emptypandas(self):
-        return pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
