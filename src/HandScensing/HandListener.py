@@ -73,8 +73,6 @@ class HandData:
         self.position_offset = copy.deepcopy(position)
         self.rotation_offset = copy.deepcopy(rotation)
 
-    # TODO: マーカーロストの処理
-
 class HandListener:
     def __init__(self):
         self.finger_dis_dim = {"up": 0, "low": 0, "left": 0, "right": 0}
@@ -118,6 +116,9 @@ class HandListener:
             # finally:
             #     print("exiting")
 
+    # TODO: マーカーロストの処理
+    def resetMarkers(self):
+        pass
 
     def calibrationListener(self, mocap_data: MoCapData):
         self.current_mocap_data = mocap_data
@@ -131,8 +132,9 @@ class HandListener:
     def getCurrentData(self) -> MoCapData:
         return copy.deepcopy(self.current_mocap_data)
 
+    # 手の数が2かつ指のマーカーの数が6
     def judgeDataComplete(self, mocap_data: MoCapData):
-        return mocap_data.rigid_body_data.get_rigid_body_count() < 3 and \
+        return mocap_data.rigid_body_data.get_rigid_body_count() == 2 and \
                mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
 
     def printHandData(self, hand: HandData):
