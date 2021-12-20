@@ -24,8 +24,8 @@ from src.UDP import MoCapData, DataDescriptions
 
 def trace(*args):
     # uncomment the one you want to use
-    print("".join(map(str, args)))
-    # pass
+    # print("".join(map(str, args)))
+    pass
 
 
 # Used for Data Description functions
@@ -110,6 +110,7 @@ class NatNetClient:
         self.data_socket = None
 
         self.stop_threads = False
+        self.temp_stop_threads = False
 
     # Client/server message ids
     NAT_CONNECT = 0
@@ -777,7 +778,7 @@ class NatNetClient:
             data_dict["is_recording"] = is_recording
             data_dict["tracked_models_changed"] = tracked_models_changed
 
-            self.new_frame_listener(data_dict)
+            self.new_frame_listener(mocap_data)
         trace_mf("MoCap Frame End\n-----------------")
         return offset, mocap_data
 
@@ -1115,10 +1116,10 @@ class NatNetClient:
                 trace_dd("Type: 5 Camera")
                 offset_tmp, data_tmp = self.__unpack_camera_description(data[offset:], major, minor)
             else:
-                print("Type: " + str(data_type) + " UNKNOWN")
-                print("ERROR: Type decode failure")
-                print("\t" + str(i + 1) + " datasets processed of " + str(dataset_count))
-                print("\t " + str(offset) + " bytes processed of " + str(packet_size))
+                trace("Type: " + str(data_type) + " UNKNOWN")
+                trace("ERROR: Type decode failure")
+                trace("\t" + str(i + 1) + " datasets processed of " + str(dataset_count))
+                trace("\t " + str(offset) + " bytes processed of " + str(packet_size))
                 print("\tPACKET DECODE STOPPED")
                 return offset
             offset += offset_tmp
@@ -1175,7 +1176,7 @@ class NatNetClient:
                  , str(self.__server_version[3]))
         return offset
 
-    def __command_thread_function(self, in_socket, stop, gprint_level):
+    def __command_thread_function(self, in_socket, stop, temp_stop, gprint_level):
         message_id_dict = {}
         if not self.use_multicast:
             in_socket.settimeout(2.0)
@@ -1183,6 +1184,8 @@ class NatNetClient:
         # 64k buffer size
         recv_buffer_size = 64 * 1024
         while not stop():
+            if temp_stop():
+                continue
             # Block for input
             try:
                 data, addr = in_socket.recvfrom(recv_buffer_size)
@@ -1199,7 +1202,7 @@ class NatNetClient:
                 return 3
             except  socket.timeout:
                 if (self.use_multicast):
-                    print("ERROR: command socket access timeout occurred. Server not responding")
+                    trace("ERROR: command socket access timeout occurred. Server not responding")
                     # return 4
 
             if len(data) > 0:
@@ -1226,7 +1229,7 @@ class NatNetClient:
                     self.send_keep_alive(in_socket, self.server_ip_address, self.command_port)
         return 0
 
-    def __data_thread_function(self, in_socket, stop, gprint_level):
+    def __data_thread_function(self, in_socket, stop, temp_stop, gprint_level):
         message_id_dict = {}
         data = bytearray(0)
         # 64k buffer size
@@ -1234,6 +1237,9 @@ class NatNetClient:
 
         while not stop():
             # Block for input
+            if temp_stop():
+                continue
+
             try:
                 data, addr = in_socket.recvfrom(recv_buffer_size)
             except socket.error as msg:
@@ -1295,22 +1301,22 @@ class NatNetClient:
 
             offset_tmp, mocap_data = self.__unpack_mocap_data(data[offset:], packet_size, major, minor)
             offset += offset_tmp
-            print("MoCap Frame: %d\n" % (mocap_data.prefix_data.frame_number))
+            trace("MoCap Frame: %d\n" % (mocap_data.prefix_data.frame_number))
             # get a string version of the data for output
             mocap_data_str = mocap_data.get_as_string()
             if print_level >= 1:
-                print("%s\n" % mocap_data_str)
+                trace("%s\n" % mocap_data_str)
 
         elif message_id == self.NAT_MODELDEF:
             trace("Message ID  : %3.1d NAT_MODELDEF" % message_id)
             trace("Packet Size : %d" % packet_size)
             offset_tmp, data_descs = self.__unpack_data_descriptions(data[offset:], packet_size, major, minor)
             offset += offset_tmp
-            print("Data Descriptions:\n")
+            trace("Data Descriptions:\n")
             # get a string version of the data for output
             data_descs_str = data_descs.get_as_string()
             if print_level > 0:
-                print("%s\n" % (data_descs_str))
+                trace("%s\n" % (data_descs_str))
 
         elif message_id == self.NAT_SERVERINFO:
             trace("Message ID  : %3.1d NAT_SERVERINFO" % message_id)
@@ -1391,7 +1397,7 @@ class NatNetClient:
         for sz_command in tmpCommands:
             return_code = self.send_command(sz_command)
             if (print_results):
-                print("Command: %s - return_code: %d" % (sz_command, return_code))
+                trace("Command: %s - return_code: %d" % (sz_command, return_code))
 
     def send_keep_alive(self, in_socket, server_ip_address, server_port):
         return self.send_request(in_socket, self.NAT_KEEPALIVE, "", (server_ip_address, server_port))
@@ -1426,14 +1432,15 @@ class NatNetClient:
         self.__is_locked = True
 
         self.stop_threads = False
+        self.temp_stop_threads = False
         # Create a separate thread for receiving data packets
         self.data_thread = Thread(target=self.__data_thread_function,
-                                  args=(self.data_socket, lambda: self.stop_threads, lambda: self.print_level,))
+                                  args=(self.data_socket, lambda: self.stop_threads, lambda: self.temp_stop_threads, lambda: self.print_level,))
         self.data_thread.start()
 
         # Create a separate thread for receiving command packets
         self.command_thread = Thread(target=self.__command_thread_function,
-                                     args=(self.command_socket, lambda: self.stop_threads, lambda: self.print_level,))
+                                     args=(self.command_socket, lambda: self.stop_threads, lambda: self.temp_stop_threads, lambda: self.print_level,))
         self.command_thread.start()
 
         # Required for setup
@@ -1446,6 +1453,16 @@ class NatNetClient:
         ## Request the model definitions
         # self.send_request(self.command_socket, self.NAT_REQUEST_MODELDEF, "",  (self.server_ip_address, self.command_port) )
         return True
+
+    def stop(self):
+        if not self.temp_stop_threads:
+            print("stop thread")
+            self.temp_stop_threads = True
+
+    def restart(self):
+        if self.temp_stop_threads:
+            print("restart thread")
+            self.temp_stop_threads = False
 
     def shutdown(self):
         print("shutdown called")

@@ -120,18 +120,48 @@ class FramePrefixData:
         out_str = "%sFrame #: %3.1d\n" % (out_tab_str, self.frame_number)
         return out_str
 
+class RigidBodyMarker:
+    def __init__(self):
+        self.pos = [0.0, 0.0, 0.0]
+        self.id_num = 0
+        self.size = 0
+        self.error = 0
+
+    def get_as_string(self, tab_str="  ", level=0):
+        out_tab_str = get_tab_str(tab_str, level)
+        out_str = ""
+        out_str += "%sPosition: [%3.2f %3.2f %3.2f]\n" % (out_tab_str, self.pos[0], self.pos[1], self.pos[2])
+        out_str += "%sID      : %3.1d\n" % (out_tab_str, self.id_num)
+        out_str += "%sSize    : %f\n" % (out_tab_str, self.size)
+        return out_str
+
+class Marker(RigidBodyMarker):
+    def set_id(self, id):
+        self.id_num = id
+
+    def set_pos(self, pos):
+        self.pos = pos
+
 
 class MarkerData:
     def __init__(self):
         self.model_name = ""
         self.marker_pos_list = []
+        self.marker_list = []
 
     def set_model_name(self, model_name):
         self.model_name = model_name
 
     def add_pos(self, pos):
         self.marker_pos_list.append(copy.deepcopy(pos))
+        marker = Marker()
+        marker.set_id(len(self.marker_pos_list))
+        marker.set_pos(pos)
+        self.add_marker(marker)
         return len(self.marker_pos_list)
+
+    def add_marker(self, marker: Marker):
+        self.marker_list.append(marker)
 
     def get_num_points(self):
         return len(self.marker_pos_list)
@@ -187,20 +217,6 @@ class MarkerSetData:
         return out_str
 
 
-class RigidBodyMarker:
-    def __init__(self):
-        self.pos = [0.0, 0.0, 0.0]
-        self.id_num = 0
-        self.size = 0
-        self.error = 0
-
-    def get_as_string(self, tab_str="  ", level=0):
-        out_tab_str = get_tab_str(tab_str, level)
-        out_str = ""
-        out_str += "%sPosition: [%3.2f %3.2f %3.2f]\n" % (out_tab_str, self.pos[0], self.pos[1], self.pos[2])
-        out_str += "%sID      : %3.1d\n" % (out_tab_str, self.id_num)
-        out_str += "%sSize    : %f\n" % (out_tab_str, self.size)
-        return out_str
 
 
 class RigidBody:
@@ -561,13 +577,13 @@ class MoCapData:
     def __init__(self):
         # Packet Parts
         self.prefix_data = None
-        self.marker_set_data = None
-        self.rigid_body_data = None
-        self.skeleton_data = None
-        self.labeled_marker_data = None
-        self.force_plate_data = None
-        self.device_data = None
-        self.suffix_data = None
+        self.marker_set_data: MarkerSetData = None
+        self.rigid_body_data: RigidBodyData = None
+        self.skeleton_data: SkeletonData = None
+        self.labeled_marker_data: LabeledMarkerData = None
+        self.force_plate_data: ForcePlateData = None
+        self.device_data: DeviceData = None
+        self.suffix_data: FrameSuffixData = None
 
     def set_prefix_data(self, new_prefix_data):
         self.prefix_data = new_prefix_data

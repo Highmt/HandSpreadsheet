@@ -20,18 +20,17 @@ np.random.seed(1671)  # for reproducibility
 
 # network and training
 DROPOUT = 0.2
-
+data_pass = '../../res/data/test/'
 # data: shuffled and split between train and test sets
-read_data0 = pd.read_csv('../../res/data/0_FREE.csv', sep=',', index_col=0)
-read_data1 = pd.read_csv('../../res/data/1_PINCH_IN.csv', sep=',', index_col=0)
-read_data2 = pd.read_csv('../../res/data/2_PINCH_OUT.csv', sep=',', index_col=0)
-read_data3 = pd.read_csv('../../res/data/3_REVERSE.csv', sep=',', index_col=0)
-read_data4 = pd.read_csv('../../res/data/4_PALM.csv', sep=',', index_col=0)
-read_data5 = pd.read_csv('../../res/data/5_GRAB.csv', sep=',', index_col=0)
+# TODO: convert one file and both hands
+lr_label = ['left', 'right']
 
-read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
-data = read_data.drop("label", axis=1).values
-label = read_data["label"].values
+i = 0
+read_data = pd.read_csv(data_pass + lr_label[i] + 'Data.csv', sep=',', index_col=0)
+
+# read_data = pd.concat([read_data0, read_data1, read_data2, read_data3, read_data4, read_data5], ignore_index=True)
+data = read_data.drop("Label", axis=1).values
+label = read_data["Label"].values
 
 
 train_data, test_data, train_label, test_label = train_test_split(data, label, test_size=0.2, stratify=label)
@@ -39,10 +38,6 @@ train_data, test_data, train_label, test_label = train_test_split(data, label, t
 # normalize
 print(train_data.shape[0], 'train samples')
 print(test_data.shape[0], 'test samples')
-
-
-
-
 
 print("train start")
 print("# Tuning hyper-parameters for accuracy")

@@ -14,9 +14,9 @@ class HandEnum(Enum):
     PINCH_IN = 1
     PINCH_OUT = 2
     REVERSE = 3
-    PALM = 4
+    OPEN = 4
     GRIP = 5
-    NAME_LIST = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "PALM", "FIST"]
+    NAME_LIST = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "OPEN", "GRIP"]
 
 class OperationEnum(Enum):
     Ir = 0
@@ -52,3 +52,32 @@ class TestModeEnum(Enum):
     GESTURE = 0
     SHORTCUT_KEY = 1
     MENU = 2
+
+class FeatureEnum(Enum):
+    FEATURE_LIST = [
+        "position_x",
+        "position_y",
+        "position_z",
+        "pitch",
+        "roll",
+        "yaw",
+        "Thumb_pos_x",
+        "Thumb_pos_y",
+        "Thumb_pos_z",
+        "Index_pos_x",
+        "Index_pos_y",
+        "Index_pos_z",
+        "Pinky_pos_x",
+        "Pinky_pos_y",
+        "Pinky_pos_z",
+        "Thumb_dir_x",
+        "Thumb_dir_y",
+        "Thumb_dir_z",
+        "Index_dir_x",
+        "Index_dir_y",
+        "Index_dir_z",
+        "Pinky_dir_x",
+        "Pinky_dir_y",
+        "Pinky_dir_z",
+        "Label"
+    ]

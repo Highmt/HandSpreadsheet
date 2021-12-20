@@ -38,16 +38,16 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
-
+import sys
+import time
 from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup)
 
-from lib.LeapMotion import Leap
 from res.SSEnum import ActionEnum, DirectionEnum
-from src.HandScensing.HandListener import HandListener
+from src.HandScensing.AppListener import AppListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
 from lib.sample.spreadsheetitem import SpreadSheetItem
@@ -63,6 +63,7 @@ from lib.sample.util import encode_pos
 #         painter.setPen(Qt.red)
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
+
 
 class HandSpreadSheet(QMainWindow):
     def __init__(self, rows, cols, parent=None):
@@ -107,11 +108,13 @@ class HandSpreadSheet(QMainWindow):
         self.overlayLayout.addWidget(self.overlayGraphics)
 
         # Create a sample listener and controller
-        self.listener = HandListener()
-        self.controller = Leap.Controller()
+        self.listener = AppListener()
+        self.listener.initOptiTrack()
+        self.listener.do_calibration()
+        self.listener.streaming_client.new_frame_listener = self.listener.frameListener
         self.setLeapSignal()
 
-        self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
+        # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
         self.show()
 
@@ -394,10 +397,10 @@ class HandSpreadSheet(QMainWindow):
 
     def startLeap(self):
         # Have the sample listener receive events from the controller
-        self.controller.add_listener(self.listener)
+        self.streaming_client.restart()
 
     def endLeap(self):
-        self.controller.remove_listener(self.listener)
+        self.streaming_client.stop()
 
     def activePointing(self):
         self.listener.setPointingMode(True)
@@ -431,7 +434,7 @@ class HandSpreadSheet(QMainWindow):
             self.pointStatusLabel.setText("")
 
     def closeEvent(self, event):
-        self.controller.remove_listener(self.listener)
+        self.streaming_client.shutdown()
 
     def cellSelect(self):
         self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
