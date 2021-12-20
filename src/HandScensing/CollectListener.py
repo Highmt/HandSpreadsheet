@@ -17,7 +17,7 @@ from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "master"
+version = "test"
 #　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
@@ -33,9 +33,11 @@ class CollectListener(HandListener):
         self.current_collect_id = 0
         self.enables = [False, False]
         self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
-        # TODO: change mode to 'x' for study
+
+        # ディレクトリが存在しない場合作成
         dir = Path(output_dir)
         dir.mkdir(parents=True, exist_ok=True)
+        # TODO: change mode to 'x' for study
         self.dfs[0].to_csv("{}/leftData.csv".format(output_dir), mode='w')
         self.dfs[1].to_csv("{}/rightData.csv".format(output_dir), mode='w')
 
@@ -49,8 +51,8 @@ class CollectListener(HandListener):
             self.setHandData(mocap_data=mocap_data)
             print("timestamp: %8.4d" %(mocap_data.suffix_data.timestamp))
             for hand in self.hands_dict.values():
-                # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
 
+                # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
                 if (self.enables[0] if hand.is_left else self.enables[1]) and hand.position[1] > Y_THRESHOLD:
                     ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
                     # Get the hand's normal vector and direction
@@ -86,7 +88,7 @@ class CollectListener(HandListener):
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
         data["label"] = self.current_collect_id
 
-        data.to_csv("../../res/data/{}Data_{}.csv".format(lr, version), mode='a', header=False, index=False)
+        data.to_csv("{}/{}Data.csv".format(output_dir,lr), mode='a', header=False, index=False)
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
