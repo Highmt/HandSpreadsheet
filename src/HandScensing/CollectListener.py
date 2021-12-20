@@ -50,7 +50,6 @@ class CollectListener(HandListener):
         if self.judgeDataComplete(mocap_data=mocap_data):
             if self.is_markerlosted:
                 self.settingUnlabeledMarkerID(mocap_data=mocap_data)
-                self.is_markerlosted = False
 
             self.setHandData(mocap_data=mocap_data)
             print("timestamp: %8.4d" %(mocap_data.suffix_data.timestamp))

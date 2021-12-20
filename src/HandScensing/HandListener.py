@@ -202,6 +202,8 @@ class HandListener:
 
     def settingUnlabeledMarkerID(self, mocap_data: MoCapData):
         if mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2:
+            self.hands_dict['l'].finger_marker_dict = {}
+            self.hands_dict['r'].finger_marker_dict = {}
             marker_pos_x_list = []
             marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
             for marker in marker_list:
@@ -214,6 +216,7 @@ class HandListener:
                             self.hands_dict['l'].setFingerMarkerDict(id+1, abs(key - len(HandData().fingers_pos) + 1))
                         else:
                             self.hands_dict['r'].setFingerMarkerDict(id+1, key % len(HandData().fingers_pos))
+            self.is_markerlosted = False
 
     def settingRigidbody(self, mocap_data: MoCapData):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>

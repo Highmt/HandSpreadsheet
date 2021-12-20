@@ -71,6 +71,8 @@ line2['y'], = ax2.plot(x_vec, r_y_vec['y'], '-o', alpha=0.8)
 line2['z'], = ax2.plot(x_vec, r_y_vec['z'], '--', alpha=0.8)
 ax1.set_ylim(ymax=1000, ymin=-1000)
 ax2.set_ylim(ymax=1000, ymin=-1000)
+ax1.legend(["x", "y", "z"])
+ax2.legend(["x", "y", "z"])
 # update plot label/title
 plt.ylabel('Y Label')
 plt.title('Title: {}'.format('Realtime'))
@@ -96,6 +98,7 @@ try:
             listener.setHandData(mocap_data=mocap_data)
             for hand in listener.hands_dict.values():
                 if hand.is_left:
+                    listener.printHandData(hand)
                     l_y_vec['x'][-1] = hand.fingers_pos[0][0]
                     l_y_vec['y'][-1] = hand.fingers_pos[1][0]
                     l_y_vec['z'][-1] = hand.fingers_pos[2][0]
@@ -104,9 +107,9 @@ try:
                     l_y_vec['y'] = np.append(l_y_vec['y'][1:], 0.0)
                     l_y_vec['z'] = np.append(l_y_vec['z'][1:], 0.0)
                 else:
-                    r_y_vec['x'][-1] = hand.position[0]
-                    r_y_vec['y'][-1] = hand.position[1]
-                    r_y_vec['z'][-1] = hand.position[2]
+                    r_y_vec['x'][-1] = hand.fingers_pos[0][0]
+                    r_y_vec['y'][-1] = hand.fingers_pos[1][0]
+                    r_y_vec['z'][-1] = hand.fingers_pos[2][0]
                     line2 = live_plotter(x_vec, r_y_vec, line2)
                     r_y_vec['x'] = np.append(r_y_vec['x'][1:], 0.0)
                     r_y_vec['y'] = np.append(r_y_vec['y'][1:], 0.0)
@@ -117,6 +120,7 @@ try:
             time.sleep(0.05)
         else:
             listener.is_markerlosted = True
+
 except KeyboardInterrupt:
     print("\n\nexit...")
     sys.exit()

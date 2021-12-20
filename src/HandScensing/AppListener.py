@@ -53,7 +53,6 @@ class AppListener(QtCore.QThread, HandListener):
         if self.judgeDataComplete(mocap_data):
             if self.is_markerlosted:
                 self.settingUnlabeledMarkerID(mocap_data=mocap_data)
-                self.is_markerlosted = False
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
 
