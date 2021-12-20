@@ -20,12 +20,13 @@ from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
 version = "master"
-#　収集する手形状のラベル（）
+# 　収集する手形状のラベル（）
 streaming_client = NatNetClient()
 collect_data_num = 2000
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
+
 
 def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.001):
     # after the figure, axis, and line are created, we only need to update the y-data
@@ -39,6 +40,7 @@ def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.001):
 
     # return line so we can update it again in the next iteration
     return line1
+
 
 x_vec = np.linspace(0, 1, 100 + 1)[0:-1]
 l_y_vec = {
@@ -63,7 +65,6 @@ ax2 = fig.add_subplot(212)
 line1['x'], = ax1.plot(x_vec, l_y_vec['x'], '-', alpha=0.8)
 line1['y'], = ax1.plot(x_vec, l_y_vec['y'], '-o', alpha=0.8)
 line1['z'], = ax1.plot(x_vec, l_y_vec['z'], '--', alpha=0.8)
-
 
 line2['x'], = ax2.plot(x_vec, r_y_vec['x'], '-', alpha=0.8)
 line2['y'], = ax2.plot(x_vec, r_y_vec['y'], '-o', alpha=0.8)
@@ -115,4 +116,3 @@ except KeyboardInterrupt:
     sys.exit()
 finally:
     listener.streaming_client.shutdown()
-
