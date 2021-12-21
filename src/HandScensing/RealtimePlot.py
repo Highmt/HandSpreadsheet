@@ -28,7 +28,7 @@ pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
 
 
-def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.001):
+def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.01):
     # after the figure, axis, and line are created, we only need to update the y-data
     line1['x'].set_ydata(y1_data['x'])
     line1['y'].set_ydata(y1_data['y'])
@@ -120,6 +120,8 @@ try:
             time.sleep(0.05)
         else:
             listener.is_markerlosted = True
+            print(".")
+            time.sleep(0.05)
 
 except KeyboardInterrupt:
     print("\n\nexit...")
