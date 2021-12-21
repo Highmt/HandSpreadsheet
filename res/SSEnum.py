@@ -55,21 +55,9 @@ class TestModeEnum(Enum):
 
 class FeatureEnum(Enum):
     FEATURE_LIST = [
-        "position_x",
-        "position_y",
-        "position_z",
         "pitch",
         "roll",
         "yaw",
-        "Thumb_pos_x",
-        "Thumb_pos_y",
-        "Thumb_pos_z",
-        "Index_pos_x",
-        "Index_pos_y",
-        "Index_pos_z",
-        "Pinky_pos_x",
-        "Pinky_pos_y",
-        "Pinky_pos_z",
         "Thumb_dir_x",
         "Thumb_dir_y",
         "Thumb_dir_z",
@@ -79,5 +67,14 @@ class FeatureEnum(Enum):
         "Pinky_dir_x",
         "Pinky_dir_y",
         "Pinky_dir_z",
+        "Thumb_Index_x",
+        "Thumb_Index_y",
+        "Thumb_Index_z",
+        "Index_Pinky_x",
+        "Index_Pinky_y",
+        "Index_Pinky_z",
+        "Pinky_Thumb_x",
+        "Pinky_Thumb_y",
+        "Pinky_Thumb_z",
         "Label"
     ]
