@@ -17,7 +17,7 @@ from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "test1"
+version = "test"
 #　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
@@ -59,15 +59,14 @@ class CollectListener(HandListener):
                     # Get the hand's normal vector and direction
                     # self.printHandData(hand)
                     print(len(self.df))
-                    ps["position_x", "position_y", "position_z"] = hand.position
                     ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
-                    # Calculate the hand's pitch, roll, and yaw angles
 
                     # Get fingers
+                    # TODO: 位置は除外
                     for finger_id in range(len(hand.fingers_pos)):
                         for pos in range(3):
-                            ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos]
                             ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.position[pos]
+                            ps[finger_labels[finger_id] + "_" + finger_labels[(finger_id + 1) % 3] + "_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.fingers_pos[(finger_id + 1) % 3][pos]
 
                     # 　データ収集が完了すると終了
 
