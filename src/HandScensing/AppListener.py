@@ -52,14 +52,14 @@ class AppListener(QtCore.QThread, HandListener):
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
             if self.is_markerlosted:
-                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+                self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時フィードバックを非表示かつマーカ再設定
             if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
                 self.hide_feedback.emit()
-                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+                self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
                 return
 
             # 認識した手の形状を識別する
