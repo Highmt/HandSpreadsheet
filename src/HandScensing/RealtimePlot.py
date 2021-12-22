@@ -93,7 +93,7 @@ try:
     while True:
         mocap_data: MoCapData = listener.getCurrentData()
         if listener.judgeDataComplete(mocap_data=mocap_data):
-            if listener.is_markerlosted:
+            if listener.need_calibrattion:
                 listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             listener.setHandData(mocap_data=mocap_data)
             for hand in listener.hands_dict.values():
@@ -119,7 +119,6 @@ try:
                 listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             time.sleep(0.05)
         else:
-            listener.is_markerlosted = True
             print(".")
             time.sleep(0.05)
 

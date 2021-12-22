@@ -62,7 +62,6 @@ class CollectListener(HandListener):
                     ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
 
                     # Get fingers
-                    # TODO: 位置は除外
                     for finger_id in range(len(hand.fingers_pos)):
                         for pos in range(3):
                             ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.position[pos]
@@ -83,9 +82,6 @@ class CollectListener(HandListener):
             if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
                 print(".")
-
-        else:
-            self.is_markerlosted = True
 
         if not (self.enables[0] or self.enables[1]):
             self.streaming_client.stop()

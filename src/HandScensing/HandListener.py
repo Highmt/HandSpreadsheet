@@ -73,7 +73,7 @@ class HandListener:
         self.current_mocap_data: MoCapData = None
         self.hands_dict = {'l': HandData(is_left=True), 'r': HandData(is_left=False)}
         self.marker_label_list = [-1] * (HandData().fingers_pos.__len__() * 2)
-        self.is_markerlosted = False
+        self.need_calibrattion = True
         self.is_resetted = False
 
     def initOptiTrack(self):
@@ -116,10 +116,12 @@ class HandListener:
         self.current_mocap_data = mocap_data
 
     def getEnoughData(self) -> MoCapData:
-        while not self.judgeDataComplete(self.current_mocap_data):
+        data = self.getCurrentData()
+        while not self.judgeDataComplete(data):
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
-        return copy.deepcopy(self.current_mocap_data)
+            data = self.getCurrentData()
+        return data
 
     def getCurrentData(self) -> MoCapData:
         return copy.deepcopy(self.current_mocap_data)
@@ -131,14 +133,16 @@ class HandListener:
 
         if not judge:
             # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
-            if not self.is_resetted and not self.is_markerlosted and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2 - 1:
+            if not self.is_resetted and not self.need_calibrattion and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2 - 1:
+                self.is_resetted = True
                 lost_finger = self.searchLostFinger(mocap_data.marker_set_data.unlabeled_markers.marker_list)
                 for i in range(len(self.marker_label_list)):
                     if self.marker_label_list[i] > self.marker_label_list[lost_finger]:
                         self.marker_label_list[i] = self.marker_label_list[i] - 1
                 self.marker_label_list[lost_finger] = finger_labels.__len__() * 2
-                self.is_markerlosted = False
-                self.is_resetted = True
+
+            elif mocap_data.marker_set_data.unlabeled_markers.get_num_points() < len(HandData().fingers_pos) * 2 - 1:
+                self.need_calibrattion = True
         else:
             self.is_resetted = False
         return judge
@@ -263,7 +267,7 @@ class HandListener:
                         else:
                             print("right {}: {}".format(finger_labels[key % len(HandData().fingers_pos)], id+1))
                             self.marker_label_list[key] = id+1
-            self.is_markerlosted = False
+            self.need_calibrattion = False
 
     def settingRigidbody(self, mocap_data: MoCapData):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>

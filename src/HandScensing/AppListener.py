@@ -87,8 +87,6 @@ class AppListener(QtCore.QThread, HandListener):
                     self.action(prehand, currentStatus, self.hands_dict.get(key))
                     self.preHands[key] = currentStatus  # １つ前の手形状を更新
                     # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
-        else:
-            self.is_markerlosted = True
 
     def isHolizon(self, hand: HandData):
         # 親指第一関節と人差し指の第二関節の位置を識別

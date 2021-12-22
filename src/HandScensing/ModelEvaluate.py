@@ -64,9 +64,6 @@ class TestListener(HandListener):
                 print("\n\n\n\n\n\nPush Enter to Finish")
                 self.streaming_client.stop()
 
-        else:
-            self.is_markerlosted = True
-
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
 
