@@ -51,7 +51,7 @@ class AppListener(QtCore.QThread, HandListener):
 
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
-            if self.is_markerlosted:
+            if self.need_calibration:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)

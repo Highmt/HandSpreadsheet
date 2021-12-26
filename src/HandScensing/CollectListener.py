@@ -47,7 +47,7 @@ class CollectListener(HandListener):
     def frameListener(self, mocap_data: MoCapData):
         # Get the most recent frame and report some basic information
         if self.judgeDataComplete(mocap_data=mocap_data):
-            if self.is_markerlosted:
+            if self.need_calibration:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
             self.setHandData(mocap_data=mocap_data)
