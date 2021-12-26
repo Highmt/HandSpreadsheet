@@ -1,6 +1,8 @@
 import csv
 
 import sys
+import time
+
 import numpy as np
 import pandas as pd
 from sklearn import metrics
@@ -36,12 +38,24 @@ class TestListener(HandListener):
         self.pred_list = [[], []]
         self.true_list = [[], []]
         self.lr = 0
+        self.started = False
 
     def resetList(self):
         self.pred_list = [[], []]
         self.true_list = [[], []]
 
     def frameListener(self, mocap_data: MoCapData):
+        # 　データ収集が完了すると終了
+        if (self.data_count >= collect_data_num):
+            print("\n\n\n\n\n\nPush Enter to Finish")
+            self.started = False
+            self.streaming_client.stop()
+            return
+
+        # 最初の数秒間のフレームをカットする
+        if not self.started:
+            return
+
         if self.judgeDataComplete(mocap_data):
             if self.need_calibration:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
@@ -60,11 +74,6 @@ class TestListener(HandListener):
                     self.pred_list[self.lr].append(pred)
                     self.true_list[self.lr].append(self.true_label)
                     print(pred)
-
-            # 　データ収集が完了すると終了
-            if (self.data_count >= collect_data_num):
-                print("\n\n\n\n\n\nPush Enter to Finish")
-                self.streaming_client.stop()
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
@@ -93,6 +102,9 @@ def main():
                 listener.data_count = 0
                 sys.stdin.readline()
                 listener.streaming_client.restart()
+                time.sleep(0.5)
+                print("------GO-------")
+                listener.started = True
                 sys.stdin.readline()
 
             c_matrix = confusion_matrix(listener.true_list[i], listener.pred_list[i])

@@ -14,7 +14,7 @@ class Predictor():
 
     def handPredict(self, hand):
         df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
-        ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
+        ps = pd.Series(dtype=pd.Float64Dtype, index=FeatureEnum.FEATURE_LIST.value)
         ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
 
         # Get fingers

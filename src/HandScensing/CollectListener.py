@@ -7,6 +7,7 @@
 ################################################################################
 import copy
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -17,7 +18,7 @@ from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "test1"
+version = "test2"
 #　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
@@ -33,6 +34,7 @@ class CollectListener(HandListener):
         self.current_collect_id = 0
         self.enables = [False, False]
         self.df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
+        self.started = False
 
         # ディレクトリが存在しない場合作成
         dir = Path(output_dir)
@@ -45,7 +47,10 @@ class CollectListener(HandListener):
         self.df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
 
     def frameListener(self, mocap_data: MoCapData):
-        # Get the most recent frame and report some basic information
+        # 最初の数秒間のフレームをカットする
+        if not self.started:
+            return
+
         if self.judgeDataComplete(mocap_data=mocap_data):
             if self.need_calibration:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
@@ -55,7 +60,7 @@ class CollectListener(HandListener):
 
                 # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
                 if (self.enables[0] if hand.is_left else self.enables[1]) and hand.position[1] > Y_THRESHOLD:
-                    ps = pd.Series(index=FeatureEnum.FEATURE_LIST.value)
+                    ps = pd.Series(dtype=pd.Float64Dtype, index=FeatureEnum.FEATURE_LIST.value)
                     # Get the hand's normal vector and direction
                     # self.printHandData(hand)
                     print(len(self.df))
@@ -72,6 +77,7 @@ class CollectListener(HandListener):
                     self.df = self.df.append(ps, ignore_index=True)
                     if (len(self.df) >= collect_data_num):
                         (lr, i) = ("left", 0) if hand.is_left else ("right", 1)
+                        self.started = False
                         self.enables[i] = False
                         self.data_save_pandas(lr=lr, data=copy.deepcopy(self.df))
                         print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], lr))
@@ -85,6 +91,7 @@ class CollectListener(HandListener):
 
         if not (self.enables[0] or self.enables[1]):
             self.streaming_client.stop()
+            self.started = False
             print("Saved data\nPlease press Enter key for next")
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
@@ -104,27 +111,22 @@ def main():
     # Have the sample listener receive events from the controller
     print("Press Enter to start collecting hand data session")
     sys.stdin.readline()
-    print("First, use left hand")
-    for label_id in range(len(labels)):
-        listener.current_collect_id = label_id
-        print("Please make {} hand shape".format(labels[label_id]))
-        print("Press Enter key to start")
-        listener.enables[0] = True
-        listener.enables[1] = False
-        sys.stdin.readline()
-        listener.streaming_client.restart()
-        sys.stdin.readline()
 
-    print("Next, use right hand")
-    for label_id in range(len(labels)):
-        listener.current_collect_id = label_id
-        print("Please make {} hand shape".format(labels[label_id]))
-        print("Press Enter key to start")
-        listener.enables[0] = False
-        listener.enables[1] = True
-        sys.stdin.readline()
-        listener.streaming_client.restart()
-        sys.stdin.readline()
+    for lr in range(2):
+        print( "First, use left hand" if lr == 0 else "Next, use right hand")
+        for label_id in range(len(labels)):
+            listener.current_collect_id = label_id
+            print("Please make {} hand shape".format(labels[label_id]))
+            print("Press Enter key to start")
+            listener.enables[0] = False
+            listener.enables[1] = False
+            listener.enables[lr] = True
+            sys.stdin.readline()
+            listener.streaming_client.restart()
+            time.sleep(0.5)
+            print("-------GO--------")
+            listener.started = True
+            sys.stdin.readline()
 
 
     # Keep this process running until Enter is pressed
