@@ -128,8 +128,7 @@ class HandListener:
 
     # 手の数が2かつ指のマーカーの数が6
     def judgeDataComplete(self, mocap_data: MoCapData):
-        judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and \
-                mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
+        judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
 
         if not judge:
             # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
@@ -272,8 +271,8 @@ class HandListener:
 
     def settingRigidbody(self, mocap_data: MoCapData):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
-        leftHand: RigidBody = mocap_data.rigid_body_data.rigid_body_list[0]
-        rightHand: RigidBody = mocap_data.rigid_body_data.rigid_body_list[1]
+        leftHand: RigidBody = mocap_data.rigid_body_data.getRigidbody(0)
+        rightHand: RigidBody = mocap_data.rigid_body_data.getRigidbody(1)
         if leftHand.pos[0] > rightHand.pos[0]:
             leftHand, rightHand = rightHand, leftHand
 

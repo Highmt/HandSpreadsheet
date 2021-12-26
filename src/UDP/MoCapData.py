@@ -287,6 +287,9 @@ class RigidBodyData:
             out_str += rigid_body.get_as_string(tab_str, level + 1)
         return out_str
 
+    def getRigidbody(self, id) -> RigidBody:
+        return self.rigid_body_list[id]
+
 
 class Skeleton:
     def __init__(self, new_id=0):
