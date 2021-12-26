@@ -8,7 +8,6 @@ from sklearn import metrics, svm
 from sklearn.metrics import classification_report, confusion_matrix
 
 from sklearn.model_selection import train_test_split, GridSearchCV
-from pycm import ConfusionMatrix
 
 import os
 import seaborn as sns
@@ -16,11 +15,13 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 
+from res import SSEnum
+
 np.random.seed(1671)  # for reproducibility
-ver = ""
+ver = "test1"
 # network and training
 DROPOUT = 0.2
-data_pass = '../../res/data/test/'
+data_pass = '../../res/data/{}/'.format(ver)
 lr_label = ['left', 'right']
 read_data = [pd.DataFrame(), pd.DataFrame()]
 for i in range(2):
@@ -37,16 +38,16 @@ for i in range(2):
     print("# Tuning hyper-parameters for accuracy")
 
     #  KNN------------------------------------------------
-    knn_parameters = {'n_neighbors': [7, 11, 19],
-                        'weights': ['uniform', 'distance'],
-                        'metric': ['euclidean', 'manhattan']
-                      }
-    scores = ['precision', 'recall', 'f1']
-
-    clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
-                       scoring='accuracy', n_jobs=-1)
-    clf.fit(train_data, train_label)
-    model = "KNN"
+    # knn_parameters = {'n_neighbors': [7, 11, 19],
+    #                     'weights': ['uniform', 'distance'],
+    #                     'metric': ['euclidean', 'manhattan']
+    #                   }
+    # scores = ['precision', 'recall', 'f1']
+    #
+    # clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
+    #                    scoring='accuracy', n_jobs=-1)
+    # clf.fit(train_data, train_label)
+    # model = "KNN"
     # ------------------------------------------------------
 
 
@@ -63,17 +64,17 @@ for i in range(2):
     # ------------------------------------------------------
 
     #   NN-------------------------------------------------
-    # nn_parameters = [{
-    #         # 最適化手法
-    #         "solver": ["lbfgs", "sgd", "adam"],
-    #         # 隠れ層の層の数と、各層のニューロンの数
-    #         "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
-    # }]
-    # scores = ['precision', 'recall']
-    # clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
-    #                    scoring='accuracy', n_jobs=-1)
-    # clf.fit(train_data, train_label)
-    # model = "NN"
+    nn_parameters = [{
+            # 最適化手法
+            "solver": ["lbfgs", "sgd", "adam"],
+            # 隠れ層の層の数と、各層のニューロンの数
+            "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
+    }]
+    scores = ['precision', 'recall']
+    clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
+                       scoring='accuracy', n_jobs=-1)
+    clf.fit(train_data, train_label)
+    model = "NN"
     # ------------------------------------------------------
 
     print(clf.best_estimator_)
@@ -85,7 +86,7 @@ for i in range(2):
     print(pred)
     print(clf.predict_proba(test_data))
     touch_true = test_label.tolist()
-    labels = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "OPEN", "GRIP", ]
+    labels = SSEnum.HandEnum.NAME_LIST.value
 
     c_matrix = confusion_matrix(touch_true, pred)
     print(c_matrix)

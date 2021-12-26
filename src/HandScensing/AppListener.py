@@ -15,7 +15,7 @@ from src.UDP.PythonSample import print_configuration
 
 DIS_SIZE = pyautogui.size()
 memorySize = 30
-
+ver = "test1"
 
 class AppListener(QtCore.QThread, HandListener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -27,7 +27,7 @@ class AppListener(QtCore.QThread, HandListener):
     def __init__(self):
         super().__init__()
         self.isPointingMode = False
-        self.predictor = Predictor("KNN")  # 学習モデル
+        self.predictor = Predictor(alg="KNN", ver=ver)  # 学習モデル
         self.memoryHands = {}
         self.preHands = {}
         self.resetHand()

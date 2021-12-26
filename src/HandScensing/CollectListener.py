@@ -17,11 +17,11 @@ from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "test"
+version = "test1"
 #　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
-collect_data_num = 200
+collect_data_num = 2000
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]

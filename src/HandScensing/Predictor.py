@@ -1,19 +1,14 @@
 import pickle
-
 import pandas as pd
-
-from lib.LeapMotion.Leap import RAD_TO_DEG
 from res.SSEnum import FeatureEnum
-from src.HandScensing.HandListener import HandData
 
 model_pass = '../../res/learningModel/'
-ver = ''
 
 pos_labels = ["x", "y", "z"]
 finger_labels = ['Thumb', 'Index', 'Pinky']
 
 class Predictor():
-    def __init__(self, alg: str):
+    def __init__(self, alg: str, ver: str):
         self.left_model = pickle.load(open('{}leftModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
         self.right_model = pickle.load(open('{}rightModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
 

@@ -1,4 +1,5 @@
 import sys
+
 from PyQt5.QtWidgets import QApplication
 from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
 

@@ -16,7 +16,10 @@ from src.UDP.MoCapData import MoCapData
 
 np.set_printoptions(suppress=True)
 training_data = np.empty([0, 7])
-model = "KNN"
+
+# "KNN", "SVC" or "NN"
+model = "NN"
+ver = "test1"
 collect_data_num = 1000
 
 
@@ -24,13 +27,12 @@ collect_data_num = 1000
 # curl -X POST -H "Content-Type: application/json" -d '{"45":{"x":-117,"y":-472,"z":-29},"47":{"x":-987,"y":-49,"z":-1524},"label":6}' localhost:8080
 
 
-
 class TestListener(HandListener):
     def __init__(self):
         super(TestListener, self).__init__()
         self.true_label = 0
         self.data_count = 0
-        self.predictor = Predictor(model)
+        self.predictor = Predictor(alg=model, ver=ver)
         self.pred_list = [[], []]
         self.true_list = [[], []]
         self.lr = 0
@@ -52,20 +54,21 @@ class TestListener(HandListener):
                 return
 
             for key in self.hands_dict.keys():
-                if self.hands_dict.get(key).position[1] > Y_THRESHOLD:
+                if self.hands_dict.get(key).position[1] > Y_THRESHOLD and self.data_count < collect_data_num:
                     self.data_count = self.data_count + 1
                     pred = self.predictor.handPredict(hand=self.hands_dict.get(key))  # 学習機で手形状識別
                     self.pred_list[self.lr].append(pred)
                     self.true_list[self.lr].append(self.true_label)
                     print(pred)
 
-            #　データ収集が完了すると終了
-            if(self.data_count >= collect_data_num):
+            # 　データ収集が完了すると終了
+            if (self.data_count >= collect_data_num):
                 print("\n\n\n\n\n\nPush Enter to Finish")
                 self.streaming_client.stop()
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
+
 
 def main():
     # Create a sample listener and controller
