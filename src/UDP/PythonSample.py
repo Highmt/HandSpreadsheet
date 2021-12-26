@@ -145,7 +145,7 @@ def print_message(streaming_client):
     if streaming_client.connected() is False:
         print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
         try:
-            sys.exit(2)
+            sys.exit(1)
         except SystemExit:
             print("...")
         finally:

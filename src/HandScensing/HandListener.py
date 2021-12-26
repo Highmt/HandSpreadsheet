@@ -92,7 +92,7 @@ class HandListener:
         if not is_running:
             print("ERROR: Could not start streaming client.")
             print("system end.")
-            sys.exit(3)
+            sys.exit(1)
             # try:
             #     sys.exit(1)
             # except SystemExit:
@@ -104,9 +104,9 @@ class HandListener:
         if self.streaming_client.connected() is False:
             print("ERROR: Could not connect properly.  Check that Motive streaming is on.")
             print("system end.")
-            sys.exit(3)
+            sys.exit(1)
             # try:
-            #     sys.exit(2)
+            #     sys.exit(1)
             # except SystemExit:
             #     print("...")
             # finally:

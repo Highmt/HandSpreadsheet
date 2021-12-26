@@ -17,7 +17,6 @@ from src.HandScensing.Predictor import Predictor
 from src.UDP.MoCapData import MoCapData
 
 np.set_printoptions(suppress=True)
-training_data = np.empty([0, 7])
 
 # "KNN", "SVC" or "NN"
 model = "NN"
@@ -123,6 +122,7 @@ def main():
 
     except:
         print("Error")
+        sys.exit(0)
 
     finally:
         sys.exit(0)
