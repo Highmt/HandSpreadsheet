@@ -28,5 +28,5 @@ class Predictor():
         if hand.is_left:
             pred = self.left_model.predict(df.values)
         else:
-            pred = self.right_model.predict(ps.values)
+            pred = self.right_model.predict(df.values)
         return pred[0]

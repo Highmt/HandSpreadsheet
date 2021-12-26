@@ -19,9 +19,10 @@ from src.UDP.MoCapData import MoCapData
 np.set_printoptions(suppress=True)
 
 # "KNN", "SVC" or "NN"
-model = "NN"
-ver = "test1"
-collect_data_num = 1000
+model = "KNN"
+ver = "test2"
+collect_data_num = 50
+lr = ["left", "right"]
 
 
 # for result
@@ -90,6 +91,8 @@ def main():
 
     labels = HandEnum.NAME_LIST.value
     # Keep this process running until Enter is pressed
+    fig = plt.figure(figsize=(10, 5))
+    ax = [fig.add_subplot(121), fig.add_subplot(122)]
     try:
         for i in range(2):
             listener.lr = i
@@ -97,7 +100,7 @@ def main():
             for true_label in range(len(labels)):
                 listener.true_label = true_label
                 print("Press Enter to start sensing hand")
-                print("Please make {} hand".format(labels[true_label]))
+                print("Please make {} shape with {} hand".format(labels[true_label], lr[i]))
                 listener.data_count = 0
                 sys.stdin.readline()
                 listener.streaming_client.restart()
@@ -110,19 +113,26 @@ def main():
             print(c_matrix)
             cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
             sum = int(listener.true_list[i].__len__()) / int(labels.__len__())  # 各ラベルの数
-            fig, ax = plt.subplots(figsize=(8, 7))
-            sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # 正規化したものを表示
-            plt.savefig('../../res/learningResult/testCM_{}.png'.format(model))
-            with open('../../res/learningResult/testCM_{}.csv'.format(model), 'w') as file:
+            sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax[i])  # 正規化したものを表示
+            with open('../../res/learningResult/{}testCM_{}.csv'.format(lr[i], model), 'w') as file:
                 writer = csv.writer(file, lineterminator='\n')
                 writer.writerows(c_matrix)
             print(classification_report(listener.true_list[i], listener.pred_list[i]))
-            print("正答率 = ", metrics.accuracy_score(listener.true_list[i], listener.pred_list[i]))
+            print("正答率 = {}\n\n".format(metrics.accuracy_score(listener.true_list[i], listener.pred_list[i])))
+
+        try:
+            # TODO: グラフの見た目修正（タイトル，軸目盛りなど）
+            plt.savefig('../../res/learningResult/testCM_{}.png'.format(model))
             plt.show()
+        except KeyboardInterrupt:
+            print("terminate normally")
+
+        finally:
+            sys.exit(0)
 
     except:
         print("Error")
-        sys.exit(0)
+        sys.exit(1)
 
     finally:
         sys.exit(0)
