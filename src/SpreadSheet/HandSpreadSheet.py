@@ -111,11 +111,14 @@ class HandSpreadSheet(QMainWindow):
         self.listener = AppListener()
         self.listener.initOptiTrack()
         self.listener.do_calibration()
-        self.listener.streaming_client.new_frame_listener = self.listener.frameListener
+        self.listener.streaming_client.stop()
+        self.listener.setListener()
+
         self.setLeapSignal()
 
         # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
+        self.listener.streaming_client.restart()
         self.show()
 
     def createStatusBar(self):

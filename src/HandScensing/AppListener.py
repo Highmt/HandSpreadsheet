@@ -14,8 +14,8 @@ from src.UDP.NatNetClient import NatNetClient
 from src.UDP.PythonSample import print_configuration
 
 DIS_SIZE = pyautogui.size()
-memorySize = 30
-ver = "test1"
+memorySize = 10
+ver = "test2"
 
 class AppListener(QtCore.QThread, HandListener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
@@ -27,9 +27,9 @@ class AppListener(QtCore.QThread, HandListener):
     def __init__(self):
         super().__init__()
         self.isPointingMode = False
-        self.predictor = Predictor(alg="KNN", ver=ver)  # 学習モデル
+        self.predictor = Predictor(alg="NN", ver=ver)  # 学習モデル
         self.memoryHands = {}
-        self.preHands = {}
+        self.formerHands = {}
         self.resetHand()
 
     def on_init(self, controller):
@@ -56,37 +56,38 @@ class AppListener(QtCore.QThread, HandListener):
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
 
-            # 左右両方の手の位置が閾値より低い時フィードバックを非表示かつマーカ再設定
+            # 左右両方の手の位置が閾値より低い時フィードバックを非表示+マーカ再設定+resetHand
             if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
                 self.hide_feedback.emit()
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
-                return
 
             # 認識した手の形状を識別する
             for key in self.hands_dict.keys():
-                handlist = self.memoryHands.get(key)
-                prehand: int = self.preHands.get(key)
+                formerStatus: int = self.formerHands.get(key)
 
-                handlist.pop(0)
+                self.memoryHands[key].pop(0)
 
-                if self.hands_dict.get(key).position[1] < Y_THRESHOLD:
+                if self.hands_dict.get(key).position[1] <= Y_THRESHOLD:
                     hand_state = HandEnum.FREE.value
+                    self.formerHands[key] = hand_state
+                    self.memoryHands[key].append(hand_state)
                 else:
                     hand_state = self.predictor.handPredict(hand=self.hands_dict.get(key))  # 学習機で手形状識別
-                # print(hand_state)
-                handlist.append(hand_state)  # 手形状のメモリに新規追加
-                self.memoryHands[key] = handlist  # 手形状のメモリを更新
+                    self.memoryHands[key].append(hand_state)  # 手形状のメモリに新規追加
 
-                # 識別手形状とメモリの手形状リストから現在の手形状を決定
-                try:
-                    currentStatus = statistics.mode(handlist)  # リストの最頻値を算出
-                except:
-                    currentStatus = prehand
-                # print(self.predictor.stateLabels[currentStatus])   # 識別結果を出力
-                if prehand != currentStatus:
-                    self.action(prehand, currentStatus, self.hands_dict.get(key))
-                    self.preHands[key] = currentStatus  # １つ前の手形状を更新
-                    # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
+                    # 識別手形状とメモリの手形状リストから現在の手形状を決定
+                    try:
+                        currentStatus = statistics.mode(self.memoryHands[key])  # リストの最頻値を算出
+                    except:
+                        currentStatus = formerStatus
+                    print("predict status: {}, current status: {}".format(hand_state, currentStatus))
+                    print(self.memoryHands[key])
+                    if formerStatus != currentStatus:
+                        self.action(formerStatus, currentStatus, self.hands_dict.get(key))
+                        self.formerHands[key] = currentStatus  # １つ前の手形状を更新
+
+            if self.formerHands['l'] == HandEnum.FREE.value and self.formerHands['r'] == HandEnum.FREE.value:
+                self.hide_feedback.emit()
 
     def isHolizon(self, hand: HandData):
         # 親指第一関節と人差し指の第二関節の位置を識別
@@ -96,19 +97,15 @@ class AppListener(QtCore.QThread, HandListener):
         dif_vec = [index_pos[0] - thumb_pos[0], index_pos[1] - thumb_pos[1]]
         return dif_vec[1] * dif_vec[1] / dif_vec[0] / dif_vec[0] < 1
 
-    def action(self, p_hand: int, n_hand: int, hand: HandData):
+    def action(self, formerS: int, currentS: int, hand: HandData):
+        # TODO: アクティブな手の判定
         if self.isHolizon(hand):
             direction = DirectionEnum.HORIZON.value
         else:
             direction = DirectionEnum.VERTICAL.value
 
-        if n_hand == HandEnum.FREE.value:
-            # if list(self.preHands.values()).count(HandEnum.FREE.value) == len(self.preHands):  //　絶対入らない
-            self.hide_feedback.emit()
-            return
-
-        elif n_hand == HandEnum.PINCH_IN.value:
-            if p_hand == HandEnum.PINCH_OUT.value:
+        if currentS == HandEnum.PINCH_IN.value:
+            if formerS == HandEnum.PINCH_OUT.value:
                 print("削除関数実行")
                 self.action_operation.emit(ActionEnum.DELETE.value, direction)
 
@@ -117,12 +114,12 @@ class AppListener(QtCore.QThread, HandListener):
                 self.change_feedback.emit("Pinch In", "", direction)
 
 
-        elif n_hand == HandEnum.PINCH_OUT.value:
-            if p_hand == HandEnum.PINCH_IN.value:
+        elif currentS == HandEnum.PINCH_OUT.value:
+            if formerS == HandEnum.PINCH_IN.value:
                 print("挿入関数実行")
                 self.action_operation.emit(ActionEnum.INSERT.value, direction)
 
-            elif p_hand == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
+            elif formerS == HandEnum.REVERSE.value and direction == DirectionEnum.VERTICAL.value:
                 print("降順ソート関数実行")
                 self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.BACK.value)
 
@@ -131,29 +128,29 @@ class AppListener(QtCore.QThread, HandListener):
                 self.change_feedback.emit("Pinch Out", "", direction)
 
 
-        elif n_hand == HandEnum.REVERSE.value:
-            if p_hand == HandEnum.PINCH_OUT.value and direction == DirectionEnum.VERTICAL.value:
+        elif currentS == HandEnum.REVERSE.value:
+            if formerS == HandEnum.PINCH_OUT.value and direction == DirectionEnum.VERTICAL.value:
                 print("昇順ソート関数実行")
                 self.action_operation.emit(ActionEnum.SORT.value, DirectionEnum.FRONT.value)
             else:
                 # print("降順ソート前状態に遷移")
                 self.change_feedback.emit("Reverse", "", direction)
 
-        elif n_hand == HandEnum.OPEN.value:
-            if p_hand == HandEnum.GRIP.value:
+        elif currentS == HandEnum.OPEN.value:
+            if formerS == HandEnum.GRIP.value:
                 print("ペースト関数実行")
                 self.action_operation.emit(ActionEnum.PASTE.value, DirectionEnum.NONE.value)
 
             else:
                 # print("コピー，カット前状態に遷移")
-                if len(self.preHands) > 1:
+                if self.getHand('l').position[1] > Y_THRESHOLD and self.getHand('r').position[1] > Y_THRESHOLD:
                     self.change_feedback.emit("Both Palm", "", DirectionEnum.VERTICAL.value)
                 else:
                     self.change_feedback.emit("One Palm", "", DirectionEnum.VERTICAL.value)
 
-        elif n_hand == HandEnum.GRIP.value:
-            if p_hand == HandEnum.OPEN.value:
-                if list(self.preHands.values()).count(HandEnum.OPEN.value) > 1:
+        elif currentS == HandEnum.GRIP.value:
+            if formerS == HandEnum.OPEN.value:
+                if list(self.formerHands.values()).count(HandEnum.OPEN.value) > 1:
                     print("コピー関数実行")
                     self.action_operation.emit(ActionEnum.COPY.value, DirectionEnum.NONE.value)
                 else:
@@ -164,8 +161,6 @@ class AppListener(QtCore.QThread, HandListener):
                 # print("ペースト前状態に遷移")
                 self.change_feedback.emit("Grip", "", DirectionEnum.VERTICAL.value)
 
-        self.resetHand()
-
     def setPointingMode(self, isMode):
         self.isPointingMode = isMode
 
@@ -174,4 +169,8 @@ class AppListener(QtCore.QThread, HandListener):
         for i in range(memorySize):
             handlist.append(HandEnum.FREE.value)
         self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
-        self.preHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
+        self.formerHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
+
+    def setListener(self):
+        self.streaming_client.new_frame_listener = self.frameListener
+

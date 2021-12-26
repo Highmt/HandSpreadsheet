@@ -111,6 +111,12 @@ class HandListener:
             #     print("...")
             # finally:
             #     print("exiting")
+    def getHand(self, key) -> HandData:
+        if isinstance(key, str):
+            return self.hands_dict[key]
+        else:
+            i = ['l', 'r'][key]
+            return self.hands_dict[i]
 
     def calibrationListener(self, mocap_data: MoCapData):
         self.current_mocap_data = mocap_data

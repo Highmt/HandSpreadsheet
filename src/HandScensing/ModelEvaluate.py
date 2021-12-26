@@ -19,9 +19,9 @@ from src.UDP.MoCapData import MoCapData
 np.set_printoptions(suppress=True)
 
 # "KNN", "SVC" or "NN"
-model = "KNN"
+model = "NN"
 ver = "test2"
-collect_data_num = 50
+collect_data_num = 500
 lr = ["left", "right"]
 
 
