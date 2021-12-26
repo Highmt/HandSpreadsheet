@@ -1,6 +1,7 @@
 import csv
 import datetime
 import pickle
+import sys
 
 import numpy as np
 import pandas as pd
@@ -18,12 +19,17 @@ from sklearn.neural_network import MLPClassifier
 from res import SSEnum
 
 np.random.seed(1671)  # for reproducibility
-ver = "test1"
+ver = "test2"
 # network and training
 DROPOUT = 0.2
 data_pass = '../../res/data/{}/'.format(ver)
 lr_label = ['left', 'right']
 read_data = [pd.DataFrame(), pd.DataFrame()]
+
+# どれかひとつだけTrueにする
+KNN_enable = True
+SVC_enable = False
+NN_enable = False
 for i in range(2):
     read_data[i] = pd.read_csv(data_pass + lr_label[i] + 'Data.csv', sep=',', index_col=0)
     data = read_data[i].drop("Label", axis=1).values
@@ -38,45 +44,49 @@ for i in range(2):
     print("# Tuning hyper-parameters for accuracy")
 
     #  KNN------------------------------------------------
-    # knn_parameters = {'n_neighbors': [7, 11, 19],
-    #                     'weights': ['uniform', 'distance'],
-    #                     'metric': ['euclidean', 'manhattan']
-    #                   }
-    # scores = ['precision', 'recall', 'f1']
-    #
-    # clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
-    #                    scoring='accuracy', n_jobs=-1)
-    # clf.fit(train_data, train_label)
-    # model = "KNN"
+    if KNN_enable:
+        knn_parameters = {'n_neighbors': [7, 11, 19],
+                            'weights': ['uniform', 'distance'],
+                            'metric': ['euclidean', 'manhattan']
+                          }
+        scores = ['precision', 'recall', 'f1']
+
+        clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
+                           scoring='accuracy', n_jobs=-1)
+        clf.fit(train_data, train_label)
+        model = "KNN"
     # ------------------------------------------------------
 
 
     #   SVC-------------------------------------------------
-    # tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-    #                      'C': [0.1, 1, 10]},
-    #                     {'kernel': ['linear'], 'C': [0.1, 1, 10]}]
-    # scores = ['precision', 'recall', 'f1']
-    # #  グリッドサーチと交差検証法
-    # clf = GridSearchCV(svm.SVC(), tuned_parameters, cv=5,
-    #                    scoring='accuracy', n_jobs=-1)
-    # clf.fit(train_data, train_label)
-    # model = "SVC"
+    elif SVC_enable:
+        tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                             'C': [0.1, 1, 10]},
+                            {'kernel': ['linear'], 'C': [0.1, 1, 10]}]
+        scores = ['precision', 'recall', 'f1']
+        #  グリッドサーチと交差検証法
+        clf = GridSearchCV(svm.SVC(), tuned_parameters, cv=5,
+                           scoring='accuracy', n_jobs=-1)
+        clf.fit(train_data, train_label)
+        model = "SVC"
     # ------------------------------------------------------
 
     #   NN-------------------------------------------------
-    nn_parameters = [{
-            # 最適化手法
-            "solver": ["lbfgs", "sgd", "adam"],
-            # 隠れ層の層の数と、各層のニューロンの数
-            "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
-    }]
-    scores = ['precision', 'recall']
-    clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
-                       scoring='accuracy', n_jobs=-1)
-    clf.fit(train_data, train_label)
-    model = "NN"
+    elif NN_enable:
+        nn_parameters = [{
+                # 最適化手法
+                "solver": ["lbfgs", "sgd", "adam"],
+                # 隠れ層の層の数と、各層のニューロンの数
+                "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
+        }]
+        scores = ['precision', 'recall']
+        clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
+                           scoring='accuracy', n_jobs=-1)
+        clf.fit(train_data, train_label)
+        model = "NN"
     # ------------------------------------------------------
-
+    else:
+        sys.exit(1)
     print(clf.best_estimator_)
     print(classification_report(test_label, clf.predict(test_data)))
     pickle.dump(clf, open('../../res/learningModel/{}Model_{}_{}.pkl'.format(lr_label[i], model, ver), 'wb'))
