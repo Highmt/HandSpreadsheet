@@ -1,13 +1,15 @@
 import copy
+import math
 import sys
 import time
 
 import pyautogui
-
+import numpy as np
 
 from src.UDP.MoCapData import MoCapData, RigidBody
 from src.UDP.NatNetClient import NatNetClient
 
+finger_labels = ['Thumb', 'Index', 'Pinky']
 DIS_SIZE = pyautogui.size()
 Y_THRESHOLD = 150.0
 def print_configuration(natnet_client: NatNetClient):
@@ -47,7 +49,6 @@ class HandData:
         self.position_offset = [0.0, 0.0, 0.0]
         self.rotation = [0.0, 0.0, 0.0, 0.0]
         self.rotation_offset = [0.0, 0.0, 0.0, 0.0]
-        self.finger_marker_dict = {}
         self.fingers_pos = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 
 
@@ -56,17 +57,9 @@ class HandData:
             self.position[axis] = (rigid_body.pos[axis] - self.position_offset[axis])*1000
             self.rotation[axis] = rigid_body.rot[axis] - self.rotation_offset[axis]
 
-    def setFingerMarkerDict(self, key, value):
-        self.finger_marker_dict[key] = value
-
-    def setFingerPos(self, marker_list):
-        for marker in marker_list:
-            if marker.id_num in self.finger_marker_dict.keys():
-                for axis in range(len(self.position)):
-                    self.fingers_pos[self.finger_marker_dict[marker.id_num]][axis] = (marker.pos[axis] - self.position_offset[axis])*1000
-
-    def getFingerPos(self, finger_id: int):
-        return self.fingers_pos[self.finger_marker_dict[finger_id]]
+    def setFingerPos(self, finger_type, marker_pos):
+        for axis in range(len(self.position)):
+            self.fingers_pos[finger_type][axis] = (marker_pos[axis] - self.position_offset[axis])*1000
 
     def setOffset(self, position, rotation):
         # offsetを設定
@@ -79,7 +72,9 @@ class HandListener:
         self.finger_dis_size = [0, 0]
         self.current_mocap_data: MoCapData = None
         self.hands_dict = {'l': HandData(is_left=True), 'r': HandData(is_left=False)}
-        self.is_markerlosted = False
+        self.marker_label_list = [-1] * (HandData().fingers_pos.__len__() * 2)
+        self.need_calibration = True
+        self.is_resetted = False
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -121,18 +116,72 @@ class HandListener:
         self.current_mocap_data = mocap_data
 
     def getEnoughData(self) -> MoCapData:
-        while not self.judgeDataComplete(self.current_mocap_data):
+        data = self.getCurrentData()
+        while not self.judgeDataComplete(data):
             print("Sorry, the system is not ready\nPush Enter key again\n")
             sys.stdin.readline()
-        return copy.deepcopy(self.current_mocap_data)
+            data = self.getCurrentData()
+        return data
 
     def getCurrentData(self) -> MoCapData:
         return copy.deepcopy(self.current_mocap_data)
 
     # 手の数が2かつ指のマーカーの数が6
     def judgeDataComplete(self, mocap_data: MoCapData):
-        return mocap_data.rigid_body_data.get_rigid_body_count() == 2 and \
-               mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
+        judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
+
+        if not judge:
+            # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
+            if not self.is_resetted and not self.need_calibration and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2 - 1:
+                self.is_resetted = True
+                lost_finger = self.searchLostFinger(mocap_data.marker_set_data.unlabeled_markers.marker_list)
+                for i in range(len(self.marker_label_list)):
+                    if self.marker_label_list[i] > self.marker_label_list[lost_finger]:
+                        self.marker_label_list[i] = self.marker_label_list[i] - 1
+                self.marker_label_list[lost_finger] = finger_labels.__len__() * 2
+
+            elif mocap_data.marker_set_data.unlabeled_markers.get_num_points() < len(HandData().fingers_pos) * 2 - 1:
+                self.need_calibration = True
+        else:
+            self.is_resetted = False
+        return judge
+
+    # ロストしたマーカーの指のラベルを返す
+    def searchLostFinger(self, marker_list) -> int:
+        # search_list = [-1] * finger_labels.__len__() * 2
+        mal = [-1] * (finger_labels.__len__() * 2) # marker_assign_list
+        for i, id in enumerate(self.marker_label_list):
+            mal[id-1] = i
+
+        for marker in marker_list:
+            marker_pos = np.array(marker.pos)
+            origin_finger = mal[marker.id_num - 1]
+            if origin_finger < len(finger_labels):
+                hand_pos = np.array(self.hands_dict['l'].fingers_pos[origin_finger])
+                marker_pos = marker_pos - np.array(self.hands_dict['l'].position_offset)
+            else:
+                hand_pos = np.array(self.hands_dict['r'].fingers_pos[origin_finger - len(finger_labels)])
+                marker_pos = marker_pos - np.array(self.hands_dict['r'].position_offset)
+            marker_pos = marker_pos * 1000
+            origin_dist = math.dist(hand_pos, marker_pos)
+
+            marker_pos = np.array(marker.pos)
+            venv_finger = mal[marker.id_num]
+            if venv_finger < len(finger_labels):
+                hand_pos = np.array(self.hands_dict['l'].fingers_pos[venv_finger])
+                marker_pos = marker_pos - np.array(self.hands_dict['l'].position_offset)
+            else:
+                hand_pos = np.array(self.hands_dict['r'].fingers_pos[venv_finger - len(finger_labels)])
+                marker_pos = marker_pos - np.array(self.hands_dict['r'].position_offset)
+
+            marker_pos = marker_pos * 1000
+            venv_dist = math.dist(hand_pos, marker_pos)
+
+            if origin_dist > venv_dist:
+                return origin_finger
+
+        return len(self.marker_label_list) - 1
+
 
     def printHandData(self, hand: HandData):
         tab = "  "
@@ -148,11 +197,11 @@ class HandListener:
     def do_calibration(self):
         print("Do caribration")
         self.streaming_client.new_frame_listener = self.calibrationListener
-        print("Please stay hand on home position\nPush Enter key\n")
+        print("Please stay hand on home position\nPush Enter key")
         sys.stdin.readline()
         mocap_data = self.getEnoughData()
         self.settingRigidbody(mocap_data)
-        self.settingUnlabeledMarkerID(mocap_data)
+        self.calibrateUnlabeledMarkerID(mocap_data)
 
         print("Complete both hands setting calibration!")
 
@@ -162,7 +211,7 @@ class HandListener:
     def settingScrean(self):
         # 画面領域を決定
         print("\nNext, screan size caribration")
-        print("Point to upper-left on display\nPush Enter key\n")
+        print("Point to upper-left on display\nPush Enter key")
         sys.stdin.readline()
         mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
@@ -170,21 +219,21 @@ class HandListener:
         dis_ul = self.hands_dict['l'].fingers_pos[1]
         print(dis_ul)
 
-        print("Point to lower-left on display\nPush Enter key\n")
+        print("Point to lower-left on display\nPush Enter key")
         sys.stdin.readline()
         mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
         dis_ll = self.hands_dict['l'].fingers_pos[1]
         print(dis_ll)
 
-        print("Point to upper-right on display\nPush Enter key\n")
+        print("Point to upper-right on display\nPush Enter key")
         sys.stdin.readline()
         mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
         dis_lr = self.hands_dict['l'].fingers_pos[1]
         print(dis_lr)
 
-        print("Point to lower-right on display\nPush Enter key\n")
+        print("Point to lower-right on display\nPush Enter key")
         sys.stdin.readline()
         mocap_data = self.getEnoughData()
         self.setHandData(mocap_data)
@@ -200,28 +249,30 @@ class HandListener:
         self.finger_dis_size[1] = self.finger_dis_dim["low"] - self.finger_dis_dim["up"]
         print(self.finger_dis_size)
 
-    def settingUnlabeledMarkerID(self, mocap_data: MoCapData):
+    def calibrateUnlabeledMarkerID(self, mocap_data: MoCapData):
         if mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2:
-            self.hands_dict['l'].finger_marker_dict = {}
-            self.hands_dict['r'].finger_marker_dict = {}
+            self.marker_label_list = [-1] * (HandData().fingers_pos.__len__() * 2)
             marker_pos_x_list = []
             marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
             for marker in marker_list:
                 marker_pos_x_list.append(marker.pos[0])
             sorted_list = sorted(marker_pos_x_list)
+            # print("\n------ hand finger label -------")
             for key in range(len(marker_pos_x_list)):
                 for id in range(len(marker_pos_x_list)):
                     if sorted_list[key] == (marker_pos_x_list[id]):
                         if key < len(HandData().fingers_pos):
-                            self.hands_dict['l'].setFingerMarkerDict(id+1, abs(key - len(HandData().fingers_pos) + 1))
+                            # print(" left {}: {}".format(finger_labels[abs(key - len(HandData().fingers_pos) + 1)], id+1))
+                            self.marker_label_list[abs(key - len(HandData().fingers_pos) + 1)] = id + 1
                         else:
-                            self.hands_dict['r'].setFingerMarkerDict(id+1, key % len(HandData().fingers_pos))
-            self.is_markerlosted = False
+                            # print("right {}: {}".format(finger_labels[key % len(HandData().fingers_pos)], id+1))
+                            self.marker_label_list[key] = id+1
+            self.need_calibration = False
 
     def settingRigidbody(self, mocap_data: MoCapData):
         # rigidbodyIDを登録 < type_hands[rididbody.num_id] = 'l'>
-        leftHand: RigidBody = mocap_data.rigid_body_data.rigid_body_list[0]
-        rightHand: RigidBody = mocap_data.rigid_body_data.rigid_body_list[1]
+        leftHand: RigidBody = mocap_data.rigid_body_data.getRigidbody(0)
+        rightHand: RigidBody = mocap_data.rigid_body_data.getRigidbody(1)
         if leftHand.pos[0] > rightHand.pos[0]:
             leftHand, rightHand = rightHand, leftHand
 
@@ -238,5 +289,9 @@ class HandListener:
                 self.hands_dict['r'].setHand(body)
 
         marker_list = mocap_data.marker_set_data.unlabeled_markers.marker_list
-        self.hands_dict['l'].setFingerPos(marker_list=copy.copy(marker_list))
-        self.hands_dict['r'].setFingerPos(marker_list=copy.copy(marker_list))
+        for i, id in enumerate(self.marker_label_list):
+            if i < len(finger_labels):
+                self.hands_dict['l'].setFingerPos(finger_type=i, marker_pos=marker_list[id - 1].pos)
+            else:
+                self.hands_dict['r'].setFingerPos(finger_type=i - len(finger_labels), marker_pos=marker_list[id - 1].pos)
+

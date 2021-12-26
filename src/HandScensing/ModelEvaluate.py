@@ -41,14 +41,14 @@ class TestListener(HandListener):
 
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
-            if self.is_markerlosted:
-                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+            if self.need_calibration:
+                self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             # フレームデータから手のデータを抽出
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時マーカ再設定
             if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
-                self.settingUnlabeledMarkerID(mocap_data=mocap_data)
+                self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
                 return
 
             for key in self.hands_dict.keys():
@@ -63,9 +63,6 @@ class TestListener(HandListener):
             if(self.data_count >= collect_data_num):
                 print("\n\n\n\n\n\nPush Enter to Finish")
                 self.streaming_client.stop()
-
-        else:
-            self.is_markerlosted = True
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener

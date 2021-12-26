@@ -93,12 +93,17 @@ try:
     while True:
         mocap_data: MoCapData = listener.getCurrentData()
         if listener.judgeDataComplete(mocap_data=mocap_data):
-            if listener.is_markerlosted:
-                listener.settingUnlabeledMarkerID(mocap_data=mocap_data)
+            if listener.need_calibration:
+                listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             listener.setHandData(mocap_data=mocap_data)
+
+            # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
+            if listener.hands_dict['l'].position[1] <= Y_THRESHOLD and listener.hands_dict['r'].position[1] <= Y_THRESHOLD:
+                listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
+
             for hand in listener.hands_dict.values():
                 if hand.is_left:
-                    listener.printHandData(hand)
+                    # listener.printHandData(hand)
                     l_y_vec['x'][-1] = hand.fingers_pos[0][0]
                     l_y_vec['y'][-1] = hand.fingers_pos[1][0]
                     l_y_vec['z'][-1] = hand.fingers_pos[2][0]
@@ -114,12 +119,8 @@ try:
                     r_y_vec['x'] = np.append(r_y_vec['x'][1:], 0.0)
                     r_y_vec['y'] = np.append(r_y_vec['y'][1:], 0.0)
                     r_y_vec['z'] = np.append(r_y_vec['z'][1:], 0.0)
-            # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
-            if listener.hands_dict['l'].position[1] <= Y_THRESHOLD and listener.hands_dict['r'].position[1] <= Y_THRESHOLD:
-                listener.settingUnlabeledMarkerID(mocap_data=mocap_data)
             time.sleep(0.05)
         else:
-            listener.is_markerlosted = True
             print(".")
             time.sleep(0.05)
 
