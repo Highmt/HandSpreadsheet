@@ -123,16 +123,16 @@ class HandSpreadSheet(QMainWindow):
 
     def createStatusBar(self):
 
-        self.leapLabel = QLabel("")
-        # self.leapLabel = QLabel("LeapMotion is disconnecting")
-        self.leapLabel.setAlignment(Qt.AlignLeft)
-        self.leapLabel.setMinimumSize(self.leapLabel.sizeHint())
+        self.optiLabel = QLabel("")
+        # self.optiLabel = QLabel("LeapMotion is disconnecting")
+        self.optiLabel.setAlignment(Qt.AlignLeft)
+        self.optiLabel.setMinimumSize(self.optiLabel.sizeHint())
 
         self.pointStatusLabel = QLabel("")
         self.pointStatusLabel.setAlignment(Qt.AlignLeft)
         self.pointStatusLabel.setContentsMargins(0, 0, 30, 0)
 
-        self.statusBar().addWidget(self.leapLabel)
+        self.statusBar().addWidget(self.optiLabel)
         self.statusBar().addPermanentWidget(self.pointStatusLabel)
 
         self.statusBar().setFont(QFont('Times', 60))
@@ -158,13 +158,13 @@ class HandSpreadSheet(QMainWindow):
         self.negative_Point.setEnabled(False)
 
     def setupMenuBar(self):
-        self.leapMenu = self.menuBar().addMenu("&LeapMotion")
-        self.leapMenu.addAction(self.start_Leap)
-        self.leapMenu.addAction(self.end_Leap)
+        self.optiMenu = self.menuBar().addMenu("&LeapMotion")
+        self.optiMenu.addAction(self.start_Leap)
+        self.optiMenu.addAction(self.end_Leap)
 
-        self.leapMenu.addSeparator()
+        self.optiMenu.addSeparator()
 
-        self.pointMenu = self.leapMenu.addMenu("&PointMode")
+        self.pointMenu = self.optiMenu.addMenu("&PointMode")
         self.pointMenu.addAction(self.active_Point)
         self.pointMenu.addAction(self.negative_Point)
         self.pointMenu.setEnabled(False)
@@ -425,14 +425,14 @@ class HandSpreadSheet(QMainWindow):
             self.end_Leap.setEnabled(True)
             self.pointMenu.setEnabled(True)
             self.active_Point.setEnabled(True)
-            # self.leapLabel.setText("LeapMotion: connecting")
+            # self.optiLabel.setText("LeapMotion: connecting")
             # self.pointStatusLabel.setText("Pointing mode: negative")
         else:
             self.end_Leap.setEnabled(False)
             self.start_Leap.setEnabled(True)
             self.pointMenu.setEnabled(False)
             self.negative_Point.setEnabled(False)
-            # self.leapLabel.setText("LeapMotion: disconnecting")
+            # self.optiLabel.setText("LeapMotion: disconnecting")
             self.overlayGraphics.hide()
             self.pointStatusLabel.setText("")
 
@@ -480,4 +480,4 @@ class HandSpreadSheet(QMainWindow):
         self.listener.show_feedback.connect(self.overlayGraphics.show)
         self.listener.change_feedback.connect(self.overlayGraphics.feedbackShow)
         self.listener.action_operation.connect(self.actionOperate)
-        self.listener.startorend_leap.connect(self.changeLeap)
+        self.listener.start_end_opti.connect(self.changeLeap)

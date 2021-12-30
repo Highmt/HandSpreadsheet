@@ -21,7 +21,7 @@ class AppListener(QtCore.QThread, HandListener):
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
     change_feedback = QtCore.pyqtSignal(str, str, int)  # フィードバック内容変換シグナル
     action_operation = QtCore.pyqtSignal(int, int)  # 操作実行シグナル
-    startorend_leap = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
+    start_end_opti = QtCore.pyqtSignal(bool)  # ハンドトラッキングの開始終了
 
     def __init__(self):
         super().__init__()
@@ -38,15 +38,15 @@ class AppListener(QtCore.QThread, HandListener):
         print("Connected")
         # self.on_caribrationTest()
         self.setPointingMode(False)
-        self.startorend_leap.emit(True)
+        self.start_end_opti.emit(True)
 
     def on_disconnect(self, controller):
         print("Disconnected")
-        self.startorend_leap.emit(False)
+        self.start_end_opti.emit(False)
 
     def on_exit(self, controller):
         print("Exited")
-        self.startorend_leap.emit(False)
+        self.start_end_opti.emit(False)
 
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
