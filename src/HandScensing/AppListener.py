@@ -9,9 +9,7 @@ from src.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
 
-from src.UDP.MoCapData import MoCapData, RigidBody, MarkerSetData
-from src.UDP.NatNetClient import NatNetClient
-from src.UDP.PythonSample import print_configuration
+from src.UDP.MoCapData import MoCapData
 
 DIS_SIZE = pyautogui.size()
 memorySize = 10
