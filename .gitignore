@@ -6,4 +6,4 @@
 
 venv
 venv/
-scv-plugin.xml
+.idea/csv-plugin.xml
