@@ -51,6 +51,7 @@ class SpreadSheetItem(QTableWidgetItem):
         else:
             super(SpreadSheetItem, self).__init__()
 
+        self.setBackground(QColor(Qt.white))
         self.isResolving = False
         self.setFont(QFont("Arial", 20))
 

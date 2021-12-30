@@ -19,7 +19,7 @@ from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
 version = "test2"
-#　収集する手形状のラベル（）
+# 　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
 collect_data_num = 2000
@@ -27,6 +27,7 @@ finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
 output_dir = "../../res/data/{}".format(version)
+
 
 class CollectListener(HandListener):
     def __init__(self):
@@ -69,8 +70,10 @@ class CollectListener(HandListener):
                     # Get fingers
                     for finger_id in range(len(hand.fingers_pos)):
                         for pos in range(3):
-                            ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.position[pos]
-                            ps[finger_labels[finger_id] + "_" + finger_labels[(finger_id + 1) % 3] + "_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.fingers_pos[(finger_id + 1) % 3][pos]
+                            ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][
+                                                                                           pos] - hand.position[pos]
+                            ps[finger_labels[finger_id] + "_" + finger_labels[(finger_id + 1) % 3] + "_" + pos_labels[
+                                pos]] = hand.fingers_pos[finger_id][pos] - hand.fingers_pos[(finger_id + 1) % 3][pos]
 
                     # 　データ収集が完了すると終了
 
@@ -82,7 +85,6 @@ class CollectListener(HandListener):
                         self.data_save_pandas(lr=lr, data=copy.deepcopy(self.df))
                         print("Finished to correct {} shape {} hand data".format(labels[self.current_collect_id], lr))
                         self.reset_df()
-
 
             # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
             if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
@@ -101,6 +103,7 @@ class CollectListener(HandListener):
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
 
+
 def main():
     listener = CollectListener()
     listener.initOptiTrack()
@@ -113,7 +116,7 @@ def main():
     sys.stdin.readline()
 
     for lr in range(2):
-        print( "First, use left hand" if lr == 0 else "Next, use right hand")
+        print("First, use left hand" if lr == 0 else "Next, use right hand")
         for label_id in range(len(labels)):
             listener.current_collect_id = label_id
             print("Please make {} hand shape".format(labels[label_id]))
@@ -127,7 +130,6 @@ def main():
             print("-------GO--------")
             listener.started = True
             sys.stdin.readline()
-
 
     # Keep this process running until Enter is pressed
     # Remove the sample listener when done

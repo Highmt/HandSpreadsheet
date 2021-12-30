@@ -46,8 +46,8 @@ for i in range(2):
     #  KNN------------------------------------------------
     if KNN_enable:
         knn_parameters = {'n_neighbors': [7, 11, 19],
-                            'weights': ['uniform', 'distance'],
-                            'metric': ['euclidean', 'manhattan']
+                          'weights': ['uniform', 'distance'],
+                          'metric': ['euclidean', 'manhattan']
                           }
         scores = ['precision', 'recall', 'f1']
 
@@ -56,7 +56,6 @@ for i in range(2):
         clf.fit(train_data, train_label)
         model = "KNN"
     # ------------------------------------------------------
-
 
     #   SVC-------------------------------------------------
     elif SVC_enable:
@@ -74,10 +73,10 @@ for i in range(2):
     #   NN-------------------------------------------------
     elif NN_enable:
         nn_parameters = [{
-                # 最適化手法
-                "solver": ["lbfgs", "sgd", "adam"],
-                # 隠れ層の層の数と、各層のニューロンの数
-                "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
+            # 最適化手法
+            "solver": ["lbfgs", "sgd", "adam"],
+            # 隠れ層の層の数と、各層のニューロンの数
+            "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
         }]
         scores = ['precision', 'recall']
         clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
@@ -104,7 +103,7 @@ for i in range(2):
     sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
     fig, ax = plt.subplots(figsize=(8, 7))
     plt.tick_params(labelsize=30)
-    sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax)  #  正規化したものを表示
+    sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # 正規化したものを表示
     plt.savefig('../../res/learningResult/{}cvCM_{}.png'.format(lr_label[i], model))
     with open('../../res/learningResult/{}cvCM_{}.csv'.format(lr_label[i], model), 'w') as file:
         writer = csv.writer(file, lineterminator='\n')

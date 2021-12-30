@@ -17,6 +17,7 @@ DIS_SIZE = pyautogui.size()
 memorySize = 10
 ver = "test2"
 
+
 class AppListener(QtCore.QThread, HandListener):
     show_feedback = QtCore.pyqtSignal()  # フィードバック非表示シグナル
     hide_feedback = QtCore.pyqtSignal()  # フィードバック表示シグナル
@@ -80,8 +81,8 @@ class AppListener(QtCore.QThread, HandListener):
                         currentStatus = statistics.mode(self.memoryHands[key])  # リストの最頻値を算出
                     except:
                         currentStatus = formerStatus
-                    print("predict status: {}, current status: {}".format(hand_state, currentStatus))
-                    print(self.memoryHands[key])
+                    # print("predict status: {}, current status: {}".format(hand_state, currentStatus))
+                    # print(self.memoryHands[key])
                     if formerStatus != currentStatus:
                         self.action(formerStatus, currentStatus, self.hands_dict.get(key))
                         self.formerHands[key] = currentStatus  # １つ前の手形状を更新
@@ -98,7 +99,6 @@ class AppListener(QtCore.QThread, HandListener):
         return dif_vec[1] * dif_vec[1] / dif_vec[0] / dif_vec[0] < 1
 
     def action(self, formerS: int, currentS: int, hand: HandData):
-        # TODO: アクティブな手の判定
         if self.isHolizon(hand):
             direction = DirectionEnum.HORIZON.value
         else:
@@ -173,4 +173,3 @@ class AppListener(QtCore.QThread, HandListener):
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
-

@@ -4,8 +4,8 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
 from res.SSEnum import ActionEnum, DirectionEnum
-from lib.sample.spreadsheetdelegate import SpreadSheetDelegate
-from lib.sample.spreadsheetitem import SpreadSheetItem
+from src.Utility.spreadsheetdelegate import SpreadSheetDelegate
+from src.Utility.spreadsheetitem import SpreadSheetItem
 
 
 class myTable(QTableWidget):
@@ -16,6 +16,7 @@ class myTable(QTableWidget):
         self.setupHeader(cols)  # ヘッダーのアルファベット設定
         self.setItemPrototype(self.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
         self.setItemDelegate(SpreadSheetDelegate(self))  # デリゲート
+
         self.initContents()
         self.setupContents()
 

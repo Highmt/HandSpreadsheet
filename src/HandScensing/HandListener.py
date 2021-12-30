@@ -12,34 +12,39 @@ from src.UDP.NatNetClient import NatNetClient
 finger_labels = ['Thumb', 'Index', 'Pinky']
 DIS_SIZE = pyautogui.size()
 Y_THRESHOLD = 150.0
+
+
 def print_configuration(natnet_client: NatNetClient):
     print("Connection Configuration:")
-    print("  Client:          %s"% natnet_client.local_ip_address)
-    print("  Server:          %s"% natnet_client.server_ip_address)
-    print("  Command Port:    %d"% natnet_client.command_port)
-    print("  Data Port:       %d"% natnet_client.data_port)
+    print("  Client:          %s" % natnet_client.local_ip_address)
+    print("  Server:          %s" % natnet_client.server_ip_address)
+    print("  Command Port:    %d" % natnet_client.command_port)
+    print("  Data Port:       %d" % natnet_client.data_port)
 
     if natnet_client.use_multicast:
         print("  Using Multicast")
-        print("  Multicast Group: %s"% natnet_client.multicast_address)
+        print("  Multicast Group: %s" % natnet_client.multicast_address)
     else:
         print("  Using Unicast")
 
-    #NatNet Server Info
+    # NatNet Server Info
     application_name = natnet_client.get_application_name()
     nat_net_requested_version = natnet_client.get_nat_net_requested_version()
     nat_net_version_server = natnet_client.get_nat_net_version_server()
     server_version = natnet_client.get_server_version()
 
     print("  NatNet Server Info")
-    print("    Application Name %s" %(application_name))
-    print("    NatNetVersion  %d %d %d %d"% (nat_net_version_server[0], nat_net_version_server[1], nat_net_version_server[2], nat_net_version_server[3]))
-    print("    ServerVersion  %d %d %d %d"% (server_version[0], server_version[1], server_version[2], server_version[3]))
+    print("    Application Name %s" % (application_name))
+    print("    NatNetVersion  %d %d %d %d" % (
+    nat_net_version_server[0], nat_net_version_server[1], nat_net_version_server[2], nat_net_version_server[3]))
+    print(
+        "    ServerVersion  %d %d %d %d" % (server_version[0], server_version[1], server_version[2], server_version[3]))
     print("  NatNet Bitstream Requested")
-    print("    NatNetVersion  %d %d %d %d"% (nat_net_requested_version[0], nat_net_requested_version[1], \
-                                             nat_net_requested_version[2], nat_net_requested_version[3]))
-    #print("command_socket = %s"%(str(natnet_client.command_socket)))
-    #print("data_socket    = %s"%(str(natnet_client.data_socket)))
+    print("    NatNetVersion  %d %d %d %d" % (nat_net_requested_version[0], nat_net_requested_version[1], \
+                                              nat_net_requested_version[2], nat_net_requested_version[3]))
+    # print("command_socket = %s"%(str(natnet_client.command_socket)))
+    # print("data_socket    = %s"%(str(natnet_client.data_socket)))
+
 
 class HandData:
     def __init__(self, is_left: bool = None):
@@ -51,20 +56,20 @@ class HandData:
         self.rotation_offset = [0.0, 0.0, 0.0, 0.0]
         self.fingers_pos = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 
-
     def setHand(self, rigid_body: RigidBody):
         for axis in range(len(self.position)):
-            self.position[axis] = (rigid_body.pos[axis] - self.position_offset[axis])*1000
+            self.position[axis] = (rigid_body.pos[axis] - self.position_offset[axis]) * 1000
             self.rotation[axis] = rigid_body.rot[axis] - self.rotation_offset[axis]
 
     def setFingerPos(self, finger_type, marker_pos):
         for axis in range(len(self.position)):
-            self.fingers_pos[finger_type][axis] = (marker_pos[axis] - self.position_offset[axis])*1000
+            self.fingers_pos[finger_type][axis] = (marker_pos[axis] - self.position_offset[axis]) * 1000
 
     def setOffset(self, position, rotation):
         # offsetを設定
         self.position_offset = copy.deepcopy(position)
         self.rotation_offset = copy.deepcopy(rotation)
+
 
 class HandListener:
     def __init__(self):
@@ -111,6 +116,7 @@ class HandListener:
             #     print("...")
             # finally:
             #     print("exiting")
+
     def getHand(self, key) -> HandData:
         if isinstance(key, str):
             return self.hands_dict[key]
@@ -134,11 +140,15 @@ class HandListener:
 
     # 手の数が2かつ指のマーカーの数が6
     def judgeDataComplete(self, mocap_data: MoCapData):
-        judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
+        judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(
+            0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(
+            0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
+            HandData().fingers_pos) * 2
 
         if not judge:
             # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
-            if not self.is_resetted and not self.need_calibration and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2 - 1:
+            if not self.is_resetted and not self.need_calibration and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
+                    HandData().fingers_pos) * 2 - 1:
                 self.is_resetted = True
                 lost_finger = self.searchLostFinger(mocap_data.marker_set_data.unlabeled_markers.marker_list)
                 for i in range(len(self.marker_label_list)):
@@ -155,9 +165,9 @@ class HandListener:
     # ロストしたマーカーの指のラベルを返す
     def searchLostFinger(self, marker_list) -> int:
         # search_list = [-1] * finger_labels.__len__() * 2
-        mal = [-1] * (finger_labels.__len__() * 2) # marker_assign_list
+        mal = [-1] * (finger_labels.__len__() * 2)  # marker_assign_list
         for i, id in enumerate(self.marker_label_list):
-            mal[id-1] = i
+            mal[id - 1] = i
 
         for marker in marker_list:
             marker_pos = np.array(marker.pos)
@@ -188,17 +198,20 @@ class HandListener:
 
         return len(self.marker_label_list) - 1
 
-
     def printHandData(self, hand: HandData):
         tab = "  "
         print("\n----------hand data----------")
         print("hand type: {}".format("Left" if hand.is_left else "Right"))
         print("{}pos: {}, {}, {}".format(tab, hand.position[0], hand.position[1], hand.position[2]))
-        print("{}rot: {}, {}, {}, {}".format(tab, hand.rotation[0], hand.rotation[1], hand.rotation[2], hand.rotation[3]))
+        print(
+            "{}rot: {}, {}, {}, {}".format(tab, hand.rotation[0], hand.rotation[1], hand.rotation[2], hand.rotation[3]))
         print("{}finger:".format(tab))
-        print("{}thumb: {}, {}, {}".format(tab*2, hand.fingers_pos[0][0], hand.fingers_pos[0][1], hand.fingers_pos[0][2]))
-        print("{}index: {}, {}, {}".format(tab*2, hand.fingers_pos[1][0], hand.fingers_pos[1][1], hand.fingers_pos[1][2]))
-        print("{}pinky: {}, {}, {}".format(tab*2, hand.fingers_pos[2][0], hand.fingers_pos[2][1], hand.fingers_pos[2][2]))
+        print("{}thumb: {}, {}, {}".format(tab * 2, hand.fingers_pos[0][0], hand.fingers_pos[0][1],
+                                           hand.fingers_pos[0][2]))
+        print("{}index: {}, {}, {}".format(tab * 2, hand.fingers_pos[1][0], hand.fingers_pos[1][1],
+                                           hand.fingers_pos[1][2]))
+        print("{}pinky: {}, {}, {}".format(tab * 2, hand.fingers_pos[2][0], hand.fingers_pos[2][1],
+                                           hand.fingers_pos[2][2]))
 
     def do_calibration(self):
         print("Do caribration")
@@ -272,7 +285,7 @@ class HandListener:
                             self.marker_label_list[abs(key - len(HandData().fingers_pos) + 1)] = id + 1
                         else:
                             # print("right {}: {}".format(finger_labels[key % len(HandData().fingers_pos)], id+1))
-                            self.marker_label_list[key] = id+1
+                            self.marker_label_list[key] = id + 1
             self.need_calibration = False
 
     def settingRigidbody(self, mocap_data: MoCapData):
@@ -299,5 +312,5 @@ class HandListener:
             if i < len(finger_labels):
                 self.hands_dict['l'].setFingerPos(finger_type=i, marker_pos=marker_list[id - 1].pos)
             else:
-                self.hands_dict['r'].setFingerPos(finger_type=i - len(finger_labels), marker_pos=marker_list[id - 1].pos)
-
+                self.hands_dict['r'].setFingerPos(finger_type=i - len(finger_labels),
+                                                  marker_pos=marker_list[id - 1].pos)

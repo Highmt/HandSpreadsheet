@@ -472,8 +472,8 @@ class HandSpreadSheet(QMainWindow):
             #     if self.clipRanges is not None:
             #
 
-        if self.end_Leap.isEnabled():
-            self.listener.resetHand()
+        # if self.end_Leap.isEnabled():
+        self.listener.resetHand()
 
     def setLeapSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
