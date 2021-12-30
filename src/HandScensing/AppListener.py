@@ -142,9 +142,9 @@ class AppListener(QtCore.QThread, HandListener):
             else:
                 # print("コピー，カット前状態に遷移")
                 if self.getHand('l').position[1] > Y_THRESHOLD and self.getHand('r').position[1] > Y_THRESHOLD:
-                    self.change_feedback.emit("Both Palm", "", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("Both Open", "", DirectionEnum.VERTICAL.value)
                 else:
-                    self.change_feedback.emit("One Palm", "", DirectionEnum.VERTICAL.value)
+                    self.change_feedback.emit("One Open", "", DirectionEnum.VERTICAL.value)
 
         elif currentS == HandEnum.GRIP.value:
             if formerS == HandEnum.OPEN.value:
