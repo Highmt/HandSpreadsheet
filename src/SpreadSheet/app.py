@@ -5,7 +5,6 @@ from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setApplicationName("app")
     sheet = HandSpreadSheet(50, 50)
-    sheet.resize(1000, 600)
-    # sheet.showFullScreen()
     sys.exit(app.exec_())

@@ -44,7 +44,7 @@ from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
-                             QVBoxLayout, QButtonGroup)
+                             QVBoxLayout, QButtonGroup, QDesktopWidget)
 
 from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.AppListener import AppListener
@@ -68,7 +68,6 @@ from lib.sample.util import encode_pos
 class HandSpreadSheet(QMainWindow):
     def __init__(self, rows, cols, parent=None):
         super(HandSpreadSheet, self).__init__(parent)
-
         self.toolBar = QToolBar()
         self.addToolBar(self.toolBar)  # ツールバーの追加
         self.formulaInput = QLineEdit()
@@ -77,6 +76,9 @@ class HandSpreadSheet(QMainWindow):
         self.toolBar.addWidget(self.cellLabel)
         self.toolBar.addWidget(self.formulaInput)
         self.table = myTable(rows, cols, self)
+
+        # self.ribonBar = QToolBar()
+        # self.addToolBar(self.ribonBar)
 
         # アクションの追加
         self.createMenuActions()
@@ -101,7 +103,7 @@ class HandSpreadSheet(QMainWindow):
         self.table.itemSelectionChanged.connect(self.cellSelect)
         self.setWindowTitle("HandSpreadSheet")
 
-        # Create a overlay layer
+        # Create an overlay layer
         self.overlayLayout = QHBoxLayout(self.table)
         self.overlayLayout.setContentsMargins(0, 0, 0, 0)
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
@@ -110,21 +112,26 @@ class HandSpreadSheet(QMainWindow):
         # Create a sample listener and controller
         self.listener = AppListener()
         self.listener.initOptiTrack()
-        self.listener.do_calibration()
+        # self.listener.do_calibration()
         self.listener.streaming_client.stop()
         self.listener.setListener()
 
-        self.setLeapSignal()
+        self.setOptiSignal()
 
-        # self.startLeap()  # デバッグ時につけると初期状態でLeapMotion起動
+        # self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
         self.listener.streaming_client.restart()
+
+        self.resize(1000, 600)
+        monitor = QDesktopWidget().screenGeometry(1)
+        self.move(monitor.left(), monitor.top())
+        self.showFullScreen()
         self.show()
 
     def createStatusBar(self):
 
         self.optiLabel = QLabel("")
-        # self.optiLabel = QLabel("LeapMotion is disconnecting")
+        # self.optiLabel = QLabel("OptiTrack is disconnecting")
         self.optiLabel.setAlignment(Qt.AlignLeft)
         self.optiLabel.setMinimumSize(self.optiLabel.sizeHint())
 
@@ -138,16 +145,16 @@ class HandSpreadSheet(QMainWindow):
         self.statusBar().setFont(QFont('Times', 60))
 
     def createMenuActions(self):
-        self.start_Leap = QAction("StartLeap", self)
-        self.start_Leap.setShortcut('Ctrl+L')
-        self.start_Leap.setShortcutContext(Qt.ApplicationShortcut)
-        self.start_Leap.triggered.connect(self.startLeap)
+        self.start_Opti = QAction("StartOpti", self)
+        self.start_Opti.setShortcut('Ctrl+L')
+        self.start_Opti.setShortcutContext(Qt.ApplicationShortcut)
+        self.start_Opti.triggered.connect(self.startOpti)
 
-        self.end_Leap = QAction("EndLeap", self)
-        self.end_Leap.setShortcut('Shift+Ctrl+L')
-        self.end_Leap.setShortcutContext(Qt.ApplicationShortcut)
-        self.end_Leap.triggered.connect(self.endLeap)
-        self.end_Leap.setEnabled(False)
+        self.end_Opti = QAction("EndOpti", self)
+        self.end_Opti.setShortcut('Shift+Ctrl+L')
+        self.end_Opti.setShortcutContext(Qt.ApplicationShortcut)
+        self.end_Opti.triggered.connect(self.endOpti)
+        self.end_Opti.setEnabled(False)
 
         self.active_Point = QAction("active", self)
         self.active_Point.triggered.connect(self.activePointing)
@@ -158,9 +165,9 @@ class HandSpreadSheet(QMainWindow):
         self.negative_Point.setEnabled(False)
 
     def setupMenuBar(self):
-        self.optiMenu = self.menuBar().addMenu("&LeapMotion")
-        self.optiMenu.addAction(self.start_Leap)
-        self.optiMenu.addAction(self.end_Leap)
+        self.optiMenu = self.menuBar().addMenu("&OptiTrack")
+        self.optiMenu.addAction(self.start_Opti)
+        self.optiMenu.addAction(self.end_Opti)
 
         self.optiMenu.addSeparator()
 
@@ -398,11 +405,11 @@ class HandSpreadSheet(QMainWindow):
             item.setData(Qt.EditRole, text)
         self.table.viewport().update()
 
-    def startLeap(self):
+    def startOpti(self):
         # Have the sample listener receive events from the controller
         self.streaming_client.restart()
 
-    def endLeap(self):
+    def endOpti(self):
         self.streaming_client.stop()
 
     def activePointing(self):
@@ -419,20 +426,20 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics.setTargetMode(False)
         # self.pointStatusLabel.setText("Pointing mode: negative")
 
-    def changeLeap(self, toConnect):
+    def changeOpti(self, toConnect):
         if toConnect:
-            self.start_Leap.setEnabled(False)
-            self.end_Leap.setEnabled(True)
+            self.start_Opti.setEnabled(False)
+            self.end_Opti.setEnabled(True)
             self.pointMenu.setEnabled(True)
             self.active_Point.setEnabled(True)
-            # self.optiLabel.setText("LeapMotion: connecting")
+            # self.optiLabel.setText("OptiTrack: connecting")
             # self.pointStatusLabel.setText("Pointing mode: negative")
         else:
-            self.end_Leap.setEnabled(False)
-            self.start_Leap.setEnabled(True)
+            self.end_Opti.setEnabled(False)
+            self.start_Opti.setEnabled(True)
             self.pointMenu.setEnabled(False)
             self.negative_Point.setEnabled(False)
-            # self.optiLabel.setText("LeapMotion: disconnecting")
+            # self.optiLabel.setText("OptiTrack: disconnecting")
             self.overlayGraphics.hide()
             self.pointStatusLabel.setText("")
 
@@ -472,12 +479,12 @@ class HandSpreadSheet(QMainWindow):
             #     if self.clipRanges is not None:
             #
 
-        # if self.end_Leap.isEnabled():
+        # if self.end_Opti.isEnabled():
         self.listener.resetHand()
 
-    def setLeapSignal(self):
+    def setOptiSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
         self.listener.show_feedback.connect(self.overlayGraphics.show)
         self.listener.change_feedback.connect(self.overlayGraphics.feedbackShow)
         self.listener.action_operation.connect(self.actionOperate)
-        self.listener.start_end_opti.connect(self.changeLeap)
+        self.listener.start_end_opti.connect(self.changeOpti)
