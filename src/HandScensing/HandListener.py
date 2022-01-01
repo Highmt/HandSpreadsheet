@@ -11,8 +11,10 @@ from src.UDP.NatNetClient import NatNetClient
 
 finger_labels = ['Thumb', 'Index', 'Pinky']
 DIS_SIZE = pyautogui.size()
-Y_THRESHOLD = 150.0
-
+Y_THRESHOLD = 100.0  # マーカーキャリブレーションを行う閾値
+Y_ACTION_THRESHOLD = 150.0
+# TODO: マーカーキャリブレーションの閾値とジェスチャ実行の閾値を分ける
+# Y_THRESHOLD < y < Y_ACTION_THRESHOLDの間で手を変える
 
 def print_configuration(natnet_client: NatNetClient):
     print("Connection Configuration:")
