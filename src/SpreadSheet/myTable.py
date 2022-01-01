@@ -77,7 +77,6 @@ class myTable(QTableWidget):
         self.item(6, 1).setText("2020/2/1")
         self.item(7, 1).setText("2020/2/20")
         self.item(8, 1).setText("2020/2/20")
-        self.setItem(9, 1, SpreadSheetItem())
         # self.item(9, 1).setBackground(Qt.lightGray)
         # column 2
         self.item(0, 2).setText("money")
@@ -173,6 +172,7 @@ class myTable(QTableWidget):
             for j in range(sortRanges.leftColumn(), sortRanges.rightColumn() + 1):
                 temp = self.item(i, j).clone()
                 editTable.setItem(i - sortRanges.topRow(), j - sortRanges.leftColumn(), temp)
+
 
         if d == DirectionEnum.BACK.value:
             editTable.sortItems(0, Qt.AscendingOrder)
