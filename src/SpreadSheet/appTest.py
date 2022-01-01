@@ -2,38 +2,34 @@ import random
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from res.SSEnum import TestSectionEnum, TestModeEnum
+from res.SSEnum import TestModeEnum
 from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
 
 ModeNames = ["Gesture", "Shortcut-key", "Menu"]
-SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
+# SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
+NUM_section = 5
 if __name__ == '__main__':
-    modeList = [TestModeEnum.GESTURE.value, TestModeEnum.SHORTCUT_KEY.value]
+    # modeList = [TestModeEnum.GESTURE.value, TestModeEnum.SHORTCUT_KEY.value]
+    mode = TestModeEnum.GESTURE.value
     # random.shuffle(modeList)
-    sectionList = []
-    for section in TestSectionEnum:
-        sectionList.append(section.value)
-    random.shuffle(sectionList)
-    section_count = 1
+    # sectionList = []
+    # for section in range(NUM_section):
+    #     sectionList.append(section)
+    # random.shuffle(sectionList)
+    # section_count = 1
 
     # modeList.reverse()
-    modes = list(modeList)
-    for mode in modes:
-        task_count = 1
-        for section in sectionList:
-            app = QApplication(sys.argv)
-            print("Task: {0}-{1}\nSection: {2}, Mode: {3} start.".format(section_count, task_count,
-                                                                         SectionNames[section], ModeNames[mode]))
-            sheet = HandSpreadSheet(rows=10, cols=10, mode=mode, section=section)
-            sheet.resize(1240, 700)
-            sheet.showFullScreen()
-            app.exec_()
-            print("Task: {0}-{1}\nSection: {2}, Mode: {3} end.".format(section_count, task_count,
-                                                                       SectionNames[section], ModeNames[mode]))
-            print("Push Return-key to next Task")
-            del sheet
-            del app
-            task_count += 1
-            input()
-        section_count += 1
+    # modes = list(modeList)
+    # for mode in modes:
+    for section in range(NUM_section):
+        app = QApplication(sys.argv)
+        print("Task: {0}-{1}\n ---------start----------.".format(section, ModeNames[mode]))
+        sheet = HandSpreadSheet(rows=16, cols=16, mode=mode, section=section)
+        app.exec_()
+        print("Task: {0}-{1}\n ----------END-----------.".format(section, ModeNames[mode]))
+        print("Please rela\nPush Return-key to next Section")
+        del sheet
+        app.exec_()
+        del app
+        input()
     sys.exit()

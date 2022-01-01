@@ -69,8 +69,8 @@ from src.Utility.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-TASK_NUM = 3
-USER_NO = 10
+TASK_NUM = 1
+USER_NO = 0
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 class HandSpreadSheet(QMainWindow):
@@ -126,7 +126,7 @@ class HandSpreadSheet(QMainWindow):
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
         # set hand track setting
-        self.isUseOpti = False
+        self.isUseOpti = True
         if self.isUseOpti:
             self.setAppListener()
 
@@ -136,7 +136,7 @@ class HandSpreadSheet(QMainWindow):
             self.section = section
             self.setTestPropaty(section)
 
-        monitor = QDesktopWidget().screenGeometry(1)
+        monitor = QDesktopWidget().screenGeometry(2)
         self.move(monitor.left(), monitor.top())
         # self.resize(1000, 600)
         self.showFullScreen()
@@ -144,15 +144,15 @@ class HandSpreadSheet(QMainWindow):
 
     def setAppListener(self):
     # Create a sample listener and controller
-    #     self.listener = AppListener()
-    #     self.listener.initOptiTrack()
-    #     self.listener.do_calibration()
-    #     self.listener.streaming_client.stop()
-    #     self.listener.setListener()
-    #
-    #     self.setOptiSignal()
-    #
-    #     self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
+        self.listener = AppListener()
+        self.listener.initOptiTrack()
+        self.listener.do_calibration()
+        self.listener.streaming_client.stop()
+        self.listener.setListener()
+
+        self.setOptiSignal()
+
+        self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
         return
 
     def createStatusBar(self):
@@ -576,25 +576,29 @@ class HandSpreadSheet(QMainWindow):
         # タスク毎の操作種類
         self.true_action_list = []
         self.true_direction_list = []
-        if section == TestSectionEnum.INSERT.value:
-            self.true_action_list = [ActionEnum.INSERT.value]
-            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
-        elif section == TestSectionEnum.DELETE.value:
-            self.true_action_list = [ActionEnum.DELETE.value]
-            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
-        elif section == TestSectionEnum.CUT_COPY_PASTE.value:
-            self.true_action_list = [ActionEnum.COPY.value, ActionEnum.CUT.value, ActionEnum.PASTE.value]
-            self.true_direction_list = [DirectionEnum.NONE.value]
-        else:
-            self.true_action_list = [ActionEnum.SORT.value]
-            self.true_direction_list = [DirectionEnum.FRONT.value, DirectionEnum.BACK.value]
+        self.true_action_list.append(ActionEnum.INSERT.value)
+        self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
+        self.true_action_list.append(ActionEnum.DELETE.value)
+        self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
+
+        self.true_action_list.append(ActionEnum.COPY.value)
+        self.true_direction_list.append([DirectionEnum.NONE.value])
+
+        self.true_action_list.append(ActionEnum.CUT.value)
+        self.true_direction_list.append([DirectionEnum.NONE.value])
+
+        self.true_action_list.append(ActionEnum.PASTE.value)
+        self.true_direction_list.append([DirectionEnum.NONE.value])
+
+        self.true_action_list.append(ActionEnum.SORT.value)
+        self.true_direction_list.append([DirectionEnum.FRONT.value, DirectionEnum.BACK.value])
 
         self.true_list = []
         for i in range(len(self.true_action_list)):
-            for j in range(len(self.true_direction_list)):
+            for j in range(len(self.true_direction_list[i])):
                 true_dict = {
                     "action": self.true_action_list[i],
-                    "direction": self.true_direction_list[j]
+                    "direction": self.true_direction_list[i][j]
                 }
                 for k in range(TASK_NUM):
                     self.true_list.append(true_dict)
