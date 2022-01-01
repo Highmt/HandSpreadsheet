@@ -19,7 +19,7 @@ from sklearn.neural_network import MLPClassifier
 from res import SSEnum
 
 np.random.seed(1671)  # for reproducibility
-ver = "test2"
+ver = "test"
 # network and training
 DROPOUT = 0.2
 data_pass = '../../res/data/{}/'.format(ver)
@@ -27,9 +27,9 @@ lr_label = ['left', 'right']
 read_data = [pd.DataFrame(), pd.DataFrame()]
 
 # どれかひとつだけTrueにする
-KNN_enable = True
+KNN_enable = False
 SVC_enable = False
-NN_enable = False
+NN_enable = True
 for i in range(2):
     read_data[i] = pd.read_csv(data_pass + lr_label[i] + 'Data.csv', sep=',', index_col=0)
     data = read_data[i].drop("Label", axis=1).values
@@ -52,20 +52,20 @@ for i in range(2):
         scores = ['precision', 'recall', 'f1']
 
         clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
-                           scoring='accuracy', n_jobs=-1)
+                           scoring='accuracy', n_jobs=-1, verbose=10)
         clf.fit(train_data, train_label)
         model = "KNN"
     # ------------------------------------------------------
 
     #   SVC-------------------------------------------------
     elif SVC_enable:
-        tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                             'C': [0.1, 1, 10]},
-                            {'kernel': ['linear'], 'C': [0.1, 1, 10]}]
+        svc_parameters = {'kernel': ['rbf'],
+                            'gamma': [1e-4],
+                             'C': [10]}
         scores = ['precision', 'recall', 'f1']
         #  グリッドサーチと交差検証法
-        clf = GridSearchCV(svm.SVC(), tuned_parameters, cv=5,
-                           scoring='accuracy', n_jobs=-1)
+        clf = GridSearchCV(svm.SVC(probability=True), svc_parameters, cv=5,
+                           scoring='accuracy', n_jobs=-1, verbose=10)
         clf.fit(train_data, train_label)
         model = "SVC"
     # ------------------------------------------------------
@@ -74,13 +74,14 @@ for i in range(2):
     elif NN_enable:
         nn_parameters = [{
             # 最適化手法
-            "solver": ["lbfgs", "sgd", "adam"],
+            "solver": ["adam"],
             # 隠れ層の層の数と、各層のニューロンの数
-            "hidden_layer_sizes": [(100,), (100, 10), (100, 100, 10), (100, 100, 100, 10)],
+            "hidden_layer_sizes": [(100, 100, 100, 10)],
+            'activation': ["logistic", "relu", "Tanh"],
         }]
         scores = ['precision', 'recall']
         clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
-                           scoring='accuracy', n_jobs=-1)
+                           scoring='accuracy', n_jobs=-1, verbose=10)
         clf.fit(train_data, train_label)
         model = "NN"
     # ------------------------------------------------------
