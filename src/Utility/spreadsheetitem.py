@@ -65,6 +65,7 @@ class SpreadSheetItem(QTableWidgetItem):
         return super(SpreadSheetItem, self).data(Qt.DisplayRole)
 
     def data(self, role):
+        # TODO: ソート，ペースト時の文字色を黒にする
         if role in (Qt.EditRole, Qt.StatusTipRole):
             return self.formula()
         if role == Qt.DisplayRole:
@@ -75,11 +76,12 @@ class SpreadSheetItem(QTableWidgetItem):
         except ValueError:
             number = None
         if role == Qt.TextColorRole:
-            if number is None:
-                return QColor(Qt.black)
-            elif number < 0:
-                return QColor(Qt.red)
-            return QColor(Qt.blue)
+            return QColor(Qt.black)
+            # if number is None:
+            #     return QColor(Qt.black)
+            # elif number < 0:
+            #     return QColor(Qt.red)
+            # return QColor(Qt.blue)
 
         if role == Qt.TextAlignmentRole:
             if t and (t[0].isdigit() or t[0] == '-'):
