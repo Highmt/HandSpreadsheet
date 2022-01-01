@@ -44,18 +44,19 @@ import time
 
 import pandas as pd
 import numpy as np
-from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
-                             QVBoxLayout, QButtonGroup)
+                             QVBoxLayout, QButtonGroup, QDesktopWidget)
 
-from res.SSEnum import *
+from res.SSEnum import ActionEnum, DirectionEnum, TestModeEnum, TestSectionEnum
 from src.HandScensing.AppListener import AppListener
-from src.SpreadSheet_test.OverlayGraphics import OverlayGraphics
-from src.SpreadSheet_test.myTable import myTable
-from lib.sample.spreadsheetitem import SpreadSheetItem
-from lib.sample.util import encode_pos
+from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
+from src.SpreadSheet.OverlayGraphics import OverlayGraphics
+from src.SpreadSheet.myTable import myTable
+from src.Utility.spreadsheetitem import SpreadSheetItem
+from src.Utility.util import encode_pos
 
 # class circleWidget(QWidget):
 #     def __init__(self, parent = None):
@@ -72,25 +73,15 @@ USER_NO = 10
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 
-class HandSpreadSheet(QMainWindow):
+class TestHandSpreadSheet(HandSpreadSheet):
     def __init__(self, rows, cols, mode, section, parent=None):
-        super(HandSpreadSheet, self).__init__(parent)
+        super(TestHandSpreadSheet, self).__init__(parent)
         self.mode = mode
         self.section = section
 
-        self.toolBar = QToolBar()
-        self.addToolBar(self.toolBar)  # ツールバーの追加
-        self.formulaInput = QLineEdit()
-        self.cellLabel = QLabel(self.toolBar)
-        self.cellLabel.setMinimumSize(80, 0)
-        self.toolBar.addWidget(self.cellLabel)
-        self.toolBar.addWidget(self.formulaInput)
-        self.table = myTable(rows, cols, self)
-
         # アクションの追加
         self.createMenuActions()
-        if self.mode == TestModeEnum.SHORTCUT_KEY.value:
-            self.createTableActions()
+        self.createTableActions()
 
         self.updateColor()
         self.setupMenuBar()
@@ -107,7 +98,7 @@ class HandSpreadSheet(QMainWindow):
         self.table.itemSelectionChanged.connect(self.cellSelect)
         self.setWindowTitle("HandSpreadSheet")
 
-        # Create a overlay layer
+        # Create an overlay layer
         self.overlayLayout = QHBoxLayout(self.table)
         self.overlayLayout.setContentsMargins(0, 0, 0, 0)
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
@@ -116,7 +107,7 @@ class HandSpreadSheet(QMainWindow):
         # Create a sample listener and controller
         self.listener = AppListener()
         self.listener.initOptiTrack()
-        # self.listener.do_calibration()
+        self.listener.do_calibration()
         self.listener.streaming_client.stop()
         self.listener.setListener()
 
@@ -124,9 +115,14 @@ class HandSpreadSheet(QMainWindow):
 
         if self.mode == TestModeEnum.GESTURE.value:
             self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
+
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
         self.setTestPropaty(section)
+        monitor = QDesktopWidget().screenGeometry(1)
+        self.move(monitor.left(), monitor.top())
+        # self.resize(1000, 600)
+        self.showFullScreen()
         self.show()
 
     def setTestPropaty(self, section):
@@ -453,10 +449,10 @@ class HandSpreadSheet(QMainWindow):
 
     def startOpti(self):
         # Have the sample listener receive events from the controller
-        self.controller.add_listener(self.listener)
+        self.listener.streaming_client.restart()
 
     def endOpti(self):
-        self.controller.remove_listener(self.listener)
+        self.listener.streaming_client.restart()
 
     def startTest(self):
         self.current_true_dict = self.true_list.pop(0)
@@ -521,7 +517,7 @@ class HandSpreadSheet(QMainWindow):
             self.pointStatusLabel.setText("")
 
     def closeEvent(self, event):
-        self.controller.remove_listener(self.listener)
+        self.listener.streaming_client.shutdown()
 
     def cellSelect(self):
         if self.table.selectedItems():

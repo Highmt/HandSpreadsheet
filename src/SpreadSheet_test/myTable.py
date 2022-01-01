@@ -19,12 +19,14 @@ class myTable(QTableWidget):
         self.setItemPrototype(self.item(rows - 1, cols - 1))  # テーブルアイテムの初期化
         self.setItemDelegate(SpreadSheetDelegate(self))   # デリゲート
         self.initContents()
-        # self.setupContents()
+        self.setupContents()
         #
         self.clipTable = QTableWidget(rows, cols, None)  # コピー，カットのための仮装テーブル
         self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
         self.verticalHeader().setDefaultSectionSize(60)
         self.horizontalHeader().setDefaultSectionSize(120)
+
+        # for test
         self.pre_target = QRect(0, 0, 0, 0)
         self.target_top = 0
         self.target_left = 0
@@ -134,7 +136,7 @@ class myTable(QTableWidget):
 
                 for j in range(selectrange.leftColumn(), selectrange.rightColumn() + 1):
                     self.setItem(i, j, SpreadSheetItem())
-                    self.item(i, j).setBackground(Qt.red)
+                    # self.item(i, j).setBackground(Qt.red)
         else:
             for j in range(selectrange.leftColumn(), selectrange.rightColumn()+1):
 
@@ -143,7 +145,7 @@ class myTable(QTableWidget):
                     self.setItem(i, j, temp)
                 for i in range(selectrange.topRow(), selectrange.bottomRow() + 1):
                     self.setItem(i, j, SpreadSheetItem())
-                    self.item(i, j).setBackground(Qt.red)
+                    # self.item(i, j).setBackground(Qt.red)
 
 
     def deleteCell(self, d):

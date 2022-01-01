@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from res.SSEnum import TestSectionEnum, TestModeEnum
-from src.SpreadSheet_test.HandSpreadSheet import HandSpreadSheet
+from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
 
 ModeNames = ["Gesture", "Shortcut-key", "Menu"]
 SectionNames = ["Insert", "Delete", "Cut&Copy&Paste", "Sort"]
@@ -24,7 +24,7 @@ if __name__ == '__main__':
             app = QApplication(sys.argv)
             print("Task: {0}-{1}\nSection: {2}, Mode: {3} start.".format(section_count, task_count,
                                                                          SectionNames[section], ModeNames[mode]))
-            sheet = HandSpreadSheet(10, 10, mode, section)
+            sheet = HandSpreadSheet(rows=10, cols=10, mode=mode, section=section)
             sheet.resize(1240, 700)
             sheet.showFullScreen()
             app.exec_()

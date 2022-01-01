@@ -38,20 +38,25 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
+import os
+import random
 import sys
 import time
+
+import numpy as np
+import pandas as pd
 from PyQt5.QtCore import QPoint, Qt, QTimer
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QBrush, QKeySequence, QFont
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar, QMenu, QMessageBox, QPushButton, QDialog, QRadioButton,
+                             QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup, QDesktopWidget)
 
-from res.SSEnum import ActionEnum, DirectionEnum
+from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
 from src.HandScensing.AppListener import AppListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
-from lib.sample.spreadsheetitem import SpreadSheetItem
-from lib.sample.util import encode_pos
+from src.Utility.spreadsheetitem import SpreadSheetItem
+from src.Utility.util import encode_pos
 
 
 # class circleWidget(QWidget):
@@ -64,10 +69,17 @@ from lib.sample.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
+TASK_NUM = 3
+USER_NO = 10
+FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 class HandSpreadSheet(QMainWindow):
-    def __init__(self, rows, cols, parent=None):
+    def __init__(self, rows, cols, mode=None, section=None, parent=None):
         super(HandSpreadSheet, self).__init__(parent)
+        self.isTest = False
+        if section is not None:
+            self.isTest = True
+
         self.toolBar = QToolBar()
         self.addToolBar(self.toolBar)  # ツールバーの追加
         self.formulaInput = QLineEdit()
@@ -77,6 +89,7 @@ class HandSpreadSheet(QMainWindow):
         self.toolBar.addWidget(self.formulaInput)
         self.table = myTable(rows, cols, self)
 
+        # TODO: リボンメニュー（未作成）
         # self.ribonBar = QToolBar()
         # self.addToolBar(self.ribonBar)
 
@@ -84,7 +97,8 @@ class HandSpreadSheet(QMainWindow):
         self.createMenuActions()
         self.createTableActions()
 
-        self.updateColor(0)
+        # 何してる？
+        self.updateColor()
         self.setupMenuBar()
 
         self.setCentralWidget(self.table)
@@ -109,24 +123,37 @@ class HandSpreadSheet(QMainWindow):
         self.overlayGraphics = OverlayGraphics()  # 描画するGraphicsView
         self.overlayLayout.addWidget(self.overlayGraphics)
 
-        # Create a sample listener and controller
-        self.listener = AppListener()
-        self.listener.initOptiTrack()
-        # self.listener.do_calibration()
-        self.listener.streaming_client.stop()
-        self.listener.setListener()
-
-        self.setOptiSignal()
-
-        # self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
-        self.listener.streaming_client.restart()
 
-        self.resize(1000, 600)
+        # set hand track setting
+        self.isUseOpti = False
+        if self.isUseOpti:
+            self.setAppListener()
+
+        # TODO: app_test を修正とディレクトリ移動
+        if self.isTest:
+            self.mode = mode
+            self.section = section
+            self.setTestPropaty(section)
+
         monitor = QDesktopWidget().screenGeometry(1)
         self.move(monitor.left(), monitor.top())
+        # self.resize(1000, 600)
         self.showFullScreen()
         self.show()
+
+    def setAppListener(self):
+    # Create a sample listener and controller
+    #     self.listener = AppListener()
+    #     self.listener.initOptiTrack()
+    #     self.listener.do_calibration()
+    #     self.listener.streaming_client.stop()
+    #     self.listener.setListener()
+    #
+    #     self.setOptiSignal()
+    #
+    #     self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
+        return
 
     def createStatusBar(self):
 
@@ -139,8 +166,13 @@ class HandSpreadSheet(QMainWindow):
         self.pointStatusLabel.setAlignment(Qt.AlignLeft)
         self.pointStatusLabel.setContentsMargins(0, 0, 30, 0)
 
+        self.statusLabel = QLabel("")
+        self.statusLabel.setAlignment(Qt.AlignLeft)
+        self.statusLabel.setContentsMargins(0, 0, 30, 0)
+
         self.statusBar().addWidget(self.optiLabel)
-        self.statusBar().addPermanentWidget(self.pointStatusLabel)
+        # self.statusBar().addPermanentWidget(self.pointStatusLabel)
+        self.statusBar().addPermanentWidget(self.statusLabel)
 
         self.statusBar().setFont(QFont('Times', 60))
 
@@ -164,6 +196,11 @@ class HandSpreadSheet(QMainWindow):
         self.negative_Point.triggered.connect(self.negativePointing)
         self.negative_Point.setEnabled(False)
 
+        self.start_test = QAction("start test", self)
+        self.start_test.setShortcut('Ctrl+T')
+        self.start_test.setShortcutContext(Qt.ApplicationShortcut)
+        self.start_test.triggered.connect(self.startTest)
+
     def setupMenuBar(self):
         self.optiMenu = self.menuBar().addMenu("&OptiTrack")
         self.optiMenu.addAction(self.start_Opti)
@@ -175,6 +212,9 @@ class HandSpreadSheet(QMainWindow):
         self.pointMenu.addAction(self.active_Point)
         self.pointMenu.addAction(self.negative_Point)
         self.pointMenu.setEnabled(False)
+
+        self.testMenu = self.menuBar().addMenu("&Test")
+        self.testMenu.addAction(self.start_test)
 
     def createTableActions(self):
         self.insert_Action = QAction("Insert...", self)
@@ -366,11 +406,9 @@ class HandSpreadSheet(QMainWindow):
             self.cellLabel.setText("Cell: (%s)" % encode_pos(self.table.row(item),
                                                              self.table.column(item)))
 
-    def updateColor(self, item):
+    def updateColor(self):
         pixmap = QPixmap(16, 16)
         color = QColor()
-        # if item:
-        #     color = item.backgroundColor()
         if not color.isValid():
             color = self.palette().base().color()
         painter = QPainter(pixmap)
@@ -407,10 +445,41 @@ class HandSpreadSheet(QMainWindow):
 
     def startOpti(self):
         # Have the sample listener receive events from the controller
-        self.streaming_client.restart()
+        self.listener.streaming_client.restart()
 
     def endOpti(self):
-        self.streaming_client.stop()
+        self.listener.streaming_client.restart()
+
+    def startTest(self):
+        self.current_true_dict = self.true_list.pop(0)
+
+        if self.section == TestSectionEnum.INSERT.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Insert Shift Right")
+            else:
+                self.statusLabel.setText("Insert Shift Down")
+        elif self.section == TestSectionEnum.DELETE.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Delete Shift Left")
+            else:
+                self.statusLabel.setText("Delete Shift Up")
+        elif self.section == TestSectionEnum.CUT_COPY_PASTE.value:
+            if self.current_true_dict.get('action') == ActionEnum.CUT.value:
+                self.statusLabel.setText("Cut")
+            elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
+                self.statusLabel.setText("Copy")
+            else:
+                self.statusLabel.setText("Paste")
+        else:
+            if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
+                self.statusLabel.setText("Sort A to Z")
+            else:
+                self.statusLabel.setText("Sort Z to A")
+
+        self.isTestrun = True
+        self.error_count = 0
+        self.table.setRandomCellColor()
+        self.start_time = time.time()
 
     def activePointing(self):
         self.listener.setPointingMode(True)
@@ -444,43 +513,96 @@ class HandSpreadSheet(QMainWindow):
             self.pointStatusLabel.setText("")
 
     def closeEvent(self, event):
-        self.streaming_client.shutdown()
+        if self.isUseOpti:
+            self.listener.streaming_client.shutdown()
+        print("close")
 
     def cellSelect(self):
-        self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
-        self.overlayGraphics.isSelected = True
-
-
-    def action_feedback_slot(self):
-        print("insert")
+        if self.table.selectedItems():
+            self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
+            self.overlayGraphics.isSelected = True
 
     def actionOperate(self, act, direction):
-        self.table.actionOperate(act, direction)
-        if self.table.selectedItems():
-            if act == ActionEnum.INSERT.value:
-                QTimer.singleShot(1000, self.action_feedback_slot)
-            # elif act == ActionEnum.DELETE.value:
-            #     self.deleteCell(direction)
-            #     self.parent().statusBar().showMessage("delete", 1000)
-            #
-            # elif act == ActionEnum.SORT.value:
-            #     self.sortCells(direction)
-            #     self.parent().statusBar().showMessage("sort", 1000)
-            #
-            # elif act == ActionEnum.COPY.value:
-            #     self.copyCells()
-            #     self.parent().statusBar().showMessage("copy", 1000)
-            #
-            # elif act == ActionEnum.CUT.value:
-            #     self.cutCells()
-            #     self.parent().statusBar().showMessage("cut", 1000)
-            #
-            # else:
-            #     if self.clipRanges is not None:
-            #
+        if self.isTest:
+            self.actionTestOperate(act=act, direction=direction)
+        else:
+            self.table.actionOperate(act, direction)
 
-        # if self.end_Opti.isEnabled():
-        self.listener.resetHand()
+        if self.isUseOpti:
+            self.listener.resetHand()
+
+    def actionTestOperate(self, act, direction):
+        if self.table.selectedItems():
+            if not self.isTestrun:
+                self.table.actionOperate(act, direction)
+            elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
+                    self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
+                    self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
+                    self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
+
+                if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
+                    os.system('play -n synth %s sin %s' % (150 / 1000, 600))
+                else:
+                    os.system('play -n synth %s sin %s' % (100 / 1000, 220))
+                    self.error_count = 1
+
+                self.records = np.append(self.records,
+                                         [[USER_NO, TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), self.mode, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
+                if len(self.true_list) == 0:
+                    recordDF = pd.DataFrame(self.records, columns=['participant', 'No', 'mode', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
+                    recordDF['No'] = recordDF['No'].astype(int)
+                    recordDF['error'] = recordDF['error'].astype(int)
+                    recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
+                    recordDF['true_direction'] = recordDF['true_direction'].astype(int)
+                    recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
+                    recordDF['select_direction'] = recordDF['select_direction'].astype(int)
+                    print(recordDF)
+                    if os.path.isfile(FILE):
+                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                    else:
+                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
+                    self.hide()
+                    self.close()
+                else:
+                    self.table.resetRandomCellColor()
+                    self.startTest()
+                    print("Remaining Task: {}".format(len(self.true_list)))
+
+                if self.end_Opti.isEnabled():
+                    self.listener.resetHand()
+            self.table.clearSelection()
+
+    def setTestPropaty(self, section):
+        # タスク毎の操作種類
+        self.true_action_list = []
+        self.true_direction_list = []
+        if section == TestSectionEnum.INSERT.value:
+            self.true_action_list = [ActionEnum.INSERT.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
+        elif section == TestSectionEnum.DELETE.value:
+            self.true_action_list = [ActionEnum.DELETE.value]
+            self.true_direction_list = [DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value]
+        elif section == TestSectionEnum.CUT_COPY_PASTE.value:
+            self.true_action_list = [ActionEnum.COPY.value, ActionEnum.CUT.value, ActionEnum.PASTE.value]
+            self.true_direction_list = [DirectionEnum.NONE.value]
+        else:
+            self.true_action_list = [ActionEnum.SORT.value]
+            self.true_direction_list = [DirectionEnum.FRONT.value, DirectionEnum.BACK.value]
+
+        self.true_list = []
+        for i in range(len(self.true_action_list)):
+            for j in range(len(self.true_direction_list)):
+                true_dict = {
+                    "action": self.true_action_list[i],
+                    "direction": self.true_direction_list[j]
+                }
+                for k in range(TASK_NUM):
+                    self.true_list.append(true_dict)
+
+        random.shuffle(self.true_list)
+        self.records = np.empty([0, 9])
+        self.isTestrun = False
+
 
     def setOptiSignal(self):
         self.listener.hide_feedback.connect(self.overlayGraphics.hide)
