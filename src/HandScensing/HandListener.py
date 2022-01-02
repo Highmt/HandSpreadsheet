@@ -52,11 +52,11 @@ class HandData:
     def __init__(self, is_left: bool = None):
         self.rb_id = 0
         self.is_left = is_left
-        self.position = [0.0, 0.0, 0.0]
-        self.position_offset = [0.0, 0.0, 0.0]
-        self.rotation = [0.0, 0.0, 0.0, 0.0]
-        self.rotation_offset = [0.0, 0.0, 0.0, 0.0]
-        self.fingers_pos = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+        self.position = np.array([0.0, 0.0, 0.0])
+        self.position_offset = np.array([0.0, 0.0, 0.0])
+        self.rotation = np.array([0.0, 0.0, 0.0, 0.0])
+        self.rotation_offset = np.array([0.0, 0.0, 0.0, 0.0])
+        self.fingers_pos = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
 
     def setHand(self, rigid_body: RigidBody):
         for axis in range(len(self.position)):
