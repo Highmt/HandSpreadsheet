@@ -8,7 +8,7 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 
-from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
+from src.HandScensing.HandListener import HandListener, Y_THRESHOLD, HandData
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
@@ -34,6 +34,16 @@ def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.01):
     # return line so we can update it again in the next iteration
     return line1
 
+
+def fingerDifferencial(former_hands, hands_dict):
+    a = {}
+    # TODO: 指の移動距離の絶対値を計算
+    for key in former_hands.keys():
+        d = []
+        for i in range(len(HandData.fingers_pos)):
+            d.append(np.linalg.norm(former_hands[key].fingers_pos[i] - hands_dict[key].fingers_pos[i]))
+        a[key] = sum(d) / len(d)
+    return a
 
 x_vec = np.linspace(0, 1, 100 + 1)[0:-1]
 l_y_vec = {
@@ -82,36 +92,47 @@ listener.streaming_client.stop()
 print("Press Enter to start plot hand position session")
 sys.stdin.readline()
 listener.streaming_client.restart()
+
+mocap_data: MoCapData = listener.getCurrentData()
+if listener.judgeDataComplete(mocap_data=mocap_data):
+    # if listener.need_calibration:
+    #     listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
+    listener.setHandData(mocap_data=mocap_data)
+former_hands = copy.deepcopy(listener.hands_dict)
+
 try:
     while True:
         mocap_data: MoCapData = listener.getCurrentData()
         if listener.judgeDataComplete(mocap_data=mocap_data):
-            if listener.need_calibration:
-                listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
+            # if listener.need_calibration:
+            #     listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
             listener.setHandData(mocap_data=mocap_data)
 
             # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
             if listener.hands_dict['l'].position[1] <= Y_THRESHOLD and listener.hands_dict['r'].position[1] <= Y_THRESHOLD:
                 listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
+            d = fingerDifferencial(former_hands, listener.hands_dict)
+            # TODO: 指の動きの絶対値のグラフも同時出力＋データ格納
             for hand in listener.hands_dict.values():
                 if hand.is_left:
                     # listener.printHandData(hand)
-                    l_y_vec['x'][-1] = hand.fingers_pos[0][0]
-                    l_y_vec['y'][-1] = hand.fingers_pos[1][0]
-                    l_y_vec['z'][-1] = hand.fingers_pos[2][0]
+                    l_y_vec['x'][-1] = hand.position[0]
+                    l_y_vec['y'][-1] = hand.position[1]
+                    l_y_vec['z'][-1] = hand.position[2]
                     line1 = live_plotter(x_vec, l_y_vec, line1)
                     l_y_vec['x'] = np.append(l_y_vec['x'][1:], 0.0)
                     l_y_vec['y'] = np.append(l_y_vec['y'][1:], 0.0)
                     l_y_vec['z'] = np.append(l_y_vec['z'][1:], 0.0)
                 else:
-                    r_y_vec['x'][-1] = hand.fingers_pos[0][0]
-                    r_y_vec['y'][-1] = hand.fingers_pos[1][0]
-                    r_y_vec['z'][-1] = hand.fingers_pos[2][0]
+                    r_y_vec['x'][-1] = hand.position[0]
+                    r_y_vec['y'][-1] = hand.position[1]
+                    r_y_vec['z'][-1] = hand.position[2]
                     line2 = live_plotter(x_vec, r_y_vec, line2)
                     r_y_vec['x'] = np.append(r_y_vec['x'][1:], 0.0)
                     r_y_vec['y'] = np.append(r_y_vec['y'][1:], 0.0)
                     r_y_vec['z'] = np.append(r_y_vec['z'][1:], 0.0)
+            former_hands = copy.deepcopy(listener.hands_dict)
             time.sleep(0.05)
         else:
             print(".")
