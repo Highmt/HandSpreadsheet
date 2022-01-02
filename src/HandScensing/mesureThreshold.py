@@ -37,12 +37,11 @@ def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.01):
 
 def fingerDifferencial(former_hands, hands_dict):
     a = {}
-    # TODO: 指の移動距離の絶対値を計算
     for key in former_hands.keys():
         d = []
-        for i in range(len(HandData.fingers_pos)):
+        for i in range(len(HandData().fingers_pos)):
             d.append(np.linalg.norm(former_hands[key].fingers_pos[i] - hands_dict[key].fingers_pos[i]))
-        a[key] = sum(d) / len(d)
+        a[key] = sum(d) / len(d)  # とりあえず平均値を返している
     return a
 
 x_vec = np.linspace(0, 1, 100 + 1)[0:-1]
