@@ -97,6 +97,8 @@ if listener.judgeDataComplete(mocap_data=mocap_data):
     listener.setHandData(mocap_data=mocap_data)
 former_hands = copy.deepcopy(listener.hands_dict)
 
+dif_memory_num = 3
+dif_memory = [np.zeros(dif_memory_num), np.zeros(dif_memory_num)]
 try:
     while True:
         mocap_data: MoCapData = listener.getCurrentData()
@@ -110,13 +112,14 @@ try:
                 listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
             d = fingerDifferencial(former_hands, listener.hands_dict)
-            # TODO: 指の動きの絶対値のグラフも同時出力＋データ格納
+            # TODO: データ格納
             for key, hand in listener.hands_dict.items():
                 lr = 0 if hand.is_left else 1
+                dif_memory[lr] = np.delete(np.append(dif_memory[lr], d[key]), 0)
                 y_vec[lr]['x'][-1] = hand.position[0]
                 y_vec[lr]['y'][-1] = hand.position[1]
                 y_vec[lr]['z'][-1] = hand.position[2]
-                y_vec[lr]['d'][-1] = d[key]
+                y_vec[lr]['d'][-1] = sum(dif_memory[lr])
                 line[lr] = live_plotter(y_data=y_vec[lr], line=line[lr])
                 y_vec[lr]['x'] = np.append(y_vec[lr]['x'][1:], 0.0)
                 y_vec[lr]['y'] = np.append(y_vec[lr]['y'][1:], 0.0)
