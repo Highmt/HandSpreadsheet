@@ -15,7 +15,7 @@ version = "test2"
 # 　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
-collect_data_num = 10000
+collect_data_num = 10
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
@@ -23,23 +23,24 @@ output_dir = "../../res/data/{}".format(version)
 
 
 class CollectListener(HandListener):
-    def __init__(self):
+    def __init__(self, file_dir: str):
         super().__init__()
+        self.file_dir = file_dir
         self.current_collect_id = 0
         self.enables = [False, False]
         self.dfs = []
         self.started = False
 
         # ディレクトリが存在しない場合作成
-        dir = Path(output_dir)
+        dir = Path(self.file_dir)
         dir.mkdir(parents=True, exist_ok=True)
         self.reset_df()
         # TODO: change mode to 'x' for study
-        self.dfs[0].to_csv("{}/leftData.csv".format(output_dir), mode='w')
-        self.dfs[1].to_csv("{}/rightData.csv".format(output_dir), mode='w')
+        self.dfs[0].to_csv("{}/leftData.csv".format(self.file_dir), mode='w')
+        self.dfs[1].to_csv("{}/rightData.csv".format(self.file_dir), mode='w')
 
     def reset_df(self):
-        self.dfs = [pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value), pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)]
+        self.dfs = [pd.DataFrame(columns=FeatureEnum.COLLECT_LIST.value), pd.DataFrame(columns=FeatureEnum.COLLECT_LIST.value)]
 
     def frameListener(self, mocap_data: MoCapData):
         # 最初の数秒間のフレームをカットする
@@ -55,20 +56,9 @@ class CollectListener(HandListener):
                 lr_label, lr = ("left", 0) if hand.is_left else ("right", 1)
                 # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
                 if self.enables[lr] and hand.position[1] > Y_THRESHOLD:
-                    ps = pd.Series(dtype=pd.Float64Dtype, index=FeatureEnum.FEATURE_LIST.value)
-                    # Get the hand's normal vector and direction
-                    # self.printHandData(hand)
                     print("{}: {}".format(lr_label, len(self.dfs[lr])))
-                    ps["pitch", "roll", "yaw"] = hand.rotation[0:3]
-
-                    # Get fingers
-                    for finger_id in range(len(hand.fingers_pos)):
-                        for pos in range(3):
-                            ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.getFingerVec(finger_type=finger_id)[pos]
-                            ps[finger_labels[finger_id] + "_" + finger_labels[(finger_id + 1) % 3] + "_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.fingers_pos[(finger_id + 1) % 3][pos]
-
+                    ps = hand.convertPS()
                     # 　データ収集が完了すると終了
-
                     self.dfs[lr] = self.dfs[lr].append(ps, ignore_index=True)
                     if (len(self.dfs[lr]) >= collect_data_num):
                         self.enables[lr] = False
@@ -87,14 +77,14 @@ class CollectListener(HandListener):
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
         data["Label"] = self.current_collect_id
-        data.to_csv("{}/{}Data.csv".format(output_dir, lr), mode='a', header=False)
+        data.to_csv("{}/{}Data.csv".format(self.file_dir, lr), mode='a', header=False)
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
 
 
 def main():
-    listener = CollectListener()
+    listener = CollectListener(output_dir)
     listener.initOptiTrack()
     listener.do_calibration()
     listener.streaming_client.stop()

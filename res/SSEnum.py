@@ -54,6 +54,24 @@ class TestModeEnum(Enum):
     MENU = 2
 
 class FeatureEnum(Enum):
+    COLLECT_LIST = [
+        "x",
+        "y",
+        "z",
+        "pitch",
+        "roll",
+        "yaw",
+        "Thumb_pos_x",
+        "Thumb_pos_y",
+        "Thumb_pos_z",
+        "Index_pos_x",
+        "Index_pos_y",
+        "Index_pos_z",
+        "Pinky_pos_x",
+        "Pinky_pos_y",
+        "Pinky_pos_z",
+        "Label"
+    ]
     FEATURE_LIST = [
         "pitch",
         "roll",

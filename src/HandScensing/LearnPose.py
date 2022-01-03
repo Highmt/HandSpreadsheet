@@ -17,9 +17,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 
 from res import SSEnum
+from res.SSEnum import FeatureEnum
+from src.HandScensing.HandListener import HandData
+from src.HandScensing.Predictor import convertLearningPS
 
 np.random.seed(1671)  # for reproducibility
-ver = "test"
+ver = "test2"
 # network and training
 DROPOUT = 0.2
 data_pass = '../../res/data/{}/'.format(ver)
@@ -30,9 +33,20 @@ read_data = [pd.DataFrame(), pd.DataFrame()]
 KNN_enable = False
 SVC_enable = False
 NN_enable = True
+
+def remakeDF(data: pd.DataFrame) -> pd.DataFrame:
+    df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
+    hand = HandData()
+    for i, ps in data.iterrows():
+        hand.loadPS(ps)
+        d = convertLearningPS(hand)
+        df = df.append(d, ignore_index=True)
+    return df
+
+
 for i in range(2):
     read_data[i] = pd.read_csv(data_pass + lr_label[i] + 'Data.csv', sep=',', index_col=0)
-    data = read_data[i].drop("Label", axis=1).values
+    data = remakeDF(read_data[i].drop("Label", axis=1)).values
     label = read_data[i]["Label"].values
     train_data, test_data, train_label, test_label = train_test_split(data, label, test_size=0.2, stratify=label)
 

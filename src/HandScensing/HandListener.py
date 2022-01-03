@@ -3,13 +3,17 @@ import math
 import sys
 import time
 
+import pandas as pd
 import pyautogui
 import numpy as np
+from scipy.spatial.transform import Rotation
 
+from res.SSEnum import FeatureEnum
 from src.UDP.MoCapData import MoCapData, RigidBody
 from src.UDP.NatNetClient import NatNetClient
 
 finger_labels = ['Thumb', 'Index', 'Pinky']
+pos_labels = ["x", "y", "z"]
 DIS_SIZE = pyautogui.size()
 Y_THRESHOLD = 100.0  # マーカーキャリブレーションを行う閾値
 Y_ACTION_THRESHOLD = 150.0
@@ -54,14 +58,14 @@ class HandData:
         self.is_left = is_left
         self.position = np.array([0.0, 0.0, 0.0])
         self.position_offset = np.array([0.0, 0.0, 0.0])
-        self.rotation = np.array([0.0, 0.0, 0.0, 0.0])
+        self.rotation = np.array([0.0, 0.0, 0.0])
         self.rotation_offset = np.array([0.0, 0.0, 0.0, 0.0])
         self.fingers_pos = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
 
     def setHand(self, rigid_body: RigidBody):
-        for axis in range(len(self.position)):
-            self.position[axis] = (rigid_body.pos[axis] - self.position_offset[axis]) * 1000
-            self.rotation[axis] = rigid_body.rot[axis] - self.rotation_offset[axis]
+        rot = Rotation.from_quat(rigid_body.rot).as_rotvec()
+        self.position = (np.array(rigid_body.pos) - self.position_offset) * 1000
+        self.rotation = rot - self.rotation_offset
 
     def setFingerPos(self, finger_type, marker_pos):
         for axis in range(len(self.position)):
@@ -72,9 +76,27 @@ class HandData:
 
     def setOffset(self, position, rotation):
         # offsetを設定
-        self.position_offset = copy.deepcopy(position)
-        self.rotation_offset = copy.deepcopy(rotation)
+        self.position_offset = np.array(position)
+        self.rotation_offset = Rotation.from_quat(rotation).as_rotvec()
 
+    def convertPS(self):
+        ps = pd.Series(dtype=pd.Float64Dtype, index=FeatureEnum.COLLECT_LIST.value)
+        ps["x", "y", "z"] = self.position
+        ps["pitch", "roll", "yaw"] = self.rotation
+
+        # Get fingers
+        for finger_id in range(len(self.fingers_pos)):
+            for pos in range(3):
+                ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]] = self.getFingerVec(finger_type=finger_id)[pos]
+        return ps
+
+    def loadPS(self, ps: pd.Series):
+        self.position = ps[["x", "y", "z"]].values
+        self.rotation = ps[["pitch", "roll", "yaw"]].values
+        # Get fingers
+        for finger_id in range(len(self.fingers_pos)):
+            for pos in range(3):
+                self.fingers_pos[finger_id][pos] = ps[finger_labels[finger_id] + "_pos_" + pos_labels[pos]]
 
 class HandListener:
     def __init__(self):
