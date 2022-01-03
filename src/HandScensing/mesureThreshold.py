@@ -8,7 +8,7 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 
-from src.HandScensing.HandListener import HandListener, Y_THRESHOLD, HandData
+from src.HandScensing.HandListener import HandListener, HandData
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
@@ -19,20 +19,21 @@ collect_data_num = 2000
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]
+Y_THRESHOLD = 20
 
-
-def live_plotter(x_vec, y1_data, line1, identifier='', pause_time=0.01):
+def live_plotter(y_data, line, pause_time=0.01):
     # after the figure, axis, and line are created, we only need to update the y-data
-    line1['x'].set_ydata(y1_data['x'])
-    line1['y'].set_ydata(y1_data['y'])
-    line1['z'].set_ydata(y1_data['z'])
+    line['x'].set_ydata(y_data['x'])
+    line['y'].set_ydata(y_data['y'])
+    line['z'].set_ydata(y_data['z'])
+    line['d'].set_ydata(y_data['d'])
     # adjust limits if new data goes beyond bounds
     plt.draw()
     # this pauses the data so the figure/axis can catch up - the amount of pause can be altered above
     plt.pause(pause_time)
 
     # return line so we can update it again in the next iteration
-    return line1
+    return line
 
 
 def fingerDifferencial(former_hands, hands_dict):
@@ -40,41 +41,38 @@ def fingerDifferencial(former_hands, hands_dict):
     for key in former_hands.keys():
         d = []
         for i in range(len(HandData().fingers_pos)):
-            d.append(np.linalg.norm(former_hands[key].fingers_pos[i] - hands_dict[key].fingers_pos[i]))
+            d.append(np.linalg.norm(former_hands[key].getFingerVec(i) - hands_dict[key].getFingerVec(i)))
         a[key] = sum(d) / len(d)  # とりあえず平均値を返している
+        print(a[key])
     return a
 
-x_vec = np.linspace(0, 1, 100 + 1)[0:-1]
-l_y_vec = {
-    'x': np.random.randn(len(x_vec)),
-    'y': np.random.randn(len(x_vec)),
-    'z': np.random.randn(len(x_vec))
-}
-line1 = {'x': [], 'y': [], 'z': []}
 
-r_y_vec = {
-    'x': np.random.randn(len(x_vec)),
-    'y': np.random.randn(len(x_vec)),
-    'z': np.random.randn(len(x_vec))
-}
-line2 = {'x': [], 'y': [], 'z': []}
+x_vec = np.linspace(0, 1, 100 + 1)[0:-1]
+
+y_vec = [{'x': np.random.randn(len(x_vec)),
+          'y': np.random.randn(len(x_vec)),
+          'z': np.random.randn(len(x_vec)),
+          'd': np.random.randn(len(x_vec))},
+         {'x': np.random.randn(len(x_vec)),
+          'y': np.random.randn(len(x_vec)),
+          'z': np.random.randn(len(x_vec)),
+          'd': np.random.randn(len(x_vec))}]
+line = [{'x': [], 'y': [], 'z': [], 'd': []},
+        {'x': [], 'y': [], 'z': [], 'd': []}]
 
 plt.ion()
 fig = plt.figure(figsize=(10, 8))
-ax1 = fig.add_subplot(211)
-ax2 = fig.add_subplot(212)
+ax = [fig.add_subplot(211), fig.add_subplot(212)]
+y_scale = 500
 # create a variable for the line so we can later update it
-line1['x'], = ax1.plot(x_vec, l_y_vec['x'], '-', alpha=0.8)
-line1['y'], = ax1.plot(x_vec, l_y_vec['y'], '-o', alpha=0.8)
-line1['z'], = ax1.plot(x_vec, l_y_vec['z'], '--', alpha=0.8)
+for lr in range(2):
+    line[lr]['x'], = ax[lr].plot(x_vec, y_vec[lr]['x'], '-', alpha=0.8)
+    line[lr]['y'], = ax[lr].plot(x_vec, y_vec[lr]['y'], '-', alpha=0.8)
+    line[lr]['z'], = ax[lr].plot(x_vec, y_vec[lr]['z'], '-', alpha=0.8)
+    line[lr]['d'], = ax[lr].plot(x_vec, y_vec[lr]['d'], '-', alpha=0.8)
 
-line2['x'], = ax2.plot(x_vec, r_y_vec['x'], '-', alpha=0.8)
-line2['y'], = ax2.plot(x_vec, r_y_vec['y'], '-o', alpha=0.8)
-line2['z'], = ax2.plot(x_vec, r_y_vec['z'], '--', alpha=0.8)
-ax1.set_ylim(ymax=1000, ymin=-1000)
-ax2.set_ylim(ymax=1000, ymin=-1000)
-ax1.legend(["x", "y", "z"])
-ax2.legend(["x", "y", "z"])
+    ax[lr].set_ylim(ymax=y_scale, ymin=-1*y_scale)
+    ax[lr].legend(["x", "y", "z", "d"])
 # update plot label/title
 plt.ylabel('Y Label')
 plt.title('Title: {}'.format('Realtime'))
@@ -113,29 +111,22 @@ try:
 
             d = fingerDifferencial(former_hands, listener.hands_dict)
             # TODO: 指の動きの絶対値のグラフも同時出力＋データ格納
-            for hand in listener.hands_dict.values():
-                if hand.is_left:
-                    # listener.printHandData(hand)
-                    l_y_vec['x'][-1] = hand.position[0]
-                    l_y_vec['y'][-1] = hand.position[1]
-                    l_y_vec['z'][-1] = hand.position[2]
-                    line1 = live_plotter(x_vec, l_y_vec, line1)
-                    l_y_vec['x'] = np.append(l_y_vec['x'][1:], 0.0)
-                    l_y_vec['y'] = np.append(l_y_vec['y'][1:], 0.0)
-                    l_y_vec['z'] = np.append(l_y_vec['z'][1:], 0.0)
-                else:
-                    r_y_vec['x'][-1] = hand.position[0]
-                    r_y_vec['y'][-1] = hand.position[1]
-                    r_y_vec['z'][-1] = hand.position[2]
-                    line2 = live_plotter(x_vec, r_y_vec, line2)
-                    r_y_vec['x'] = np.append(r_y_vec['x'][1:], 0.0)
-                    r_y_vec['y'] = np.append(r_y_vec['y'][1:], 0.0)
-                    r_y_vec['z'] = np.append(r_y_vec['z'][1:], 0.0)
+            for key, hand in listener.hands_dict.items():
+                lr = 0 if hand.is_left else 1
+                y_vec[lr]['x'][-1] = hand.position[0]
+                y_vec[lr]['y'][-1] = hand.position[1]
+                y_vec[lr]['z'][-1] = hand.position[2]
+                y_vec[lr]['d'][-1] = d[key]
+                line[lr] = live_plotter(y_data=y_vec[lr], line=line[lr])
+                y_vec[lr]['x'] = np.append(y_vec[lr]['x'][1:], 0.0)
+                y_vec[lr]['y'] = np.append(y_vec[lr]['y'][1:], 0.0)
+                y_vec[lr]['z'] = np.append(y_vec[lr]['z'][1:], 0.0)
+                y_vec[lr]['d'] = np.append(y_vec[lr]['d'][1:], 0.0)
             former_hands = copy.deepcopy(listener.hands_dict)
-            time.sleep(0.05)
+            time.sleep(0.01)
         else:
-            print(".")
-            time.sleep(0.05)
+            # # print(".")
+            time.sleep(0.01)
 
 except KeyboardInterrupt:
     print("\n\nexit...")

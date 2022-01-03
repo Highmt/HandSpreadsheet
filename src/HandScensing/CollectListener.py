@@ -64,10 +64,8 @@ class CollectListener(HandListener):
                     # Get fingers
                     for finger_id in range(len(hand.fingers_pos)):
                         for pos in range(3):
-                            ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.fingers_pos[finger_id][
-                                                                                           pos] - hand.position[pos]
-                            ps[finger_labels[finger_id] + "_" + finger_labels[(finger_id + 1) % 3] + "_" + pos_labels[
-                                pos]] = hand.fingers_pos[finger_id][pos] - hand.fingers_pos[(finger_id + 1) % 3][pos]
+                            ps[finger_labels[finger_id] + "_dir_" + pos_labels[pos]] = hand.getFingerVec(finger_type=finger_id)[pos]
+                            ps[finger_labels[finger_id] + "_" + finger_labels[(finger_id + 1) % 3] + "_" + pos_labels[pos]] = hand.fingers_pos[finger_id][pos] - hand.fingers_pos[(finger_id + 1) % 3][pos]
 
                     # 　データ収集が完了すると終了
 

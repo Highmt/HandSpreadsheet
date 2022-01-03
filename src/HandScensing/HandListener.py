@@ -67,6 +67,9 @@ class HandData:
         for axis in range(len(self.position)):
             self.fingers_pos[finger_type][axis] = (marker_pos[axis] - self.position_offset[axis]) * 1000
 
+    def getFingerVec(self, finger_type: int) -> np.ndarray:
+        return self.fingers_pos[finger_type] - self.position
+
     def setOffset(self, position, rotation):
         # offsetを設定
         self.position_offset = copy.deepcopy(position)
