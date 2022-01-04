@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from res.SSEnum import HandEnum
-from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
+from src.HandScensing.HandListener import HandListener
 from src.HandScensing.Predictor import Predictor
 from src.UDP.MoCapData import MoCapData
 
@@ -63,12 +63,12 @@ class TestListener(HandListener):
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時マーカ再設定
-            if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
+            if self.hands_dict['l'].position[1] <= self.calibration_threshold and self.hands_dict['r'].position[1] <= self.calibration_threshold:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
                 return
 
             for key in self.hands_dict.keys():
-                if self.hands_dict.get(key).position[1] > Y_THRESHOLD and self.data_count < collect_data_num:
+                if self.hands_dict.get(key).position[1] > self.calibration_threshold and self.data_count < collect_data_num:
                     self.data_count = self.data_count + 1
                     pred = self.predictor.handPredict(hand=self.hands_dict.get(key))  # 学習機で手形状識別
                     self.pred_list[self.lr].append(pred)

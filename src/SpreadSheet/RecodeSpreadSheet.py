@@ -38,6 +38,8 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
+import copy
+
 import math
 import os
 import random
@@ -99,14 +101,14 @@ class RecodeSpreadSheet(HandSpreadSheet):
         self.listener.stop()
         self.listener.setListener()
         self.listener.data_num = math.inf
+        self.listener.action_threshold = -100.0
+        self.listener.current_collect_id = -1
         time.sleep(0.1)
-        self.listener.started = True
         self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
 
     def actionOperate(self, act, direction):
         pass
 
-    # TODO: FIX
     def recording(self):
         if self.table.selectedItems():
             if not self.isTestrun:
@@ -130,8 +132,42 @@ class RecodeSpreadSheet(HandSpreadSheet):
                 print("Remaining Task: {}".format(len(self.true_list)))
                 if len(self.true_list) == 0:
                     self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='a', header=False, index=False)
+                    self.listener.data_save_pandas(lr="left", data=copy.deepcopy(self.listener.dfs[0]))
+                    self.listener.data_save_pandas(lr="right", data=copy.deepcopy(self.listener.dfs[1]))
                     self.finish()
                 else:
                     self.startTest()
 
             self.table.clearSelection()
+
+    def startTest(self):
+        self.listener.started = True
+        self.listener.current_collect_id = self.listener.current_collect_id + 1
+        self.current_true_dict = self.true_list.pop(0)
+
+        if self.section == TestSectionEnum.INSERT.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Insert Shift Right")
+            else:
+                self.statusLabel.setText("Insert Shift Down")
+        elif self.section == TestSectionEnum.DELETE.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Delete Shift Left")
+            else:
+                self.statusLabel.setText("Delete Shift Up")
+        elif self.section == TestSectionEnum.CUT_COPY_PASTE.value:
+            if self.current_true_dict.get('action') == ActionEnum.CUT.value:
+                self.statusLabel.setText("Cut")
+            elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
+                self.statusLabel.setText("Copy")
+            else:
+                self.statusLabel.setText("Paste")
+        else:
+            if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
+                self.statusLabel.setText("Sort A to Z")
+            else:
+                self.statusLabel.setText("Sort Z to A")
+
+        self.isTestrun = True
+        self.error_count = 0
+        self.table.setRandomCellColor()

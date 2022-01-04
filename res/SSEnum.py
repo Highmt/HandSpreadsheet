@@ -70,6 +70,7 @@ class FeatureEnum(Enum):
         "Pinky_pos_x",
         "Pinky_pos_y",
         "Pinky_pos_z",
+        "timestamp",
         "Label"
     ]
     FEATURE_LIST = [

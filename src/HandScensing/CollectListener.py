@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 
 from res.SSEnum import HandEnum, FeatureEnum
-from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
+from src.HandScensing.HandListener import HandListener
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
@@ -56,10 +56,11 @@ class CollectListener(HandListener):
             self.setHandData(mocap_data=mocap_data)
             for hand in self.hands_dict.values():
                 lr_label, lr = ("left", 0) if hand.is_left else ("right", 1)
-                # 収集する手に一致していない場合とその手の位置が閾値より低い場合スキップ
-                if self.enables[lr] and hand.position[1] > Y_THRESHOLD:
+                # T収集する手に一致していない場合とその手の位置が収集の閾値より低い場合スキップ
+                if self.enables[lr] and hand.position[1] > self.action_threshold:
                     print("{}: {}".format(lr_label, len(self.dfs[lr])))
                     ps = hand.convertPS()
+                    ps["Label"] = self.current_collect_id
                     # 　データ収集が完了すると終了
                     self.dfs[lr] = self.dfs[lr].append(ps, ignore_index=True)
                     if (len(self.dfs[lr]) >= self.data_num):
@@ -68,7 +69,7 @@ class CollectListener(HandListener):
                         print("Finished to collect {} shape {} hand data".format(labels[self.current_collect_id], lr_label))
 
             # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
-            if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
+            if self.hands_dict['l'].position[1] <= self.calibration_threshold and self.hands_dict['r'].position[1] <= self.calibration_threshold:
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
                 print(".")
 
@@ -78,7 +79,6 @@ class CollectListener(HandListener):
             print("Saved data\nPlease press Enter key for next")
 
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
-        data["Label"] = self.current_collect_id
         data.to_csv("{}/{}Data.csv".format(self.file_dir, lr), mode='a', header=False)
 
     # TODO: move to handlisner

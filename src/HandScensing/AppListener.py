@@ -4,7 +4,7 @@ import statistics
 import sys
 import pyautogui
 
-from src.HandScensing.HandListener import HandListener, HandData, Y_THRESHOLD
+from src.HandScensing.HandListener import HandListener, HandData
 from src.HandScensing.Predictor import Predictor
 from res.SSEnum import HandEnum, DirectionEnum, ActionEnum
 from PyQt5 import QtCore
@@ -56,7 +56,7 @@ class AppListener(QtCore.QThread, HandListener):
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時フィードバックを非表示+マーカ再設定+resetHand
-            if self.hands_dict['l'].position[1] <= Y_THRESHOLD and self.hands_dict['r'].position[1] <= Y_THRESHOLD:
+            if self.hands_dict['l'].position[1] <= self.calibration_threshold and self.hands_dict['r'].position[1] <= self.calibration_threshold:
                 self.hide_feedback.emit()
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
@@ -66,7 +66,7 @@ class AppListener(QtCore.QThread, HandListener):
 
                 self.memoryHands[key].pop(0)
 
-                if self.hands_dict.get(key).position[1] <= Y_THRESHOLD:
+                if self.hands_dict.get(key).position[1] <= self.action_threshold:
                     hand_state = HandEnum.FREE.value
                     self.formerHands[key] = hand_state
                     self.memoryHands[key].append(hand_state)
@@ -141,7 +141,7 @@ class AppListener(QtCore.QThread, HandListener):
 
             else:
                 # print("コピー，カット前状態に遷移")
-                if self.getHand('l').position[1] > Y_THRESHOLD and self.getHand('r').position[1] > Y_THRESHOLD:
+                if self.getHand('l').position[1] > self.action_threshold and self.getHand('r').position[1] > self.action_threshold:
                     self.change_feedback.emit("Both Open", "", DirectionEnum.VERTICAL.value)
                 else:
                     self.change_feedback.emit("One Open", "", DirectionEnum.VERTICAL.value)

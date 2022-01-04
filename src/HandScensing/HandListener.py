@@ -15,10 +15,10 @@ from src.UDP.NatNetClient import NatNetClient
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 DIS_SIZE = pyautogui.size()
-Y_THRESHOLD = 100.0  # マーカーキャリブレーションを行う閾値
-Y_ACTION_THRESHOLD = 150.0
+CALIBRATION_THRESHOLD = 20.0  # マーカーキャリブレーションを行う閾値
+ACTION_THRESHOLD = 150.0
 # TODO: マーカーキャリブレーションの閾値とジェスチャ実行の閾値を分ける
-# Y_THRESHOLD < y < Y_ACTION_THRESHOLDの間で手を変える
+# CALIBRATION_THRESHOLD < y < Y_ACTION_THRESHOLDの間で手を変える
 
 def print_configuration(natnet_client: NatNetClient):
     print("Connection Configuration:")
@@ -109,6 +109,8 @@ class HandListener:
         self.marker_label_list = [-1] * (HandData().fingers_pos.__len__() * 2)
         self.need_calibration = True
         self.is_resetted = False
+        self.action_threshold = ACTION_THRESHOLD
+        self.calibration_threshold = CALIBRATION_THRESHOLD
         self.start_timestamp = -1
 
     def initOptiTrack(self):

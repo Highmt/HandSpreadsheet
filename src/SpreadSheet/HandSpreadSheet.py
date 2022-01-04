@@ -563,7 +563,7 @@ class HandSpreadSheet(QMainWindow):
                     self.finish()
                 else:
                     self.table.resetRandomCellColor()
-                    # self.startTest()
+                    self.startTest()
                     print("Remaining Task: {}".format(len(self.true_list)))
 
                 if self.end_Opti.isEnabled():

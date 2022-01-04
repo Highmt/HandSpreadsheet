@@ -8,7 +8,7 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 
-from src.HandScensing.HandListener import HandListener, Y_THRESHOLD
+from src.HandScensing.HandListener import HandListener
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
@@ -91,7 +91,7 @@ try:
             listener.setHandData(mocap_data=mocap_data)
 
             # 両手が閾値以下の位置にある時ラベルの再設定処理を回す
-            if listener.hands_dict['l'].position[1] <= Y_THRESHOLD and listener.hands_dict['r'].position[1] <= Y_THRESHOLD:
+            if listener.hands_dict['l'].position[1] <= listener.calibration_threshold and listener.hands_dict['r'].position[1] <= listener.calibration_threshold:
                 listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
             for hand in listener.hands_dict.values():
