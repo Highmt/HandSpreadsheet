@@ -447,25 +447,30 @@ class HandSpreadSheet(QMainWindow):
         self.listener.restart()
 
     def startTest(self):
+        self.stepTask()
+
+    def stepTask(self):
         self.current_true_dict = self.true_list.pop(0)
 
-        if self.section == TestSectionEnum.INSERT.value:
+        if self.current_true_dict.get("action") == TestSectionEnum.INSERT.value:
             if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
                 self.statusLabel.setText("Insert Shift Right")
             else:
                 self.statusLabel.setText("Insert Shift Down")
-        elif self.section == TestSectionEnum.DELETE.value:
+
+        elif self.current_true_dict.get("action") == TestSectionEnum.DELETE.value:
             if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
                 self.statusLabel.setText("Delete Shift Left")
             else:
                 self.statusLabel.setText("Delete Shift Up")
-        elif self.section == TestSectionEnum.CUT_COPY_PASTE.value:
-            if self.current_true_dict.get('action') == ActionEnum.CUT.value:
-                self.statusLabel.setText("Cut")
-            elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
-                self.statusLabel.setText("Copy")
-            else:
-                self.statusLabel.setText("Paste")
+
+        elif self.current_true_dict.get('action') == ActionEnum.CUT.value:
+            self.statusLabel.setText("Cut")
+        elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
+            self.statusLabel.setText("Copy")
+        elif self.current_true_dict.get('action') == ActionEnum.PASTE.value:
+            self.statusLabel.setText("Paste")
+
         else:
             if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
                 self.statusLabel.setText("Sort A to Z")
@@ -514,7 +519,8 @@ class HandSpreadSheet(QMainWindow):
 
     def finish(self):
         self.showNormal()
-        QTimer.singleShot(1000, self.close)
+        self.hide()
+        QTimer.singleShot(2000, self.close)
 
     def cellSelect(self):
         if self.table.selectedItems():
@@ -563,7 +569,7 @@ class HandSpreadSheet(QMainWindow):
                     self.finish()
                 else:
                     self.table.resetRandomCellColor()
-                    self.startTest()
+                    self.stepTask()
                     print("Remaining Task: {}".format(len(self.true_list)))
 
                 if self.end_Opti.isEnabled():
@@ -574,6 +580,7 @@ class HandSpreadSheet(QMainWindow):
         # タスク毎の操作種類
         self.true_action_list = []
         self.true_direction_list = []
+
         self.true_action_list.append(ActionEnum.INSERT.value)
         self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
         self.true_action_list.append(ActionEnum.DELETE.value)

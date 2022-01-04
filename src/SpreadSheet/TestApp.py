@@ -30,7 +30,6 @@ if __name__ == '__main__':
         print("Task: {0}-{1}\n ----------END-----------.".format(section, ModeNames[mode]))
         print("Please rela\nPush Return-key to next Section")
         del sheet
-        app.exec_()
         del app
         input()
     sys.exit()

@@ -136,38 +136,11 @@ class RecodeSpreadSheet(HandSpreadSheet):
                     self.listener.data_save_pandas(lr="right", data=copy.deepcopy(self.listener.dfs[1]))
                     self.finish()
                 else:
-                    self.startTest()
+                    self.stepTask()
 
             self.table.clearSelection()
 
     def startTest(self):
         self.listener.started = True
         self.listener.current_collect_id = self.listener.current_collect_id + 1
-        self.current_true_dict = self.true_list.pop(0)
-
-        if self.section == TestSectionEnum.INSERT.value:
-            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
-                self.statusLabel.setText("Insert Shift Right")
-            else:
-                self.statusLabel.setText("Insert Shift Down")
-        elif self.section == TestSectionEnum.DELETE.value:
-            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
-                self.statusLabel.setText("Delete Shift Left")
-            else:
-                self.statusLabel.setText("Delete Shift Up")
-        elif self.section == TestSectionEnum.CUT_COPY_PASTE.value:
-            if self.current_true_dict.get('action') == ActionEnum.CUT.value:
-                self.statusLabel.setText("Cut")
-            elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
-                self.statusLabel.setText("Copy")
-            else:
-                self.statusLabel.setText("Paste")
-        else:
-            if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
-                self.statusLabel.setText("Sort A to Z")
-            else:
-                self.statusLabel.setText("Sort Z to A")
-
-        self.isTestrun = True
-        self.error_count = 0
-        self.table.setRandomCellColor()
+        self.stepTask()
