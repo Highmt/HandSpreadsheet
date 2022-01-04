@@ -17,7 +17,6 @@ pos_labels = ["x", "y", "z"]
 DIS_SIZE = pyautogui.size()
 CALIBRATION_THRESHOLD = 20.0  # マーカーキャリブレーションを行う閾値
 ACTION_THRESHOLD = 150.0
-# TODO: マーカーキャリブレーションの閾値とジェスチャ実行の閾値を分ける
 # CALIBRATION_THRESHOLD < y < Y_ACTION_THRESHOLDの間で手を変える
 
 def print_configuration(natnet_client: NatNetClient):
@@ -359,7 +358,7 @@ class HandListener:
             else:
                 self.hands_dict['r'].setFingerPos(finger_type=i - len(finger_labels),
                                                   marker_pos=marker_list[id - 1].pos)
-                
+
     def restart(self):
         self.streaming_client.restart()
         self.start_timestamp = -1

@@ -81,7 +81,6 @@ class CollectListener(HandListener):
     def data_save_pandas(self, lr: str, data: pd.DataFrame):
         data.to_csv("{}/{}Data.csv".format(self.file_dir, lr), mode='a', header=False)
 
-    # TODO: move to handlisner
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
 

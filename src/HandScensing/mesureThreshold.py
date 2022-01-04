@@ -102,7 +102,6 @@ try:
                 listener.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
             d = fingerDifferencial(former_hands, listener.hands_dict)
-            # TODO: データ格納
             for key, hand in listener.hands_dict.items():
                 lr = 0 if hand.is_left else 1
                 dif_memory[lr] = np.delete(np.append(dif_memory[lr], d[key]), 0)

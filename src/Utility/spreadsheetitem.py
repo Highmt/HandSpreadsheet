@@ -65,7 +65,6 @@ class SpreadSheetItem(QTableWidgetItem):
         return super(SpreadSheetItem, self).data(Qt.DisplayRole)
 
     def data(self, role):
-        # TODO: ソート，ペースト時の文字色を黒にする
         if role in (Qt.EditRole, Qt.StatusTipRole):
             return self.formula()
         if role == Qt.DisplayRole:

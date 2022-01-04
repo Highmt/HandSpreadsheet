@@ -164,6 +164,7 @@ class myTable(QTableWidget):
                 for i in range(self.rowCount() - selectrange.rowCount(), self.rowCount()):
                     self.setItem(i, j, SpreadSheetItem())
 
+    # TODO: 数値を認識する
     def sortCells(self, d):
         sortRanges = self.selectedRanges()[0]
         editTable = QTableWidget(sortRanges.rowCount(), sortRanges.columnCount())
@@ -182,7 +183,7 @@ class myTable(QTableWidget):
         for i in range(sortRanges.topRow(), sortRanges.bottomRow() + 1):
             for j in range(sortRanges.leftColumn(), sortRanges.rightColumn() + 1):
                 temp = editTable.takeItem(i - sortRanges.topRow(), j - sortRanges.leftColumn())
-                self.setItem(i, j, temp)
+                self.item(i, j).setText(temp.text())
 
     def copyCells(self):
         self.clipRanges = self.selectedRanges()[0]
@@ -205,7 +206,7 @@ class myTable(QTableWidget):
         for i in range(0, self.clipRanges.rowCount()):
             for j in range(0, self.clipRanges.columnCount()):
                 temp = self.clipTable.item(self.clipRanges.topRow() + i, self.clipRanges.leftColumn() + j).clone()
-                self.setItem(selectrange.topRow() + i, selectrange.leftColumn() + j, temp)
+                self.item(selectrange.topRow() + i, selectrange.leftColumn() + j).setText(temp.text())
 
     def actionOperate(self, act, direction):
         if self.selectedItems():

@@ -422,7 +422,7 @@ class HandSpreadSheet(QMainWindow):
     def updateLineEdit(self, item):
         if item != self.table.currentItem():
             return
-        if item:
+        if item and len(self.table.selectedItems()) == 1:
             self.formulaInput.setText(item.data(Qt.EditRole))
         else:
             self.formulaInput.clear()
