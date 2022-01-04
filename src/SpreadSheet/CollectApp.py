@@ -17,11 +17,11 @@ if __name__ == '__main__':
         app = QApplication(sys.argv)
         print("Task: {0}-{1}\n ---------start----------.".format(section, ModeNames[mode]))
         sheet = RecodeSpreadSheet(rows=16, cols=16, mode=mode, section=section)
+        sheet.showFullScreen()
         app.exec_()
         print("Task: {0}-{1}\n ----------END-----------.".format(section, ModeNames[mode]))
         print("Please relax\nPush Return-key to next Section")
         del sheet
-        app.exec_()
         del app
         input()
     sys.exit()

@@ -170,26 +170,29 @@ class HandListener:
 
     # 手の数が2かつ指のマーカーの数が6
     def judgeDataComplete(self, mocap_data: MoCapData):
-        judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(
-            0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(
-            0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
-            HandData().fingers_pos) * 2
+        try:
+            judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(
+                0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(
+                0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
+                HandData().fingers_pos) * 2
 
-        if not judge:
-            # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
-            if not self.is_resetted and not self.need_calibration and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
-                    HandData().fingers_pos) * 2 - 1:
-                self.is_resetted = True
-                lost_finger = self.searchLostFinger(mocap_data.marker_set_data.unlabeled_markers.marker_list)
-                for i in range(len(self.marker_label_list)):
-                    if self.marker_label_list[i] > self.marker_label_list[lost_finger]:
-                        self.marker_label_list[i] = self.marker_label_list[i] - 1
-                self.marker_label_list[lost_finger] = finger_labels.__len__() * 2
+            if not judge:
+                # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
+                if not self.is_resetted and not self.need_calibration and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
+                        HandData().fingers_pos) * 2 - 1:
+                    self.is_resetted = True
+                    lost_finger = self.searchLostFinger(mocap_data.marker_set_data.unlabeled_markers.marker_list)
+                    for i in range(len(self.marker_label_list)):
+                        if self.marker_label_list[i] > self.marker_label_list[lost_finger]:
+                            self.marker_label_list[i] = self.marker_label_list[i] - 1
+                    self.marker_label_list[lost_finger] = finger_labels.__len__() * 2
 
-            elif mocap_data.marker_set_data.unlabeled_markers.get_num_points() < len(HandData().fingers_pos) * 2 - 1:
-                self.need_calibration = True
-        else:
-            self.is_resetted = False
+                elif mocap_data.marker_set_data.unlabeled_markers.get_num_points() < len(HandData().fingers_pos) * 2 - 1:
+                    self.need_calibration = True
+            else:
+                self.is_resetted = False
+        except AttributeError:
+            judge = False
         return judge
 
     # ロストしたマーカーの指のラベルを返す
@@ -364,4 +367,6 @@ class HandListener:
         
     def shutdown(self):
         self.streaming_client.shutdown()
+        time.sleep(0.2)
+        print("OptiTrack exit safely")
     

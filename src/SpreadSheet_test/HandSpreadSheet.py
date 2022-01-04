@@ -554,8 +554,7 @@ class TestHandSpreadSheet(HandSpreadSheet):
                         recordDF.to_csv(FILE, mode='a', header=False, index=False)
                     else:
                         recordDF.to_csv(FILE, mode='x', header=True, index=False)
-                    self.hide()
-                    self.close()
+                    self.finish()
                 else:
                     self.table.resetRandomCellColor()
                     self.startTest()

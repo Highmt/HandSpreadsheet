@@ -1193,7 +1193,7 @@ class NatNetClient:
                 if stop():
                     # print("ERROR: command socket access error occurred:\n  %s" %msg)
                     # return 1
-                    print("shutting down")
+                    print("shut down")
             except  socket.herror:
                 print("ERROR: command socket access herror occurred")
                 return 2

@@ -137,9 +137,6 @@ class HandSpreadSheet(QMainWindow):
 
         monitor = QDesktopWidget().screenGeometry(1)
         self.move(monitor.left(), monitor.top())
-        # self.resize(1000, 600)
-        self.showFullScreen()
-        self.show()
 
     def setAppListener(self):
     # Create a sample listener and controller
@@ -515,6 +512,10 @@ class HandSpreadSheet(QMainWindow):
             self.listener.shutdown()
         print("close")
 
+    def finish(self):
+        self.showNormal()
+        QTimer.singleShot(1000, self.close)
+
     def cellSelect(self):
         if self.table.selectedItems():
             self.overlayGraphics.luRect, self.overlayGraphics.rbRect = self.table.getItemCoordinate()
@@ -559,8 +560,7 @@ class HandSpreadSheet(QMainWindow):
                         recordDF.to_csv(FILE, mode='a', header=False, index=False)
                     else:
                         recordDF.to_csv(FILE, mode='x', header=True, index=False)
-                    self.hide()
-                    self.close()
+                    self.finish()
                 else:
                     self.table.resetRandomCellColor()
                     # self.startTest()

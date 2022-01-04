@@ -86,7 +86,7 @@ class RecodeSpreadSheet(HandSpreadSheet):
 
     def setRecordTimingTriger(self):
         self.execute = QAction("execute operation", self)
-        self.execute.setShortcut('Ctrl+H')
+        self.execute.setShortcut('Alt+H')
         self.execute.setShortcutContext(Qt.ApplicationShortcut)
         self.execute.triggered.connect(self.recording)
         self.addAction(self.execute)
@@ -130,8 +130,7 @@ class RecodeSpreadSheet(HandSpreadSheet):
                 print("Remaining Task: {}".format(len(self.true_list)))
                 if len(self.true_list) == 0:
                     self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='a', header=False, index=False)
-                    self.hide()
-                    self.close()
+                    self.finish()
                 else:
                     self.startTest()
 
