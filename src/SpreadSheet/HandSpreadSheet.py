@@ -79,6 +79,8 @@ class HandSpreadSheet(QMainWindow):
         self.isTest = False
         if section is not None:
             self.isTest = True
+        self.mode = mode
+        self.section = section
 
         self.toolBar = QToolBar()
         self.addToolBar(self.toolBar)  # ツールバーの追加
@@ -130,13 +132,10 @@ class HandSpreadSheet(QMainWindow):
         if self.isUseOpti:
             self.setAppListener()
 
-        # TODO: app_test を修正とディレクトリ移動
         if self.isTest:
-            self.mode = mode
-            self.section = section
-            self.setTestPropaty(section)
+            self.setTestPropaty(self.section)
 
-        monitor = QDesktopWidget().screenGeometry(2)
+        monitor = QDesktopWidget().screenGeometry(1)
         self.move(monitor.left(), monitor.top())
         # self.resize(1000, 600)
         self.showFullScreen()
@@ -147,7 +146,7 @@ class HandSpreadSheet(QMainWindow):
         self.listener = AppListener()
         self.listener.initOptiTrack()
         self.listener.do_calibration()
-        self.listener.streaming_client.stop()
+        self.listener.stop()
         self.listener.setListener()
 
         self.setOptiSignal()
@@ -178,12 +177,12 @@ class HandSpreadSheet(QMainWindow):
 
     def createMenuActions(self):
         self.start_Opti = QAction("StartOpti", self)
-        self.start_Opti.setShortcut('Ctrl+L')
+        self.start_Opti.setShortcut('Ctrl+O')
         self.start_Opti.setShortcutContext(Qt.ApplicationShortcut)
         self.start_Opti.triggered.connect(self.startOpti)
 
         self.end_Opti = QAction("EndOpti", self)
-        self.end_Opti.setShortcut('Shift+Ctrl+L')
+        self.end_Opti.setShortcut('Shift+Ctrl+O')
         self.end_Opti.setShortcutContext(Qt.ApplicationShortcut)
         self.end_Opti.triggered.connect(self.endOpti)
         self.end_Opti.setEnabled(False)
@@ -445,10 +444,10 @@ class HandSpreadSheet(QMainWindow):
 
     def startOpti(self):
         # Have the sample listener receive events from the controller
-        self.listener.streaming_client.restart()
+        self.listener.restart()
 
     def endOpti(self):
-        self.listener.streaming_client.restart()
+        self.listener.restart()
 
     def startTest(self):
         self.current_true_dict = self.true_list.pop(0)
@@ -479,7 +478,6 @@ class HandSpreadSheet(QMainWindow):
         self.isTestrun = True
         self.error_count = 0
         self.table.setRandomCellColor()
-        self.start_time = time.time()
 
     def activePointing(self):
         self.listener.setPointingMode(True)
@@ -514,7 +512,7 @@ class HandSpreadSheet(QMainWindow):
 
     def closeEvent(self, event):
         if self.isUseOpti:
-            self.listener.streaming_client.shutdown()
+            self.listener.shutdown()
         print("close")
 
     def cellSelect(self):
@@ -565,7 +563,7 @@ class HandSpreadSheet(QMainWindow):
                     self.close()
                 else:
                     self.table.resetRandomCellColor()
-                    self.startTest()
+                    # self.startTest()
                     print("Remaining Task: {}".format(len(self.true_list)))
 
                 if self.end_Opti.isEnabled():

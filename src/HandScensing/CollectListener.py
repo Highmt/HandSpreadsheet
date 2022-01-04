@@ -27,9 +27,10 @@ class CollectListener(HandListener):
         super().__init__()
         self.file_dir = file_dir
         self.current_collect_id = 0
-        self.enables = [False, False]
+        self.enables = [True, True]
         self.dfs = []
         self.started = False
+        self.data_num = collect_data_num
 
         # ディレクトリが存在しない場合作成
         dir = Path(self.file_dir)
@@ -44,6 +45,7 @@ class CollectListener(HandListener):
 
     def frameListener(self, mocap_data: MoCapData):
         # 最初の数秒間のフレームをカットする
+        self.current_mocap_data = mocap_data
         if not self.started:
             return
 
@@ -60,7 +62,7 @@ class CollectListener(HandListener):
                     ps = hand.convertPS()
                     # 　データ収集が完了すると終了
                     self.dfs[lr] = self.dfs[lr].append(ps, ignore_index=True)
-                    if (len(self.dfs[lr]) >= collect_data_num):
+                    if (len(self.dfs[lr]) >= self.data_num):
                         self.enables[lr] = False
                         self.data_save_pandas(lr=lr_label, data=copy.deepcopy(self.dfs[lr]))
                         print("Finished to collect {} shape {} hand data".format(labels[self.current_collect_id], lr_label))
@@ -71,7 +73,7 @@ class CollectListener(HandListener):
                 print(".")
 
         if not (self.enables[0] or self.enables[1]):
-            self.streaming_client.stop()
+            self.stop()
             self.started = False
             print("Saved data\nPlease press Enter key for next")
 
@@ -79,6 +81,7 @@ class CollectListener(HandListener):
         data["Label"] = self.current_collect_id
         data.to_csv("{}/{}Data.csv".format(self.file_dir, lr), mode='a', header=False)
 
+    # TODO: move to handlisner
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
 
@@ -87,7 +90,7 @@ def main():
     listener = CollectListener(output_dir)
     listener.initOptiTrack()
     listener.do_calibration()
-    listener.streaming_client.stop()
+    listener.stop()
     listener.setListener()
 
     # Have the sample listener receive events from the controller
@@ -104,7 +107,7 @@ def main():
         print("Press Enter key to start")
         listener.enables = [True, True]
         sys.stdin.readline()
-        listener.streaming_client.restart()
+        listener.restart()
         time.sleep(0.5)
         print("-------GO--------")
         listener.started = True
@@ -112,7 +115,7 @@ def main():
 
     # Keep this process running until Enter is pressed
     # Remove the sample listener when done
-    listener.streaming_client.shutdown()
+    listener.shutdown()
 
 
 if __name__ == "__main__":

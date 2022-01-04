@@ -49,7 +49,7 @@ class TestListener(HandListener):
         if (self.data_count >= collect_data_num):
             print("\n\n\n\n\n\nPush Enter to Finish")
             self.started = False
-            self.streaming_client.stop()
+            self.stop()
             return
 
         # 最初の数秒間のフレームをカットする
@@ -84,7 +84,7 @@ def main():
     listener = TestListener()
     listener.initOptiTrack()
     listener.do_calibration()
-    listener.streaming_client.stop()
+    listener.stop()
     listener.setListener()
 
     # Have the sample listener receive events from the controller
@@ -103,7 +103,7 @@ def main():
                 print("Please make {} shape with {} hand".format(labels[true_label], lr[i]))
                 listener.data_count = 0
                 sys.stdin.readline()
-                listener.streaming_client.restart()
+                listener.restart()
                 time.sleep(0.5)
                 print("------GO-------")
                 listener.started = True

@@ -76,12 +76,12 @@ plt.style.use('ggplot')
 listener = HandListener()
 listener.initOptiTrack()
 listener.do_calibration()
-listener.streaming_client.stop()
+listener.stop()
 
 # Have the sample listener receive events from the controller
 print("Press Enter to start plot hand position session")
 sys.stdin.readline()
-listener.streaming_client.restart()
+listener.restart()
 try:
     while True:
         mocap_data: MoCapData = listener.getCurrentData()
@@ -121,4 +121,4 @@ except KeyboardInterrupt:
     print("\n\nexit...")
     sys.exit()
 finally:
-    listener.streaming_client.shutdown()
+    listener.shutdown()

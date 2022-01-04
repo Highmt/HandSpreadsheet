@@ -241,7 +241,7 @@ def print_message(streaming_client):
 
             elif c1 == 'q':
                 is_looping = False
-                streaming_client.shutdown()
+                shutdown()
                 break
             else:
                 print("Error: Command %s not recognized" % c1)

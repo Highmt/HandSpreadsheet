@@ -51,7 +51,6 @@ def print_configuration(natnet_client: NatNetClient):
     # print("command_socket = %s"%(str(natnet_client.command_socket)))
     # print("data_socket    = %s"%(str(natnet_client.data_socket)))
 
-
 class HandData:
     def __init__(self, is_left: bool = None):
         self.rb_id = 0
@@ -61,6 +60,7 @@ class HandData:
         self.rotation = np.array([0.0, 0.0, 0.0])
         self.rotation_offset = np.array([0.0, 0.0, 0.0, 0.0])
         self.fingers_pos = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+        self.timestamp = 0.0
 
     def setHand(self, rigid_body: RigidBody):
         rot = Rotation.from_quat(rigid_body.rot).as_rotvec()
@@ -81,6 +81,7 @@ class HandData:
 
     def convertPS(self):
         ps = pd.Series(dtype=pd.Float64Dtype, index=FeatureEnum.COLLECT_LIST.value)
+        ps["timestamp"] = self.timestamp
         ps["x", "y", "z"] = self.position
         ps["pitch", "roll", "yaw"] = self.rotation
 
@@ -91,6 +92,7 @@ class HandData:
         return ps
 
     def loadPS(self, ps: pd.Series):
+        self.timestamp = ps[["timestamp"]].values
         self.position = ps[["x", "y", "z"]].values
         self.rotation = ps[["pitch", "roll", "yaw"]].values
         # Get fingers
@@ -107,6 +109,7 @@ class HandListener:
         self.marker_label_list = [-1] * (HandData().fingers_pos.__len__() * 2)
         self.need_calibration = True
         self.is_resetted = False
+        self.start_timestamp = -1
 
     def initOptiTrack(self):
         optionsDict = {}
@@ -118,7 +121,7 @@ class HandListener:
         self.streaming_client.set_client_address(optionsDict["clientAddress"])
         self.streaming_client.set_server_address(optionsDict["serverAddress"])
         self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
-        print_configuration(self.streaming_client)
+        # print_configuration(self.streaming_client)
 
         is_running = self.streaming_client.run()
         if not is_running:
@@ -254,6 +257,12 @@ class HandListener:
         # self.settingScrean()
         print("\nComplete caribration")
 
+    def setStartTimestamp(self, mocap_data: MoCapData = None):
+        if mocap_data is not None:
+            self.start_timestamp = mocap_data.suffix_data.timestamp
+        else:
+            self.start_timestamp = self.getCurrentData().suffix_data.timestamp
+
     def settingScrean(self):
         # 画面領域を決定
         print("\nNext, screan size caribration")
@@ -328,6 +337,10 @@ class HandListener:
         self.hands_dict['r'].setOffset(rightHand.pos, rightHand.rot)
 
     def setHandData(self, mocap_data: MoCapData):
+        if self.start_timestamp < 0:
+            self.setStartTimestamp(mocap_data=mocap_data)
+        self.hands_dict['l'].timestamp = mocap_data.suffix_data.timestamp - self.start_timestamp
+        self.hands_dict['r'].timestamp = mocap_data.suffix_data.timestamp - self.start_timestamp
         for body in mocap_data.rigid_body_data.rigid_body_list:
             if self.hands_dict['l'].rb_id == body.id_num:
                 self.hands_dict['l'].setHand(body)
@@ -341,3 +354,14 @@ class HandListener:
             else:
                 self.hands_dict['r'].setFingerPos(finger_type=i - len(finger_labels),
                                                   marker_pos=marker_list[id - 1].pos)
+                
+    def restart(self):
+        self.streaming_client.restart()
+        self.start_timestamp = -1
+        
+    def stop(self):
+        self.streaming_client.stop()
+        
+    def shutdown(self):
+        self.streaming_client.shutdown()
+    

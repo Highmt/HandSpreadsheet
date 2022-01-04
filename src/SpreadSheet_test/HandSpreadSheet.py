@@ -108,7 +108,7 @@ class TestHandSpreadSheet(HandSpreadSheet):
         self.listener = AppListener()
         self.listener.initOptiTrack()
         self.listener.do_calibration()
-        self.listener.streaming_client.stop()
+        self.listener.stop()
         self.listener.setListener()
 
         self.setOptiSignal()
@@ -449,10 +449,10 @@ class TestHandSpreadSheet(HandSpreadSheet):
 
     def startOpti(self):
         # Have the sample listener receive events from the controller
-        self.listener.streaming_client.restart()
+        self.listener.restart()
 
     def endOpti(self):
-        self.listener.streaming_client.restart()
+        self.listener.restart()
 
     def startTest(self):
         self.current_true_dict = self.true_list.pop(0)
@@ -517,7 +517,7 @@ class TestHandSpreadSheet(HandSpreadSheet):
             self.pointStatusLabel.setText("")
 
     def closeEvent(self, event):
-        self.listener.streaming_client.shutdown()
+        self.listener.shutdown()
 
     def cellSelect(self):
         if self.table.selectedItems():
