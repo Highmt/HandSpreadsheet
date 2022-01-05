@@ -103,7 +103,6 @@ class RecodeSpreadSheet(HandSpreadSheet):
         self.listener.setListener()
         self.listener.data_num = math.inf
         self.listener.action_threshold = -100.0
-        self.listener.current_collect_id = -1
         time.sleep(0.1)
         self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
 
@@ -140,10 +139,6 @@ class RecodeSpreadSheet(HandSpreadSheet):
                     self.finish()
                 else:
                     self.stepTask()
+                    self.listener.current_collect_id = self.listener.current_collect_id + 1
 
             self.table.clearSelection()
-
-    def startTest(self):
-        self.listener.started = True
-        self.listener.current_collect_id = self.listener.current_collect_id + 1
-        self.stepTask()

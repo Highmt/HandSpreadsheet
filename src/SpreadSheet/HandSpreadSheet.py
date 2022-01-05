@@ -69,7 +69,7 @@ from src.Utility.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-TASK_NUM = 1
+TASK_NUM = 3
 USER_NO = 1
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
