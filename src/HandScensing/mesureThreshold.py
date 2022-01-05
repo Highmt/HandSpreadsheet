@@ -12,13 +12,6 @@ from src.HandScensing.HandListener import HandListener, HandData
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "master"
-# 　収集する手形状のラベル（）
-streaming_client = NatNetClient()
-collect_data_num = 2000
-finger_labels = ['Thumb', 'Index', 'Pinky']
-pos_labels = ["x", "y", "z"]
-rot_labels = ["pitch", "roll", "yaw"]
 Y_THRESHOLD = 20
 
 def live_plotter(y_data, lines, pause_time=0.01):
