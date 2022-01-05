@@ -65,8 +65,7 @@ class AppListener(QtCore.QThread, HandListener):
                 formerStatus: int = self.formerHands.get(key)
 
                 self.memoryHands[key].pop(0)
-
-                if self.hands_dict.get(key).position[1] <= self.action_threshold:
+                if self.judgeActiveAction(key):
                     hand_state = HandEnum.FREE.value
                     self.formerHands[key] = hand_state
                     self.memoryHands[key].append(hand_state)
@@ -87,6 +86,9 @@ class AppListener(QtCore.QThread, HandListener):
 
             if self.formerHands['l'] == HandEnum.FREE.value and self.formerHands['r'] == HandEnum.FREE.value:
                 self.hide_feedback.emit()
+
+    def judgeActiveAction(self, key):
+        return self.hands_dict.get(key).position[1] <= self.action_threshold
 
     def isHolizon(self, hand: HandData):
         # 親指第一関節と人差し指の第二関節の位置を識別

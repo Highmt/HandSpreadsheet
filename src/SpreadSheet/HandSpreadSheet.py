@@ -518,7 +518,7 @@ class HandSpreadSheet(QMainWindow):
 
     def finish(self):
         self.showNormal()
-        QTimer.singleShot(2000, self.close)
+        QTimer.singleShot(5000, self.close)
 
     def cellSelect(self):
         if self.table.selectedItems():
