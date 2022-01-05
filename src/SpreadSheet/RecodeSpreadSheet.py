@@ -75,16 +75,17 @@ from src.Utility.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-TASK_NUM = 1
-USER_NO = 0
+USER_NO = 1
 FILE_DIR = '../../res/data/study1/data{}'.format(USER_NO)
 recordFeature = ["timestamp", "action", "direction"]
+
 class RecodeSpreadSheet(HandSpreadSheet):
     def __init__(self, rows, cols, mode, section, parent=None):
         super(RecodeSpreadSheet, self).__init__(rows, cols, mode, section, parent)
         self.time_df = pd.DataFrame(columns=recordFeature)
         self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='w')
         self.setRecordTimingTriger()
+        self.table.currentItemChanged.connect(self.gestureBegin)
 
     def setRecordTimingTriger(self):
         self.execute = QAction("execute operation", self)
@@ -106,6 +107,9 @@ class RecodeSpreadSheet(HandSpreadSheet):
         time.sleep(0.1)
         self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
 
+    def gestureBegin(self):
+        self.listener.started = True
+
     def actionOperate(self, act, direction):
         pass
 
@@ -120,16 +124,15 @@ class RecodeSpreadSheet(HandSpreadSheet):
                     self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
                 os.system('play -n synth %s sin %s' % (150 / 1000, 600))
 
-                mocap_data = self.listener.getCurrentData()
-
                 self.current_true_dict.get("action"), self.current_true_dict.get("direction")
-                t = mocap_data.suffix_data.timestamp - self.listener.start_timestamp
+                t = time.time() - self.listener.start_timestamp
                 ps = pd.Series([t, self.current_true_dict.get("action"), self.current_true_dict.get("direction")], index=recordFeature)
                 self.time_df = self.time_df.append(ps, ignore_index=True)
 
                 self.table.resetRandomCellColor()
 
                 print("Remaining Task: {}".format(len(self.true_list)))
+                self.listener.started = False
                 if len(self.true_list) == 0:
                     self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='a', header=False, index=False)
                     self.listener.data_save_pandas(lr="left", data=copy.deepcopy(self.listener.dfs[0]))

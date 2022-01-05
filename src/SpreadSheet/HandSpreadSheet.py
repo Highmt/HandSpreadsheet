@@ -70,7 +70,7 @@ from src.Utility.util import encode_pos
 #         painter.drawEllipse(10, 10, 100, 100)
 
 TASK_NUM = 1
-USER_NO = 0
+USER_NO = 1
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 class HandSpreadSheet(QMainWindow):
@@ -513,13 +513,11 @@ class HandSpreadSheet(QMainWindow):
             self.pointStatusLabel.setText("")
 
     def closeEvent(self, event):
-        if self.isUseOpti:
-            self.listener.shutdown()
+        self.listener.shutdown()
         print("close")
 
     def finish(self):
         self.showNormal()
-        self.hide()
         QTimer.singleShot(2000, self.close)
 
     def cellSelect(self):
