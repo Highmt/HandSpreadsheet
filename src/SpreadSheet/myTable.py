@@ -249,6 +249,9 @@ class myTable(QTableWidget):
             self.target_left = random.randint(1, self.rowCount()-4)
             self.target_height = random.randint(1, 3)
             self.target_width = random.randint(1, 3)
+            while self.target_width == 1 and self.target_height == 1:
+                self.target_height = random.randint(1, 3)
+                self.target_width = random.randint(1, 3)
             if self.target_top < self.pre_target.y() or \
                     self.target_left < self.pre_target.x() or \
                     self.target_height + self.target_top > self.pre_target.height() + self.pre_target.y() or \
