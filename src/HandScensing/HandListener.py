@@ -232,6 +232,9 @@ class HandListener:
 
         return len(self.marker_label_list) - 1
 
+    def judgeValidHand(self, key):
+        return self.hands_dict.get(key).position[1] <= self.action_threshold
+
     def printHandData(self, hand: HandData):
         tab = "  "
         print("\n----------hand data----------")

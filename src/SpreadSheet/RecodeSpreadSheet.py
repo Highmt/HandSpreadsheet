@@ -75,7 +75,7 @@ from src.Utility.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-USER_NO = 1
+USER_NO = 2
 FILE_DIR = '../../res/data/study1/data{}'.format(USER_NO)
 recordFeature = ["timestamp", "action", "direction"]
 
