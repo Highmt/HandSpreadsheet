@@ -122,7 +122,7 @@ class HandListener:
         self.streaming_client.set_client_address(optionsDict["clientAddress"])
         self.streaming_client.set_server_address(optionsDict["serverAddress"])
         self.streaming_client.set_use_multicast(optionsDict["use_multicast"])
-        # print_configuration(self.streaming_client)
+        print_configuration(self.streaming_client)
 
         is_running = self.streaming_client.run()
         if not is_running:
@@ -261,11 +261,8 @@ class HandListener:
         # self.settingScrean()
         print("\nComplete caribration")
 
-    def setStartTimestamp(self, mocap_data: MoCapData = None):
-        if mocap_data is not None:
-            self.start_timestamp = mocap_data.suffix_data.timestamp
-        else:
-            self.start_timestamp = self.getCurrentData().suffix_data.timestamp
+    def setStartTimestamp(self):
+        self.start_timestamp = time.time()
 
     def settingScrean(self):
         # 画面領域を決定
@@ -342,9 +339,9 @@ class HandListener:
 
     def setHandData(self, mocap_data: MoCapData):
         if self.start_timestamp < 0:
-            self.setStartTimestamp(mocap_data=mocap_data)
-        self.hands_dict['l'].timestamp = mocap_data.suffix_data.timestamp - self.start_timestamp
-        self.hands_dict['r'].timestamp = mocap_data.suffix_data.timestamp - self.start_timestamp
+            self.setStartTimestamp()
+        self.hands_dict['l'].timestamp = time.time() - self.start_timestamp
+        self.hands_dict['r'].timestamp = time.time() - self.start_timestamp
         for body in mocap_data.rigid_body_data.rigid_body_list:
             if self.hands_dict['l'].rb_id == body.id_num:
                 self.hands_dict['l'].setHand(body)
