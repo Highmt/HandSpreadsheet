@@ -11,7 +11,7 @@ from src.HandScensing.HandListener import HandListener
 from src.UDP.MoCapData import MoCapData
 from src.UDP.NatNetClient import NatNetClient
 
-version = "p6"
+version = "master"
 # 　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()

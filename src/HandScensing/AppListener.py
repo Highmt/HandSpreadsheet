@@ -12,7 +12,7 @@ from PyQt5 import QtCore
 from src.UDP.MoCapData import MoCapData
 
 DIS_SIZE = pyautogui.size()
-memorySize = 10
+memorySize = 20
 ver = "p6"
 
 

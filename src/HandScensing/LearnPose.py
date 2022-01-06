@@ -21,18 +21,17 @@ from res.SSEnum import FeatureEnum
 from src.HandScensing.HandListener import HandData
 from src.HandScensing.Predictor import convertLearningPS
 
-np.random.seed(1671)  # for reproducibility
-ver = "p6"
+# np.random.seed(1671)  # for reproducibility
+ver = "master"
 # network and training
 DROPOUT = 0.2
 data_pass = '../../res/data/train/{}'.format(ver)
 lr_label = ['left', 'right']
-read_data = [pd.DataFrame(), pd.DataFrame()]
 
 # どれかひとつだけTrueにする
-KNN_enable = False
+KNN_enable = True
 SVC_enable = False
-NN_enable = True
+NN_enable = False
 
 def convertLearningDF(data: pd.DataFrame) -> pd.DataFrame:
     df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)
@@ -45,9 +44,10 @@ def convertLearningDF(data: pd.DataFrame) -> pd.DataFrame:
 
 
 for i in range(2):
-    read_data[i] = pd.read_csv(data_pass + '/' + lr_label[i] + 'Data.csv', sep=',', index_col=0)
-    data = convertLearningDF(read_data[i]).drop("Label", axis=1).values
-    label = read_data[i]["Label"].values
+    print("------------- {} start -------------".format(lr_label[i]))
+    read_data = pd.read_csv(data_pass + '/' + lr_label[i] + 'Data.csv', sep=',', index_col=0)
+    data = convertLearningDF(read_data).drop("Label", axis=1).values
+    label = read_data["Label"].values
     train_data, test_data, train_label, test_label = train_test_split(data, label, test_size=0.2, stratify=label)
 
     # normalize
@@ -91,7 +91,7 @@ for i in range(2):
             "solver": ["adam"],
             # 隠れ層の層の数と、各層のニューロンの数
             "hidden_layer_sizes": [(100, 100, 100, 10)],
-            'activation': ["logistic", "relu", "Tanh"],
+            'activation': ["logistic", "relu", "tanh"],
         }]
         scores = ['precision', 'recall']
         clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
@@ -117,11 +117,14 @@ for i in range(2):
     cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
     sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
     fig, ax = plt.subplots(figsize=(8, 7))
-    plt.tick_params(labelsize=30)
-    sns.heatmap(cm_pd / sum, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # 正規化したものを表示
+    plt.tick_params(labelsize=10)
+    sns.heatmap(cm_pd / sum * 100, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # パーセントで表示
     plt.savefig('../../res/learningResult/{}cvCM_{}.png'.format(lr_label[i], model))
     with open('../../res/learningResult/{}cvCM_{}.csv'.format(lr_label[i], model), 'w') as file:
         writer = csv.writer(file, lineterminator='\n')
         writer.writerows(c_matrix)
     print(classification_report(test_label, pred))
     print("正答率 = ", metrics.accuracy_score(test_label, pred))
+
+    print("------------- {} end ------------\n".format(lr_label[i]))
+plt.show()
