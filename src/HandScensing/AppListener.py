@@ -13,7 +13,7 @@ from src.UDP.MoCapData import MoCapData
 
 DIS_SIZE = pyautogui.size()
 memorySize = 10
-ver = "test2"
+ver = "p6"
 
 
 class AppListener(QtCore.QThread, HandListener):
@@ -26,8 +26,9 @@ class AppListener(QtCore.QThread, HandListener):
     def __init__(self):
         super().__init__()
         self.isPointingMode = False
-        self.predictor = Predictor(alg="NN", ver=ver)  # 学習モデル
+        self.predictor = Predictor(alg="KNN", ver=ver)  # 学習モデル
         self.memoryHands = {}
+        self.formerStatus = {}
         self.formerHands = {}
         self.resetHand()
 
@@ -48,6 +49,12 @@ class AppListener(QtCore.QThread, HandListener):
         print("Exited")
         self.start_end_opti.emit(False)
 
+    def judgeCalibrate(self):
+        # a = False
+        # for key in self.hands_dict.keys():
+        #     if self.hands_dict[key].position[1] - self.formerHands[key].position[1]
+        return True
+
     def frameListener(self, mocap_data: MoCapData):
         if self.judgeDataComplete(mocap_data):
             if self.need_calibration:
@@ -56,18 +63,19 @@ class AppListener(QtCore.QThread, HandListener):
             self.setHandData(mocap_data)
 
             # 左右両方の手の位置が閾値より低い時フィードバックを非表示+マーカ再設定+resetHand
-            if self.hands_dict['l'].position[1] <= self.calibration_threshold and self.hands_dict['r'].position[1] <= self.calibration_threshold:
+            if self.hands_dict['l'].position[1] <= self.calibration_threshold and self.hands_dict['r'].position[1] <= self.calibration_threshold and self.judgeCalibrate():
                 self.hide_feedback.emit()
                 self.calibrateUnlabeledMarkerID(mocap_data=mocap_data)
 
             # 認識した手の形状を識別する
+            self.formerHands = copy.deepcopy(self.hands_dict)
             for key in self.hands_dict.keys():
-                formerStatus: int = self.formerHands.get(key)
+                formerStatus: int = self.formerStatus.get(key)
 
                 self.memoryHands[key].pop(0)
                 if self.judgeValidHand(key):
                     hand_state = HandEnum.FREE.value
-                    self.formerHands[key] = hand_state
+                    self.formerStatus[key] = hand_state
                     self.memoryHands[key].append(hand_state)
                 else:
                     hand_state = self.predictor.handPredict(hand=self.hands_dict.get(key))  # 学習機で手形状識別
@@ -82,9 +90,9 @@ class AppListener(QtCore.QThread, HandListener):
                     # print(self.memoryHands[key])
                     if formerStatus != currentStatus:
                         self.action(formerStatus, currentStatus, self.hands_dict.get(key))
-                        self.formerHands[key] = currentStatus  # １つ前の手形状を更新
+                        self.formerStatus[key] = currentStatus  # １つ前の手形状を更新
 
-            if self.formerHands['l'] == HandEnum.FREE.value and self.formerHands['r'] == HandEnum.FREE.value:
+            if self.formerStatus['l'] == HandEnum.FREE.value and self.formerStatus['r'] == HandEnum.FREE.value:
                 self.hide_feedback.emit()
 
 
@@ -148,7 +156,7 @@ class AppListener(QtCore.QThread, HandListener):
 
         elif currentS == HandEnum.GRIP.value:
             if formerS == HandEnum.OPEN.value:
-                if list(self.formerHands.values()).count(HandEnum.OPEN.value) > 1:
+                if list(self.formerStatus.values()).count(HandEnum.OPEN.value) > 1:
                     print("コピー関数実行")
                     self.action_operation.emit(ActionEnum.COPY.value, DirectionEnum.NONE.value)
                 else:
@@ -167,7 +175,7 @@ class AppListener(QtCore.QThread, HandListener):
         for i in range(memorySize):
             handlist.append(HandEnum.FREE.value)
         self.memoryHands = {'l': copy.copy(handlist), 'r': copy.copy(handlist)}
-        self.formerHands = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
+        self.formerStatus = {'l': HandEnum.FREE.value, 'r': HandEnum.FREE.value}
 
     def setListener(self):
         self.streaming_client.new_frame_listener = self.frameListener
