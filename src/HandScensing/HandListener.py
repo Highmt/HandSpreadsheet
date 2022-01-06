@@ -16,7 +16,7 @@ finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 DIS_SIZE = pyautogui.size()
 CALIBRATION_THRESHOLD = 20.0  # マーカーキャリブレーションを行う閾値
-ACTION_THRESHOLD = 150.0
+ACTION_THRESHOLD = 100.0
 # CALIBRATION_THRESHOLD < y < Y_ACTION_THRESHOLDの間で手を変える
 
 def print_configuration(natnet_client: NatNetClient):

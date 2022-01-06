@@ -133,7 +133,7 @@ class RecodeSpreadSheet(HandSpreadSheet):
                 print("Remaining Task: {}".format(len(self.true_list)))
                 self.listener.started = False
                 if len(self.true_list) == 0:
-                    self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='a', header=False, index=False)
+                    self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='a', header=False)
                     self.listener.data_save_pandas(lr="left", data=copy.deepcopy(self.listener.dfs[0]))
                     self.listener.data_save_pandas(lr="right", data=copy.deepcopy(self.listener.dfs[1]))
                     self.finish()
