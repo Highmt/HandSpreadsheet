@@ -91,7 +91,7 @@ class HandData:
         return ps
 
     def loadPS(self, ps: pd.Series):
-        self.timestamp = ps[["timestamp"]].values
+        self.timestamp = ps["timestamp"]
         self.position = ps[["x", "y", "z"]].values
         self.rotation = ps[["pitch", "roll", "yaw"]].values
         # Get fingers

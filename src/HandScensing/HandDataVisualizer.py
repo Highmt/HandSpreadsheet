@@ -10,7 +10,7 @@ from datetime import datetime
 from matplotlib import pyplot as plt
 
 from res.SSEnum import OperationEnum
-from src.HandScensing.HandListener import HandData, CALIBRATION_THRESHOLD
+from src.HandScensing.HandListener import HandData, CALIBRATION_THRESHOLD, ACTION_THRESHOLD
 from src.UDP.MoCapData import MoCapData
 
 dif_memory_num = 3
@@ -25,13 +25,14 @@ def fingerDifferencial(former_hand: HandData, hand: HandData):
     return a
 
 def fingerMoveNolm(y_vec: pd.DataFrame) -> np.ndarray:
-    d = np.empty(1)
+    d = np.empty(0)
     former = HandData()
     current = HandData()
-    former.loadPS(y_vec.iloc(0))
+    former.loadPS(y_vec.iloc[0])
     for i, row in y_vec.iterrows():
-        current.loadPS(y_vec.iloc(i))
+        current.loadPS(y_vec.iloc[i])
         d = np.append(d, fingerDifferencial(former, current))
+        former.loadPS(y_vec.iloc[i])
     return d
 
 def convertHandDataList(data: pd.DataFrame) -> []:
@@ -44,9 +45,10 @@ def convertHandDataList(data: pd.DataFrame) -> []:
 
 def main():
     # begin 被験者 ----------
-    participant = 3
+    exception_count = 0
     participant_num = sum(not os.path.isfile(os.path.join(data_pass, name)) for name in os.listdir(data_pass))
     for participant in range(participant_num):
+        print("----- p{} -----".format(participant))
         participant_dir = "{}/data{}".format(data_pass, participant)
         # 被験者の数だけグラフ作成
         fig = plt.figure(figsize=(15, 9))
@@ -55,15 +57,16 @@ def main():
         # 操作の数だけグラフを作成
         ax = [fig.add_subplot(330 + i + 1) for i in range(len(OperationEnum.OperationName_LIST_JP.value))]
         line = [[] for i in range(len(OperationEnum.OperationName_LIST_JP.value))] # 操作分つくる
-        y_scale = 600
+        y_scale = 400
 
         # section ごと
         section_num = sum(not os.path.isfile(os.path.join(participant_dir, name)) for name in os.listdir(participant_dir))
         for sec in range(section_num):
+            print("     ----- sec {} -----".format(sec))
 
             sec_dir = "{}/sec_{}".format(participant_dir, sec)
             read_data = [pd.DataFrame(), pd.DataFrame()]
-            # TODO: split for operation
+
             time_df = pd.read_csv(sec_dir + '/timeData.csv', sep=',', index_col=0)
             time_df = time_df.reset_index(drop=True)
             time_df["operation"] = [OperationEnum.OperationGrid.value[int(p.action)][int(p.direction)] for i, p in time_df[["action", "direction"]].iterrows()]
@@ -72,7 +75,7 @@ def main():
             for lr, lr_name in enumerate(lr_label):
                 read_data[lr] = pd.read_csv(sec_dir + '/' + lr_name + 'Data.csv', sep=',', index_col=0)
                 splited_data = read_data[lr].groupby('Label')
-
+                # 操作ごと
                 for i in time_df["operation"].index:
                     # y 座標だけ追加
                     op = int(time_df.at[i, "operation"])
@@ -80,25 +83,43 @@ def main():
                     try:
                         target_vec = splited_data.get_group(i)
                     except:
-                        print("p{} sec{} {}Hand: task{} - {}  memorization failed".format(participant, sec, lr_name, i, OperationEnum.OperationName_LIST.value[op]))
+                        # print("p{} sec{} {}Hand: task{} - {}  memorization failed".format(participant, sec, lr_name, i, OperationEnum.OperationName_LIST.value[op]))
                         continue
                     target_vec = target_vec.reset_index(drop=True)
-                    d_np = fingerMoveNolm(target_vec)
-                    y_vec = target_vec['y']
-                    time_vec = target_vec['timestamp']
-                    s_time = time_vec[0]
-                    n = 0
-                    try:
-                        while time_vec[n + 1] - s_time > 1 or y_vec[n] > CALIBRATION_THRESHOLD:
-                            time_vec = time_vec.drop(n)
-                            y_vec = y_vec.drop(n)
-                            n = n + 1
-                            s_time = time_vec[n]
-                    except:
-                        print("p{} sec{} {}Hand: task{} - {}   marker tracking failed".format(participant, sec, lr_name, i, OperationEnum.OperationName_LIST.value[op]))
+                    y_vec = target_vec['y'].values
+                    x_vec = target_vec['timestamp'].values
+                    s_time = x_vec[0]
+                    while y_vec[0] > CALIBRATION_THRESHOLD:
+                        x_vec = np.delete(x_vec, 0)
+                        y_vec = np.delete(y_vec, 0)
+                        s_time = x_vec[0]
+
+                    if y_vec.max() - y_vec[0] < ACTION_THRESHOLD:
                         continue
-                    x_vec = time_vec - s_time
-                    line[op].append(ax[op].plot(x_vec, y_vec, '-', alpha=0.8)[0])
+
+                    try:
+                        while x_vec[1] - s_time > 1 or y_vec[10] - y_vec[0] < CALIBRATION_THRESHOLD:
+                            x_vec = np.delete(x_vec, 0)
+                            y_vec = np.delete(y_vec, 0)
+                            s_time = x_vec[0]
+                        x_vec = x_vec - s_time
+                        # 最後を整える
+                        while x_vec[-1] - x_vec[-2] > 0.01 or y_vec[-1] - y_vec[-20] < 20:
+                            x_vec = np.delete(x_vec, -1)
+                            y_vec = np.delete(y_vec, -1)
+                    except:
+                        exception_count = exception_count + 1
+                        # print("p{} sec{} {}Hand: task{} - {}   marker tracking failed".format(participant, sec, lr_name, i, OperationEnum.OperationName_LIST.value[op]))
+                        continue
+
+                    e_time = x_vec.max()
+                    # if e_time > 1:
+                    #     print("p{} sec{} {}Hand: task{} - {}   time: {}".format(participant, sec, lr_name, i, OperationEnum.OperationName_LIST.value[op], x_vec.max()))
+
+                    if e_time < 1.5 and e_time > 0.4:
+                        line[op].append(ax[op].plot(x_vec, y_vec, '-', alpha=0.8)[0])
+                    else:
+                        exception_count = exception_count + 1
 
                 # handlist.append(convertHandDataList(read_data[lr]))
 
@@ -118,14 +139,18 @@ def main():
                     # ax[lr].legend(["y"])
 
 
-            # update plot label/title
-
+        # update plot label/title
         for i in range(len(ax)):
             ax[i].set_title(OperationEnum.OperationName_LIST.value[i])
+            ax[i].set_xlabel("time [s]")
+            ax[i].set_xlabel("Y-axis position of hand [mm]")
         fig.tight_layout()
+
+        plt.savefig('{}/study1_p{}.png'.format(data_pass, participant))
     # end 被験者 ------------------------
 
-    plt.show()
+    print("excepted data count: {}".format(exception_count))
+    # plt.show()
     # use ggplot style for more sophisticated visuals
     # plt.style.use('ggplot')
 
