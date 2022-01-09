@@ -36,7 +36,7 @@ class OperationEnum(Enum):
         [None, None, 7, 8, None]
     ]
     OperationName_LIST = ["Ir", "Id", "Dl", "Du", "Copy", "Cut", "Paste", "Sa", "Sd"]
-    OperationName_LIST_JP = ["列の挿入", "行の挿入", "列の削除", "行の削除", "コピー", "カット", "ペースト", "昇順ソート", "降順ソート"]
+    OperationName_LIST_JP = ["挿入（右シフト）", "挿入（下シフト）", "削除（左シフト）", "削除（上シフト）", "コピー", "カット", "ペースト", "昇順ソート", "降順ソート"]
 
 
 
