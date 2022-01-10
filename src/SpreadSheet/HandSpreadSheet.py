@@ -118,7 +118,7 @@ class HandSpreadSheet(QMainWindow):
         # self.table.itemAt(50, 50).setSelected(True) # テーブルアイテムの設定の仕方
 
         # set hand track setting
-        self.isUseOpti = True
+        self.isUseOpti = False
         if self.isUseOpti:
             self.setAppListener()
 

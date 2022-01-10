@@ -79,6 +79,7 @@ class TestSpreadSheet(HandSpreadSheet):
         super(TestSpreadSheet, self).__init__(rows, cols)
         self.mode = mode
         self.section = section
+        self.start_time = 0
         self.setWindowTitle("TestSpreadSheet")
         self.setTestPropaty(self.section)
         self.setTestTriger()
@@ -90,6 +91,11 @@ class TestSpreadSheet(HandSpreadSheet):
         self.start_test.triggered.connect(self.startTest)
         self.testMenu = self.menuBar().addMenu("&Test")
         self.testMenu.addAction(self.start_test)
+
+        self.table.currentItemChanged.connect(lambda: self.gestureBegin)
+
+    def gestureBegin(self):
+        self.start_time = time.time()
 
     def stepTask(self):
         self.current_true_dict = self.true_list.pop(0)
