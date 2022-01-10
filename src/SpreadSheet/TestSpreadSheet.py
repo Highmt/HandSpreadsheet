@@ -38,9 +38,6 @@
 ## $QT_END_LICENSE$
 ##
 #############################################################################
-import copy
-
-import math
 import os
 import random
 import sys
@@ -48,7 +45,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtCore
 from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
@@ -57,7 +53,6 @@ from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
 
 from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
 from src.HandScensing.AppListener import AppListener
-from src.HandScensing.CollectListener import CollectListener
 from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable
@@ -75,23 +70,18 @@ from src.Utility.util import encode_pos
 #         painter.setBrush(Qt.yellow)
 #         painter.drawEllipse(10, 10, 100, 100)
 
-
 TASK_NUM = 3
-USER_NO = 7
-FILE_DIR = '../../res/data/study1/data{}'.format(USER_NO)
-recordFeature = ["timestamp", "action", "direction"]
+USER_NO = 1
+FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
-class RecodeSpreadSheet(HandSpreadSheet):
-    def __init__(self, rows, cols, mode, section, parent=None):
-        super(RecodeSpreadSheet, self).__init__(rows, cols)
+class TestSpreadSheet(HandSpreadSheet):
+    def __init__(self, rows, cols, mode=None, section=None, parent=None):
+        super(TestSpreadSheet, self).__init__(rows, cols)
         self.mode = mode
         self.section = section
-        self.time_df = pd.DataFrame(columns=recordFeature)
-        self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='w')
-        self.setWindowTitle("RecodeSpreadSheet")
+        self.setWindowTitle("TestSpreadSheet")
         self.setTestPropaty(self.section)
         self.setTestTriger()
-        self.table.currentItemChanged.connect(self.gestureBegin)
 
     def setTestTriger(self):
         self.start_test = QAction("start test", self)
@@ -100,33 +90,6 @@ class RecodeSpreadSheet(HandSpreadSheet):
         self.start_test.triggered.connect(self.startTest)
         self.testMenu = self.menuBar().addMenu("&Test")
         self.testMenu.addAction(self.start_test)
-
-        self.execute = QAction("execute operation", self)
-        self.execute.setShortcut('Alt+H')
-        self.execute.setShortcutContext(Qt.ApplicationShortcut)
-        self.execute.triggered.connect(self.recording)
-        self.addAction(self.execute)
-
-    def setAppListener(self):
-        # Create a sample listener and controller
-        self.listener = CollectListener("{}/sec_{}/".format(FILE_DIR, self.section))
-        self.listener.initOptiTrack()
-        self.listener.do_calibration()
-        self.listener.stop()
-        self.listener.setListener()
-        self.listener.data_num = math.inf
-        self.listener.action_threshold = -100.0
-        time.sleep(0.1)
-        self.startOpti()  # デバッグ時につけると初期状態でOptiTrack起動
-
-    def gestureBegin(self):
-        self.listener.started = True
-
-    def actionOperate(self, act, direction):
-        pass
-
-    def startTest(self):
-        self.stepTask()
 
     def stepTask(self):
         self.current_true_dict = self.true_list.pop(0)
@@ -160,35 +123,50 @@ class RecodeSpreadSheet(HandSpreadSheet):
         self.error_count = 0
         self.table.setRandomCellColor()
 
-    def recording(self):
+    def startTest(self):
+        self.stepTask()
+
+    def actionOperate(self, act, direction):
+        self.actionTestOperate(act=act, direction=direction)
+
+    def actionTestOperate(self, act, direction):
         if self.table.selectedItems():
             if not self.isTestrun:
-                print("Test has not started yet")
-
+                self.table.actionOperate(act, direction)
             elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
                     self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
                     self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
                     self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
-                os.system('play -n synth %s sin %s' % (150 / 1000, 600))
 
-                self.current_true_dict.get("action"), self.current_true_dict.get("direction")
-                t = time.time() - self.listener.start_timestamp
-                ps = pd.Series([t, self.current_true_dict.get("action"), self.current_true_dict.get("direction")], index=recordFeature)
-                self.time_df = self.time_df.append(ps, ignore_index=True)
+                if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
+                    os.system('play -n synth %s sin %s' % (150 / 1000, 600))
+                else:
+                    os.system('play -n synth %s sin %s' % (100 / 1000, 220))
+                    self.error_count = 1
 
-                self.table.resetRandomCellColor()
-
-                print("Remaining Task: {}".format(len(self.true_list)))
-                self.listener.started = False
+                self.records = np.append(self.records,
+                                         [[USER_NO, TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), self.mode, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
                 if len(self.true_list) == 0:
-                    self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='a', header=False)
-                    self.listener.data_save_pandas(lr="left", data=copy.deepcopy(self.listener.dfs[0]))
-                    self.listener.data_save_pandas(lr="right", data=copy.deepcopy(self.listener.dfs[1]))
+                    recordDF = pd.DataFrame(self.records, columns=['participant', 'No', 'mode', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
+                    recordDF['No'] = recordDF['No'].astype(int)
+                    recordDF['error'] = recordDF['error'].astype(int)
+                    recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
+                    recordDF['true_direction'] = recordDF['true_direction'].astype(int)
+                    recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
+                    recordDF['select_direction'] = recordDF['select_direction'].astype(int)
+                    print(recordDF)
+                    if os.path.isfile(FILE):
+                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                    else:
+                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
                     self.finish()
                 else:
+                    self.table.resetRandomCellColor()
                     self.stepTask()
-                    self.listener.current_collect_id = self.listener.current_collect_id + 1
+                    print("Remaining Task: {}".format(len(self.true_list)))
 
+                if self.end_Opti.isEnabled():
+                    self.listener.resetHand()
             self.table.clearSelection()
 
     def setTestPropaty(self, section):
