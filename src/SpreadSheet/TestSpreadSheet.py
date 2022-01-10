@@ -45,11 +45,12 @@ import time
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import QPoint, Qt, QTimer
+from PyQt5.QtCore import QPoint, Qt, QTimer, QSize
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
-                             QVBoxLayout, QButtonGroup, QDesktopWidget)
+                             QVBoxLayout, QButtonGroup, QDesktopWidget, QDockWidget, QListWidget, QTextEdit,
+                             QSizePolicy)
 
 from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
 from src.HandScensing.AppListener import AppListener
@@ -77,6 +78,15 @@ FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'
 class TestSpreadSheet(HandSpreadSheet):
     def __init__(self, rows, cols, mode=None, section=None, parent=None):
         super(TestSpreadSheet, self).__init__(rows, cols)
+
+        self.dock = QDockWidget("GOAL SHEET", self)
+        self.goal_table = myTable(rows, cols, self)
+        self.dock.setWidget(self.goal_table)
+        self.dock.setFloating(False)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
+        self.dock.widget().setMinimumWidth(self.width()/2)
+        self.dock.widget().setMaximumWidth(self.width()/2)
+
         self.mode = mode
         self.section = section
         self.start_time = 0

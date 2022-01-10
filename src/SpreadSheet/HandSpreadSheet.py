@@ -124,6 +124,7 @@ class HandSpreadSheet(QMainWindow):
 
         monitor = QDesktopWidget().screenGeometry(1)
         self.move(monitor.left(), monitor.top())
+        self.showFullScreen()
 
     def setAppListener(self):
     # Create a sample listener and controller
