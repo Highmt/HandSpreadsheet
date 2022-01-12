@@ -63,7 +63,7 @@ recordFeature = ["timestamp", "action", "direction"]
 class RecodeSpreadSheet(HandSpreadSheet):
     def __init__(self, rows, cols, mode, section, parent=None):
         self.rows = int(QDesktopWidget().height() / cell_height - 2)
-        self.cols = int(QDesktopWidget().width() / 4 / cell_width + 1)
+        self.cols = int(QDesktopWidget().width() / 2 / cell_width + 1)
         super(RecodeSpreadSheet, self).__init__(self.rows, self.cols)
         self.mode = mode
         self.section = section
