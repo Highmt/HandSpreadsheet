@@ -49,7 +49,7 @@ from PyQt5.QtCore import QPoint, Qt, QTimer
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
-                             QVBoxLayout, QButtonGroup, QDesktopWidget)
+                             QVBoxLayout, QButtonGroup, QDesktopWidget, QDockWidget)
 
 from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.AppListener import AppListener
@@ -93,7 +93,12 @@ class HandSpreadSheet(QMainWindow):
         self.updateColor()
         self.setupMenuBar()
 
-        self.setCentralWidget(self.table)
+        self.mainDock = QDockWidget("MAIN SHEET", self)
+        self.mainDock.setWidget(self.table)
+        self.mainDock.setFloating(False)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.mainDock)
+
+        # self.setCentralWidget(self.table)
         self.createStatusBar()
 
         # self.setupContextMenu()  # コンテクストメニュー設定
@@ -125,6 +130,9 @@ class HandSpreadSheet(QMainWindow):
         monitor = QDesktopWidget().screenGeometry(1)
         self.move(monitor.left(), monitor.top())
         self.showFullScreen()
+
+        self.mainDock.widget().setMinimumWidth(self.width())
+        self.mainDock.widget().setMaximumWidth(self.width())
 
     def setAppListener(self):
     # Create a sample listener and controller

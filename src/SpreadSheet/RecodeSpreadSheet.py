@@ -157,8 +157,6 @@ class RecodeSpreadSheet(HandSpreadSheet):
                 ps = pd.Series([t, self.current_true_dict.get("action"), self.current_true_dict.get("direction")], index=recordFeature)
                 self.time_df = self.time_df.append(ps, ignore_index=True)
 
-                self.goal_table.resetRandomCellColor()
-
                 print("Remaining Task: {}".format(len(self.true_list)))
                 self.listener.started = False
                 if len(self.true_list) == 0:

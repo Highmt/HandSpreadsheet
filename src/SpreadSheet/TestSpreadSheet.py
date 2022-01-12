@@ -45,7 +45,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import QPoint, Qt, QTimer, QSize
+from PyQt5.QtCore import QPoint, Qt, QTimer, QSize, QRect
 from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
@@ -79,6 +79,8 @@ class TestSpreadSheet(HandSpreadSheet):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
         self.dock.widget().setMinimumWidth(self.width()/2)
         self.dock.widget().setMaximumWidth(self.width()/2)
+        self.mainDock.widget().setMinimumWidth(self.width()/2)
+        self.mainDock.widget().setMaximumWidth(self.width()/2)
 
         self.section = section
         self.start_time = 0
@@ -109,6 +111,11 @@ class TestSpreadSheet(HandSpreadSheet):
             })
 
         self.goal_table.setGoalTable(self.current_true_dict.get("action"), self.current_true_dict.get("direction"))
+
+        for i in range(self.goal_table.target_height):
+            for j in range(self.goal_table.target_width):
+                self.table.item(self.goal_table.target_top + i, self.goal_table.target_left + j).setBackground(Qt.blue)
+        # self.pre_target = QRect(self.target_left, self.target_top, self.target_width, self.target_height)
         self.isTestrun = True
         self.error_count = 0
 
@@ -136,7 +143,8 @@ class TestSpreadSheet(HandSpreadSheet):
                 self.records = np.append(self.records,
                                          [[USER_NO,
                                            TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), time.time() - self.start_time,
-                                           self.error_count, OperationEnum.OperationGrid.value[self.current_true_dict.get("action")][self.current_true_dict.get("direction")],
+                                           self.error_count,
+                                           OperationEnum.OperationGrid.value[self.current_true_dict.get("action")][self.current_true_dict.get("direction")],
                                            OperationEnum.OperationGrid.value[act][direction]]], axis=0)
 
                 if self.current_true_dict.get("action") == TestTaskEnum.COPY_PASTE.value or self.current_true_dict.get("action") == TestTaskEnum.CUT_PASTE.value:
