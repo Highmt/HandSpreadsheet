@@ -43,38 +43,17 @@ import copy
 import math
 import os
 import random
-import sys
 import time
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtCore
-from PyQt5.QtCore import QPoint, Qt, QTimer
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
-from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
-                             QVBoxLayout, QButtonGroup, QDesktopWidget)
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAction, QDockWidget, QDesktopWidget
 
-from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
-from src.HandScensing.AppListener import AppListener
+from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.CollectListener import CollectListener
 from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
-from src.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src.SpreadSheet.myTable import myTable
-from src.Utility.spreadsheetitem import SpreadSheetItem
-from src.Utility.util import encode_pos
-
-
-# class circleWidget(QWidget):
-#     def __init__(self, parent = None):
-#         super(circleWidget, self).__init__(parent)
-#
-#     def paintEvent(self, event):
-#         painter = QPainter(self)
-#         painter.setPen(Qt.red)
-#         painter.setBrush(Qt.yellow)
-#         painter.drawEllipse(10, 10, 100, 100)
-
+from src.SpreadSheet.myTable import myTable, cell_height, cell_width
 
 TASK_NUM = 3
 USER_NO = 7
@@ -83,15 +62,17 @@ recordFeature = ["timestamp", "action", "direction"]
 
 class RecodeSpreadSheet(HandSpreadSheet):
     def __init__(self, rows, cols, mode, section, parent=None):
-        super(RecodeSpreadSheet, self).__init__(rows, cols)
+        self.rows = int(QDesktopWidget().height() / cell_height - 2)
+        self.cols = int(QDesktopWidget().width() / 4 / cell_width + 1)
+        super(RecodeSpreadSheet, self).__init__(self.rows, self.cols)
         self.mode = mode
         self.section = section
         self.time_df = pd.DataFrame(columns=recordFeature)
-        self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='w')
+        # self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='w')
+        # self.table.currentItemChanged.connect(self.gestureBegin)
         self.setWindowTitle("RecodeSpreadSheet")
-        self.setTestPropaty(self.section)
+        self.setTestProperty(self.section)
         self.setTestTriger()
-        self.table.currentItemChanged.connect(self.gestureBegin)
 
     def setTestTriger(self):
         self.start_test = QAction("start test", self)
@@ -131,13 +112,13 @@ class RecodeSpreadSheet(HandSpreadSheet):
     def stepTask(self):
         self.current_true_dict = self.true_list.pop(0)
 
-        if self.current_true_dict.get("action") == TestSectionEnum.INSERT.value:
+        if self.current_true_dict.get("action") == ActionEnum.INSERT.value:
             if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
                 self.statusLabel.setText("Insert Shift Right")
             else:
                 self.statusLabel.setText("Insert Shift Down")
 
-        elif self.current_true_dict.get("action") == TestSectionEnum.DELETE.value:
+        elif self.current_true_dict.get("action") == ActionEnum.DELETE.value:
             if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
                 self.statusLabel.setText("Delete Shift Left")
             else:
@@ -176,7 +157,7 @@ class RecodeSpreadSheet(HandSpreadSheet):
                 ps = pd.Series([t, self.current_true_dict.get("action"), self.current_true_dict.get("direction")], index=recordFeature)
                 self.time_df = self.time_df.append(ps, ignore_index=True)
 
-                self.table.resetRandomCellColor()
+                self.goal_table.resetRandomCellColor()
 
                 print("Remaining Task: {}".format(len(self.true_list)))
                 self.listener.started = False
@@ -191,7 +172,7 @@ class RecodeSpreadSheet(HandSpreadSheet):
 
             self.table.clearSelection()
 
-    def setTestPropaty(self, section):
+    def setTestProperty(self, section):
         # タスク毎の操作種類
         self.true_action_list = []
         self.true_direction_list = []

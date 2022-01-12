@@ -48,11 +48,12 @@ class ActionEnum(Enum):
     PASTE = 4
     SORT = 5
 
-class TestSectionEnum(Enum):
+class TestTaskEnum(Enum):
     INSERT = 0
     DELETE = 1
-    CUT_COPY_PASTE = 2
-    SORT = 3
+    COPY_PASTE = 2
+    CUT_PASTE = 3
+    SORT = 5
 
 
 class TestModeEnum(Enum):

@@ -51,7 +51,7 @@ from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup, QDesktopWidget)
 
-from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
+from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.AppListener import AppListener
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
 from src.SpreadSheet.myTable import myTable

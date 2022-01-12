@@ -57,7 +57,7 @@ class HandData:
         self.position = np.array([0.0, 0.0, 0.0])
         self.position_offset = np.array([0.0, 0.0, 0.0])
         self.rotation = np.array([0.0, 0.0, 0.0])
-        self.rotation_offset = np.array([0.0, 0.0, 0.0, 0.0])
+        self.rotation_offset = np.array([0.0, 0.0, 0.0])
         self.fingers_pos = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
         self.timestamp = 0.0
 

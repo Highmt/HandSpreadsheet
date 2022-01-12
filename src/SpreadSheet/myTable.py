@@ -5,10 +5,12 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
 
-from res.SSEnum import ActionEnum, DirectionEnum
+from res.SSEnum import ActionEnum, DirectionEnum, TestTaskEnum
 from src.Utility.spreadsheetdelegate import SpreadSheetDelegate
 from src.Utility.spreadsheetitem import SpreadSheetItem
 
+cell_height = 60
+cell_width = 120
 
 class myTable(QTableWidget):
     def __init__(self, rows, cols, parent):
@@ -24,8 +26,8 @@ class myTable(QTableWidget):
 
         self.clipTable = QTableWidget(rows, cols, None)  # コピー，カットのための仮装テーブル
         self.clipRanges = QTableWidgetSelectionRange()  # コピー，カットしたセルの領域情報
-        self.verticalHeader().setDefaultSectionSize(60)
-        self.horizontalHeader().setDefaultSectionSize(120)
+        self.verticalHeader().setDefaultSectionSize(cell_height)
+        self.horizontalHeader().setDefaultSectionSize(cell_width)
 
         # for test
         self.pre_target = QRect(0, 0, 0, 0)
@@ -235,6 +237,27 @@ class myTable(QTableWidget):
                     self.pasteCells()
                     self.parent().statusBar().showMessage("paste", 1000)
 
+    def fixOperated(self, act, direction):
+        if self.selectedItems():
+            if act == ActionEnum.INSERT.value:
+                self.insertCell(direction)
+
+            elif act == ActionEnum.DELETE.value:
+                self.deleteCell(direction)
+
+            elif act == ActionEnum.SORT.value:
+                self.sortCells(direction)
+
+            elif act == ActionEnum.COPY.value:
+                self.copyCells()
+
+            elif act == ActionEnum.CUT.value:
+                self.cutCells()
+
+            else:
+                if self.clipRanges is not None:
+                    self.pasteCells()
+
     def getItemCoordinate(self):
         itemList = self.selectedItems()
         # self.cutCells()
@@ -244,11 +267,21 @@ class myTable(QTableWidget):
             # self.last_item = itemList[-1]
 
     def setRandomCellColor(self):
+        self.setTargetLocation()
+
+        for i in range(self.target_height):
+            for j in range(self.target_width):
+                self.item(self.target_top + i, self.target_left + j).setBackground(Qt.blue)
+        self.pre_target = QRect(self.target_left, self.target_top, self.target_width, self.target_height)
+
+    def setTargetLocation(self):
         while True:
-            self.target_top = random.randint(1, self.columnCount()-4)
-            self.target_left = random.randint(1, self.rowCount()-4)
+            self.target_top = random.randint(1, self.num_row - 4)
+            self.target_left = random.randint(1, self.num_col - 4)
             self.target_height = random.randint(1, 3)
             self.target_width = random.randint(1, 3)
+
+            # 条件をクリアするまで繰り返し設定
             while self.target_width == 1 and self.target_height == 1:
                 self.target_height = random.randint(1, 3)
                 self.target_width = random.randint(1, 3)
@@ -258,11 +291,24 @@ class myTable(QTableWidget):
                     self.target_width + self.target_left > self.pre_target.width() + self.pre_target.x():
                 break
 
+    def setGoalTable(self, act, direction):
+        if act == TestTaskEnum.SORT.value:
+            self.target_top = 1
+            self.target_left = random.randint(1, self.num_col - 4)
+            # TODO: データを見て変更
+            self.target_height = 8
+            self.target_width = 8
+
+        else:
+            self.setTargetLocation()
+
         for i in range(self.target_height):
             for j in range(self.target_width):
-                self.item(self.target_top + i, self.target_left + j).setBackground(Qt.blue)
+                self.setCurrentCell(self.target_top + i, self.target_left + j)
 
-        self.pre_target = QRect(self.target_left, self.target_top, self.target_width, self.target_height)
+        self.selectedItems()
+        self.fixOperated(act, direction)
+        self.clearSelection()
 
 
     def resetRandomCellColor(self):

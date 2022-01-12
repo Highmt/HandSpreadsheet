@@ -50,48 +50,40 @@ from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
                              QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
                              QVBoxLayout, QButtonGroup, QDesktopWidget, QDockWidget, QListWidget, QTextEdit,
-                             QSizePolicy)
+                             QSizePolicy, QApplication)
 
-from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
+from res.SSEnum import ActionEnum, DirectionEnum, TestTaskEnum, OperationEnum
 from src.HandScensing.AppListener import AppListener
 from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
 from src.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src.SpreadSheet.myTable import myTable
+from src.SpreadSheet.myTable import myTable, cell_height, cell_width
 from src.Utility.spreadsheetitem import SpreadSheetItem
 from src.Utility.util import encode_pos
 
-
-# class circleWidget(QWidget):
-#     def __init__(self, parent = None):
-#         super(circleWidget, self).__init__(parent)
-#
-#     def paintEvent(self, event):
-#         painter = QPainter(self)
-#         painter.setPen(Qt.red)
-#         painter.setBrush(Qt.yellow)
-#         painter.drawEllipse(10, 10, 100, 100)
 
 TASK_NUM = 3
 USER_NO = 1
 FILE = '/Users/yuta/develop/HandSpreadsheet/res/ResultExperiment/result_p{}.csv'.format(USER_NO)
 
 class TestSpreadSheet(HandSpreadSheet):
-    def __init__(self, rows, cols, mode=None, section=None, parent=None):
-        super(TestSpreadSheet, self).__init__(rows, cols)
+    def __init__(self, section=None, parent=None):
+        self.rows = int(QDesktopWidget().height() / cell_height - 2)
+        self.cols = int(QDesktopWidget().width() / 4 / cell_width + 1)
+
+        super(TestSpreadSheet, self).__init__(self.rows, self.cols)
 
         self.dock = QDockWidget("GOAL SHEET", self)
-        self.goal_table = myTable(rows, cols, self)
+        self.goal_table = myTable(self.rows, self.cols, self)
         self.dock.setWidget(self.goal_table)
         self.dock.setFloating(False)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
         self.dock.widget().setMinimumWidth(self.width()/2)
         self.dock.widget().setMaximumWidth(self.width()/2)
 
-        self.mode = mode
         self.section = section
         self.start_time = 0
         self.setWindowTitle("TestSpreadSheet")
-        self.setTestPropaty(self.section)
+        self.setTestProperty()
         self.setTestTriger()
 
     def setTestTriger(self):
@@ -108,36 +100,17 @@ class TestSpreadSheet(HandSpreadSheet):
         self.start_time = time.time()
 
     def stepTask(self):
+        self.goal_table.setupContents()
         self.current_true_dict = self.true_list.pop(0)
+        if self.current_true_dict.get("action") == TestTaskEnum.COPY_PASTE.value or self.current_true_dict.get("action") == TestTaskEnum.CUT_PASTE.value:
+            self.true_list.insert(0, {
+                "action": ActionEnum.PASTE.value,
+                "direction": DirectionEnum.NONE.value
+            })
 
-        if self.current_true_dict.get("action") == TestSectionEnum.INSERT.value:
-            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
-                self.statusLabel.setText("Insert Shift Right")
-            else:
-                self.statusLabel.setText("Insert Shift Down")
-
-        elif self.current_true_dict.get("action") == TestSectionEnum.DELETE.value:
-            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
-                self.statusLabel.setText("Delete Shift Left")
-            else:
-                self.statusLabel.setText("Delete Shift Up")
-
-        elif self.current_true_dict.get('action') == ActionEnum.CUT.value:
-            self.statusLabel.setText("Cut")
-        elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
-            self.statusLabel.setText("Copy")
-        elif self.current_true_dict.get('action') == ActionEnum.PASTE.value:
-            self.statusLabel.setText("Paste")
-
-        else:
-            if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
-                self.statusLabel.setText("Sort A to Z")
-            else:
-                self.statusLabel.setText("Sort Z to A")
-
+        self.goal_table.setGoalTable(self.current_true_dict.get("action"), self.current_true_dict.get("direction"))
         self.isTestrun = True
         self.error_count = 0
-        self.table.setRandomCellColor()
 
     def startTest(self):
         self.stepTask()
@@ -149,62 +122,66 @@ class TestSpreadSheet(HandSpreadSheet):
         if self.table.selectedItems():
             if not self.isTestrun:
                 self.table.actionOperate(act, direction)
-            elif self.table.selectedRanges()[0].topRow() == self.table.target_top and \
-                    self.table.selectedRanges()[0].bottomRow() == self.table.target_height + self.table.target_top - 1 and \
-                    self.table.selectedRanges()[0].leftColumn() == self.table.target_left and \
-                    self.table.selectedRanges()[0].rightColumn() == self.table.target_width + self.table.target_left - 1:
+            elif self.table.selectedRanges()[0].topRow() == self.goal_table.target_top and \
+                    self.table.selectedRanges()[0].bottomRow() == self.goal_table.target_height + self.goal_table.target_top - 1 and \
+                    self.table.selectedRanges()[0].leftColumn() == self.goal_table.target_left and \
+                    self.table.selectedRanges()[0].rightColumn() == self.goal_table.target_width + self.goal_table.target_left - 1:
 
                 if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
-                    os.system('play -n synth %s sin %s' % (150 / 1000, 600))
+                    os.system('play -n synth %s sin %s' % (150 / 100, 600))
                 else:
-                    os.system('play -n synth %s sin %s' % (100 / 1000, 220))
+                    os.system('play -n synth %s sin %s' % (100 / 100, 220))
                     self.error_count = 1
 
                 self.records = np.append(self.records,
-                                         [[USER_NO, TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), self.mode, time.time() - self.start_time, self.error_count, self.current_true_dict.get("action"), self.current_true_dict.get("direction"), act, direction]], axis=0)
-                if len(self.true_list) == 0:
-                    recordDF = pd.DataFrame(self.records, columns=['participant', 'No', 'mode', 'time', 'error', 'true_manipulation', 'true_direction', 'select_manipulation', 'select_direction'])
-                    recordDF['No'] = recordDF['No'].astype(int)
-                    recordDF['error'] = recordDF['error'].astype(int)
-                    recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
-                    recordDF['true_direction'] = recordDF['true_direction'].astype(int)
-                    recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
-                    recordDF['select_direction'] = recordDF['select_direction'].astype(int)
-                    print(recordDF)
-                    if os.path.isfile(FILE):
-                        recordDF.to_csv(FILE, mode='a', header=False, index=False)
-                    else:
-                        recordDF.to_csv(FILE, mode='x', header=True, index=False)
-                    self.finish()
-                else:
-                    self.table.resetRandomCellColor()
-                    self.stepTask()
-                    print("Remaining Task: {}".format(len(self.true_list)))
+                                         [[USER_NO,
+                                           TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), time.time() - self.start_time,
+                                           self.error_count, OperationEnum.OperationGrid.value[self.current_true_dict.get("action")][self.current_true_dict.get("direction")],
+                                           OperationEnum.OperationGrid.value[act][direction]]], axis=0)
 
-                if self.end_Opti.isEnabled():
-                    self.listener.resetHand()
+                if self.current_true_dict.get("action") == TestTaskEnum.COPY_PASTE.value or self.current_true_dict.get("action") == TestTaskEnum.CUT_PASTE.value:
+                    self.current_true_dict = self.true_list.pop(0)
+
+                else:
+                    if len(self.true_list) == 0:
+                        recordDF = pd.DataFrame(self.records, columns=['participant', 'No', 'time', 'error', 'true_manipulation', 'select_manipulation'])
+                        recordDF['No'] = recordDF['No'].astype(int)
+                        recordDF['error'] = recordDF['error'].astype(int)
+                        recordDF['true_manipulation'] = recordDF['true_manipulation'].astype(int)
+                        recordDF['true_direction'] = recordDF['true_direction'].astype(int)
+                        recordDF['select_manipulation'] = recordDF['select_manipulation'].astype(int)
+                        recordDF['select_direction'] = recordDF['select_direction'].astype(int)
+                        print(recordDF)
+                        if os.path.isfile(FILE):
+                            recordDF.to_csv(FILE, mode='a', header=False, index=False)
+                        else:
+                            recordDF.to_csv(FILE, mode='x', header=True, index=False)
+                        self.finish()
+                    else:
+                        self.stepTask()
+                        print("Remaining Task: {}".format(len(self.true_list)))
+
+                # if self.end_Opti.isEnabled():
+                self.listener.resetHand()
             self.table.clearSelection()
 
-    def setTestPropaty(self, section):
+    def setTestProperty(self):
         # タスク毎の操作種類
         self.true_action_list = []
         self.true_direction_list = []
 
-        self.true_action_list.append(ActionEnum.INSERT.value)
+        self.true_action_list.append(TestTaskEnum.INSERT.value)
         self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
-        self.true_action_list.append(ActionEnum.DELETE.value)
+        self.true_action_list.append(TestTaskEnum.DELETE.value)
         self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
 
-        self.true_action_list.append(ActionEnum.COPY.value)
+        self.true_action_list.append(TestTaskEnum.COPY_PASTE.value)
         self.true_direction_list.append([DirectionEnum.NONE.value])
 
-        self.true_action_list.append(ActionEnum.CUT.value)
+        self.true_action_list.append(TestTaskEnum.CUT_PASTE.value)
         self.true_direction_list.append([DirectionEnum.NONE.value])
 
-        self.true_action_list.append(ActionEnum.PASTE.value)
-        self.true_direction_list.append([DirectionEnum.NONE.value])
-
-        self.true_action_list.append(ActionEnum.SORT.value)
+        self.true_action_list.append(TestTaskEnum.SORT.value)
         self.true_direction_list.append([DirectionEnum.FRONT.value, DirectionEnum.BACK.value])
 
         self.true_list = []
