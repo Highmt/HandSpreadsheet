@@ -1,9 +1,11 @@
 import random
 
+import pandas as pd
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QMenu, QAction, \
+    QAbstractItemView
 
 from res.SSEnum import ActionEnum, DirectionEnum, TestTaskEnum
 from src.Utility.spreadsheetdelegate import SpreadSheetDelegate
@@ -46,83 +48,92 @@ class myTable(QTableWidget):
             for j in range(0, self.num_col):
                 self.setItem(i, j, SpreadSheetItem())
 
+    def loadCSV(self):
+        read_data = pd.read_csv('../../res/tabledata.csv', header=None)
+        for i in range(min(len(read_data), self.num_row)):
+            for j in range(min(len(read_data.columns), self.num_col)):
+                self.item(i, j).setText(read_data.iat[i, j])
+                if i == 0:
+                    self.item(i, j).setBackground(QColor(Qt.lightGray))
+
     def setupContents(self):
-        titleBackground = QColor(Qt.lightGray)
-        titleFont = self.font()
-        titleFont.setBold(True)
-        # column 0
-        self.item(0, 0).setText("Item")
-        self.item(0, 0).setBackground(titleBackground)
-        # self.item(0, 0).setToolTip("This column shows the purchased item/service")
-        self.item(0, 0).setFont(titleFont)
-        self.item(1, 0).setText("Rent")
-        self.item(2, 0).setText("Food")
-        self.item(3, 0).setText("Water")
-        self.item(4, 0).setText("Electricity")
-        self.item(5, 0).setText("Gas")
-        self.item(6, 0).setText("Travel")
-        self.item(7, 0).setText("Amusement")
-        self.item(8, 0).setText("Salary")
-        self.item(9, 0).setText("Total")
-        self.item(9, 0).setFont(titleFont)
-        # self.item(9, 0).setBackground(Qt.lightGray)
-        # column 1
-        self.item(0, 1).setText("Date")
-        self.item(0, 1).setBackground(titleBackground)
-        # self.item(0, 1).setToolTip("This column shows the purchase date, double click to change")
-        self.item(0, 1).setFont(titleFont)
-        self.item(1, 1).setText("2020/2/14")
-        self.item(2, 1).setText("2020/2/14")
-        self.item(3, 1).setText("2020/2/1")
-        self.item(4, 1).setText("2020/2/1")
-        self.item(5, 1).setText("2020/2/1")
-        self.item(6, 1).setText("2020/2/1")
-        self.item(7, 1).setText("2020/2/20")
-        self.item(8, 1).setText("2020/2/20")
-        # self.item(9, 1).setBackground(Qt.lightGray)
-        # column 2
-        self.item(0, 2).setText("money")
-        self.item(0, 2).setBackground(titleBackground)
-        # self.item(0, 2).setToolTip("This column shows the price of the purchase")
-        self.item(0, 2).setFont(titleFont)
-        self.item(1, 2).setText("-45000")
-        self.item(2, 2).setText("-20000")
-        self.item(3, 2).setText("-4000")
-        self.item(4, 2).setText("-3000")
-        self.item(5, 2).setText("-5500")
-        self.item(6, 2).setText("-4000")
-        self.item(7, 2).setText("-20000")
-        self.item(8, 2).setText("100000")
-        self.item(9, 2).setText("5000")
-        # self.item(9, 2).setBackground(Qt.lightGray)
-        # column 3
-        self.item(0, 3).setText("allocated")
-        self.item(0, 3).setBackground(titleBackground)
-        self.item(0, 3).setToolTip("This column shows the currency")
-        self.item(0, 3).setFont(titleFont)
-        self.item(1, 3).setText("○")
-        self.item(2, 3).setText("○")
-        self.item(3, 3).setText("○")
-        self.item(4, 3).setText("○")
-        self.item(5, 3).setText("○")
-        self.item(6, 3).setText("○")
-        self.item(7, 3).setText("")
-        self.item(8, 3).setText("○")
-        # self.item(9, 3).setBackground(Qt.lightGray)
-        # column 4
-        self.item(0, 4).setText("note")
-        self.item(0, 4).setBackground(titleBackground)
-        self.item(0, 4).setToolTip("This column shows the exchange rate to NOK")
-        self.item(0, 4).setFont(titleFont)
-        self.item(1, 4).setText("")
-        self.item(2, 4).setText("")
-        self.item(3, 4).setText("")
-        self.item(4, 4).setText("")
-        self.item(5, 4).setText("")
-        self.item(6, 4).setText("")
-        self.item(7, 4).setText("")
-        self.item(8, 4).setText("Up from last month.")
-        # self.item(9, 4).setBackground(Qt.lightGray)
+        self.loadCSV()
+        # titleBackground = QColor(Qt.lightGray)
+        # titleFont = self.font()
+        # titleFont.setBold(True)
+        # # column 0
+        # self.item(0, 0).setText("Item")
+        # self.item(0, 0).setBackground(titleBackground)
+        # # self.item(0, 0).setToolTip("This column shows the purchased item/service")
+        # self.item(0, 0).setFont(titleFont)
+        # self.item(1, 0).setText("Rent")
+        # self.item(2, 0).setText("Food")
+        # self.item(3, 0).setText("Water")
+        # self.item(4, 0).setText("Electricity")
+        # self.item(5, 0).setText("Gas")
+        # self.item(6, 0).setText("Travel")
+        # self.item(7, 0).setText("Amusement")
+        # self.item(8, 0).setText("Salary")
+        # self.item(9, 0).setText("Total")
+        # self.item(9, 0).setFont(titleFont)
+        # # self.item(9, 0).setBackground(Qt.lightGray)
+        # # column 1
+        # self.item(0, 1).setText("Date")
+        # self.item(0, 1).setBackground(titleBackground)
+        # # self.item(0, 1).setToolTip("This column shows the purchase date, double click to change")
+        # self.item(0, 1).setFont(titleFont)
+        # self.item(1, 1).setText("2020/2/14")
+        # self.item(2, 1).setText("2020/2/14")
+        # self.item(3, 1).setText("2020/2/1")
+        # self.item(4, 1).setText("2020/2/1")
+        # self.item(5, 1).setText("2020/2/1")
+        # self.item(6, 1).setText("2020/2/1")
+        # self.item(7, 1).setText("2020/2/20")
+        # self.item(8, 1).setText("2020/2/20")
+        # # self.item(9, 1).setBackground(Qt.lightGray)
+        # # column 2
+        # self.item(0, 2).setText("money")
+        # self.item(0, 2).setBackground(titleBackground)
+        # # self.item(0, 2).setToolTip("This column shows the price of the purchase")
+        # self.item(0, 2).setFont(titleFont)
+        # self.item(1, 2).setText("-45000")
+        # self.item(2, 2).setText("-20000")
+        # self.item(3, 2).setText("-4000")
+        # self.item(4, 2).setText("-3000")
+        # self.item(5, 2).setText("-5500")
+        # self.item(6, 2).setText("-4000")
+        # self.item(7, 2).setText("-20000")
+        # self.item(8, 2).setText("100000")
+        # self.item(9, 2).setText("5000")
+        # # self.item(9, 2).setBackground(Qt.lightGray)
+        # # column 3
+        # self.item(0, 3).setText("allocated")
+        # self.item(0, 3).setBackground(titleBackground)
+        # self.item(0, 3).setToolTip("This column shows the currency")
+        # self.item(0, 3).setFont(titleFont)
+        # self.item(1, 3).setText("○")
+        # self.item(2, 3).setText("○")
+        # self.item(3, 3).setText("○")
+        # self.item(4, 3).setText("○")
+        # self.item(5, 3).setText("○")
+        # self.item(6, 3).setText("○")
+        # self.item(7, 3).setText("")
+        # self.item(8, 3).setText("○")
+        # # self.item(9, 3).setBackground(Qt.lightGray)
+        # # column 4
+        # self.item(0, 4).setText("note")
+        # self.item(0, 4).setBackground(titleBackground)
+        # self.item(0, 4).setToolTip("This column shows the exchange rate to NOK")
+        # self.item(0, 4).setFont(titleFont)
+        # self.item(1, 4).setText("")
+        # self.item(2, 4).setText("")
+        # self.item(3, 4).setText("")
+        # self.item(4, 4).setText("")
+        # self.item(5, 4).setText("")
+        # self.item(6, 4).setText("")
+        # self.item(7, 4).setText("")
+        # self.item(8, 4).setText("Up from last month.")
+        # # self.item(9, 4).setBackground(Qt.lightGray)
 
     def insertCell(self, d):
         selectrange = self.selectedRanges()[0]
@@ -295,9 +306,8 @@ class myTable(QTableWidget):
         if act == TestTaskEnum.SORT.value:
             self.target_top = 1
             self.target_left = random.randint(1, self.num_col - 4)
-            # TODO: データを見て変更
             self.target_height = 8
-            self.target_width = 8
+            self.target_width = 1
 
         else:
             self.setTargetLocation()
@@ -305,8 +315,10 @@ class myTable(QTableWidget):
         for i in range(self.target_height):
             for j in range(self.target_width):
                 self.setCurrentCell(self.target_top + i, self.target_left + j)
-
-        self.selectedItems()
+        self.setRangeSelected(QTableWidgetSelectionRange(self.target_top,
+                                                         self.target_left,
+                                                         self.target_top + self.target_height - 1,
+                                                         self.target_left + self.target_width - 1), True)
         self.fixOperated(act, direction)
         self.clearSelection()
 

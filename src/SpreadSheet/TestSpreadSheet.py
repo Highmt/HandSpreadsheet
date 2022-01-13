@@ -103,6 +103,9 @@ class TestSpreadSheet(HandSpreadSheet):
 
     def stepTask(self):
         self.goal_table.setupContents()
+        for i in range(self.goal_table.target_height):
+            for j in range(self.goal_table.target_width):
+                self.table.item(self.goal_table.target_top + i, self.goal_table.target_left + j).setBackground(Qt.white)
         self.current_true_dict = self.true_list.pop(0)
         if self.current_true_dict.get("action") == TestTaskEnum.COPY_PASTE.value or self.current_true_dict.get("action") == TestTaskEnum.CUT_PASTE.value:
             self.true_list.insert(0, {
@@ -115,9 +118,11 @@ class TestSpreadSheet(HandSpreadSheet):
         for i in range(self.goal_table.target_height):
             for j in range(self.goal_table.target_width):
                 self.table.item(self.goal_table.target_top + i, self.goal_table.target_left + j).setBackground(Qt.blue)
+
         # self.pre_target = QRect(self.target_left, self.target_top, self.target_width, self.target_height)
         self.isTestrun = True
         self.error_count = 0
+        print(OperationEnum.OperationName_LIST_JP.value[OperationEnum.OperationGrid.value[self.current_true_dict.get("action")][self.current_true_dict.get("direction")]])
 
     def startTest(self):
         self.stepTask()
@@ -135,14 +140,15 @@ class TestSpreadSheet(HandSpreadSheet):
                     self.table.selectedRanges()[0].rightColumn() == self.goal_table.target_width + self.goal_table.target_left - 1:
 
                 if act == self.current_true_dict.get("action") and direction == self.current_true_dict.get("direction"):
-                    os.system('play -n synth %s sin %s' % (150 / 100, 600))
+                    os.system('play -n synth %s sin %s' % (150 / 1000, 600))
                 else:
-                    os.system('play -n synth %s sin %s' % (100 / 100, 220))
+                    os.system('play -n synth %s sin %s' % (100 / 1000, 220))
                     self.error_count = 1
 
                 self.records = np.append(self.records,
                                          [[USER_NO,
-                                           TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list), time.time() - self.start_time,
+                                           TASK_NUM*len(self.true_action_list)*len(self.true_direction_list) - len(self.true_list),
+                                           time.time() - self.start_time,
                                            self.error_count,
                                            OperationEnum.OperationGrid.value[self.current_true_dict.get("action")][self.current_true_dict.get("direction")],
                                            OperationEnum.OperationGrid.value[act][direction]]], axis=0)
@@ -169,8 +175,8 @@ class TestSpreadSheet(HandSpreadSheet):
                         self.stepTask()
                         print("Remaining Task: {}".format(len(self.true_list)))
 
-                # if self.end_Opti.isEnabled():
-                self.listener.resetHand()
+                if self.end_Opti.isEnabled():
+                    self.listener.resetHand()
             self.table.clearSelection()
 
     def setTestProperty(self):
@@ -203,6 +209,6 @@ class TestSpreadSheet(HandSpreadSheet):
                     self.true_list.append(true_dict)
 
         random.shuffle(self.true_list)
-        self.records = np.empty([0, 9])
+        self.records = np.empty([0, 6])
         self.isTestrun = False
 

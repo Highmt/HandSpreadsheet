@@ -74,8 +74,8 @@ for i in range(2):
     #   SVC-------------------------------------------------
     elif SVC_enable:
         svc_parameters = {'kernel': ['rbf'],
-                            'gamma': [1e-4],
-                             'C': [10]}
+                            'gamma': [1e-3, 1e-4],
+                             'C': [0.1, 1, 10]}
         scores = ['precision', 'recall', 'f1']
         #  グリッドサーチと交差検証法
         clf = GridSearchCV(svm.SVC(probability=True), svc_parameters, cv=5,
@@ -88,7 +88,7 @@ for i in range(2):
     elif NN_enable:
         nn_parameters = [{
             # 最適化手法
-            "solver": ["adam"],
+            "solver": ['lbfgs', 'sgd', 'adam'],
             # 隠れ層の層の数と、各層のニューロンの数
             "hidden_layer_sizes": [(100, 100, 100, 10)],
             'activation': ["logistic", "relu", "tanh"],

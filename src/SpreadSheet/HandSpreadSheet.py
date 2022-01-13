@@ -129,7 +129,8 @@ class HandSpreadSheet(QMainWindow):
 
         monitor = QDesktopWidget().screenGeometry(1)
         self.move(monitor.left(), monitor.top())
-        self.showFullScreen()
+        # self.showFullScreen()
+        self.showMaximized()
 
         self.mainDock.widget().setMinimumWidth(self.width())
         self.mainDock.widget().setMaximumWidth(self.width())
