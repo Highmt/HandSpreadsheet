@@ -43,51 +43,45 @@ import copy
 import math
 import os
 import random
-import sys
 import time
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtCore
-from PyQt5.QtCore import QPoint, Qt, QTimer
-from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
-from PyQt5.QtWidgets import (QAction, QHBoxLayout, QLabel,
-                             QLineEdit, QMainWindow, QToolBar, QMenu, QPushButton, QDialog, QRadioButton,
-                             QVBoxLayout, QButtonGroup, QDesktopWidget)
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAction, QDockWidget, QDesktopWidget
 
-from res.SSEnum import ActionEnum, DirectionEnum, TestSectionEnum
-from src.HandScensing.AppListener import AppListener
+from res.SSEnum import ActionEnum, DirectionEnum
 from src.HandScensing.CollectListener import CollectListener
 from src.SpreadSheet.HandSpreadSheet import HandSpreadSheet
-from src.SpreadSheet.OverlayGraphics import OverlayGraphics
-from src.SpreadSheet.myTable import myTable
-from src.Utility.spreadsheetitem import SpreadSheetItem
-from src.Utility.util import encode_pos
+from src.SpreadSheet.myTable import myTable, cell_height, cell_width
 
-
-# class circleWidget(QWidget):
-#     def __init__(self, parent = None):
-#         super(circleWidget, self).__init__(parent)
-#
-#     def paintEvent(self, event):
-#         painter = QPainter(self)
-#         painter.setPen(Qt.red)
-#         painter.setBrush(Qt.yellow)
-#         painter.drawEllipse(10, 10, 100, 100)
-
-USER_NO = 2
+TASK_NUM = 3
+USER_NO = 7
 FILE_DIR = '../../res/data/study1/data{}'.format(USER_NO)
 recordFeature = ["timestamp", "action", "direction"]
 
 class RecodeSpreadSheet(HandSpreadSheet):
     def __init__(self, rows, cols, mode, section, parent=None):
-        super(RecodeSpreadSheet, self).__init__(rows, cols, mode, section, parent)
+        self.rows = int(QDesktopWidget().height() / cell_height - 2)
+        self.cols = int(QDesktopWidget().width() / 2 / cell_width + 1)
+        super(RecodeSpreadSheet, self).__init__(self.rows, self.cols)
+        self.mode = mode
+        self.section = section
         self.time_df = pd.DataFrame(columns=recordFeature)
-        self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='w')
-        self.setRecordTimingTriger()
-        self.table.currentItemChanged.connect(self.gestureBegin)
+        # self.time_df.to_csv("{}/timeData.csv".format(self.listener.file_dir), mode='w')
+        # self.table.currentItemChanged.connect(self.gestureBegin)
+        self.setWindowTitle("RecodeSpreadSheet")
+        self.setTestProperty(self.section)
+        self.setTestTriger()
 
-    def setRecordTimingTriger(self):
+    def setTestTriger(self):
+        self.start_test = QAction("start test", self)
+        self.start_test.setShortcut('Ctrl+T')
+        self.start_test.setShortcutContext(Qt.ApplicationShortcut)
+        self.start_test.triggered.connect(self.startTest)
+        self.testMenu = self.menuBar().addMenu("&Test")
+        self.testMenu.addAction(self.start_test)
+
         self.execute = QAction("execute operation", self)
         self.execute.setShortcut('Alt+H')
         self.execute.setShortcutContext(Qt.ApplicationShortcut)
@@ -112,6 +106,41 @@ class RecodeSpreadSheet(HandSpreadSheet):
     def actionOperate(self, act, direction):
         pass
 
+    def startTest(self):
+        self.stepTask()
+
+    def stepTask(self):
+        self.current_true_dict = self.true_list.pop(0)
+
+        if self.current_true_dict.get("action") == ActionEnum.INSERT.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Insert Shift Right")
+            else:
+                self.statusLabel.setText("Insert Shift Down")
+
+        elif self.current_true_dict.get("action") == ActionEnum.DELETE.value:
+            if self.current_true_dict.get('direction') == DirectionEnum.HORIZON.value:
+                self.statusLabel.setText("Delete Shift Left")
+            else:
+                self.statusLabel.setText("Delete Shift Up")
+
+        elif self.current_true_dict.get('action') == ActionEnum.CUT.value:
+            self.statusLabel.setText("Cut")
+        elif self.current_true_dict.get('action') == ActionEnum.COPY.value:
+            self.statusLabel.setText("Copy")
+        elif self.current_true_dict.get('action') == ActionEnum.PASTE.value:
+            self.statusLabel.setText("Paste")
+
+        else:
+            if self.current_true_dict.get('direction') == DirectionEnum.FRONT.value:
+                self.statusLabel.setText("Sort A to Z")
+            else:
+                self.statusLabel.setText("Sort Z to A")
+
+        self.isTestrun = True
+        self.error_count = 0
+        self.table.setRandomCellColor()
+
     def recording(self):
         if self.table.selectedItems():
             if not self.isTestrun:
@@ -128,8 +157,6 @@ class RecodeSpreadSheet(HandSpreadSheet):
                 ps = pd.Series([t, self.current_true_dict.get("action"), self.current_true_dict.get("direction")], index=recordFeature)
                 self.time_df = self.time_df.append(ps, ignore_index=True)
 
-                self.table.resetRandomCellColor()
-
                 print("Remaining Task: {}".format(len(self.true_list)))
                 self.listener.started = False
                 if len(self.true_list) == 0:
@@ -142,3 +169,40 @@ class RecodeSpreadSheet(HandSpreadSheet):
                     self.listener.current_collect_id = self.listener.current_collect_id + 1
 
             self.table.clearSelection()
+
+    def setTestProperty(self, section):
+        # タスク毎の操作種類
+        self.true_action_list = []
+        self.true_direction_list = []
+
+        self.true_action_list.append(ActionEnum.INSERT.value)
+        self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
+        self.true_action_list.append(ActionEnum.DELETE.value)
+        self.true_direction_list.append([DirectionEnum.HORIZON.value, DirectionEnum.VERTICAL.value])
+
+        self.true_action_list.append(ActionEnum.COPY.value)
+        self.true_direction_list.append([DirectionEnum.NONE.value])
+
+        self.true_action_list.append(ActionEnum.CUT.value)
+        self.true_direction_list.append([DirectionEnum.NONE.value])
+
+        self.true_action_list.append(ActionEnum.PASTE.value)
+        self.true_direction_list.append([DirectionEnum.NONE.value])
+
+        self.true_action_list.append(ActionEnum.SORT.value)
+        self.true_direction_list.append([DirectionEnum.FRONT.value, DirectionEnum.BACK.value])
+
+        self.true_list = []
+        for i in range(len(self.true_action_list)):
+            for j in range(len(self.true_direction_list[i])):
+                true_dict = {
+                    "action": self.true_action_list[i],
+                    "direction": self.true_direction_list[i][j]
+                }
+                for k in range(TASK_NUM):
+                    self.true_list.append(true_dict)
+
+        random.shuffle(self.true_list)
+        self.records = np.empty([0, 9])
+        self.isTestrun = False
+

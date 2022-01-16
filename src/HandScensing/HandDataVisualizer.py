@@ -53,17 +53,20 @@ def main():
     # begin 被験者 ----------
     e_record = 0
     e_gestuer = 0
-
-    ###### 被験者の数だけウィンドウを作成 ###########
-    # fig = plt.figure(figsize=(15, 9))
-    # plt.suptitle('Hand Y-Position')
-    # # 操作の数だけグラフを作成
-    # ax = [fig.add_subplot(330 + i + 1) for i in range(len(OperationEnum.OperationName_LIST_JP.value))]
-    # line = [[] for i in range(len(OperationEnum.OperationName_LIST_JP.value))] # 操作分つくる
+    valid_count = 0
+    time_sum = 0
+    e_time_list = []
+    is_all_p = True
+    ###### 全体で１つのウィンドウを作成 ###########
+    if is_all_p:
+        fig = plt.figure(figsize=(15, 9))
+        plt.suptitle('Hand Y-Position')
+        # 操作の数だけグラフを作成
+        ax = [fig.add_subplot(330 + i + 1) for i in range(len(OperationEnum.OperationName_LIST_JP.value))]
+        line = [[] for i in range(len(OperationEnum.OperationName_LIST_JP.value))] # 操作分つくる
     ###########################
 
     u_scale = 400
-
 
     participant_num = sum(not os.path.isfile(os.path.join(data_pass, name)) for name in os.listdir(data_pass))
     for participant in range(participant_num):
@@ -72,11 +75,12 @@ def main():
         participant_dir = "{}/data{}".format(data_pass, participant)
 
         ############ 被験者の数だけウィンドウを作成 #########
-        fig = plt.figure(figsize=(15, 9))
-        plt.suptitle('Hand Y-Position (P{})'.format(participant))
-        # 操作の数だけグラフを作成
-        ax = [fig.add_subplot(330 + i + 1) for i in range(len(OperationEnum.OperationName_LIST_JP.value))]
-        line = [[] for i in range(len(OperationEnum.OperationName_LIST_JP.value))]  # 操作分つくる
+        if not is_all_p:
+            fig = plt.figure(figsize=(15, 9))
+            plt.suptitle('Hand Y-Position (P{})'.format(participant))
+            # 操作の数だけグラフを作成
+            ax = [fig.add_subplot(330 + i + 1) for i in range(len(OperationEnum.OperationName_LIST_JP.value))]
+            line = [[] for i in range(len(OperationEnum.OperationName_LIST_JP.value))]  # 操作分つくる
         #####################
         
         # section ごと
@@ -125,29 +129,49 @@ def main():
                     # y_vec = fingerMoveNolm(target_vec)
                     x_vec = target_vec['timestamp'].values
                     x_vec = x_vec - x_vec[0]
-                    e_time = x_vec.max()
 
-                    if e_time < 1.5 and e_time > 0.3:
+                    if x_vec[-1] < 0.4 and y_vec[-1] - y_vec[-2] < 5:
+                        x_vec = np.append(x_vec, x_vec[-1]+0.1)
+                        y_vec = np.append(y_vec, y_vec[-1])
+
+                    e_time = x_vec.max()
+                    time_sum = time_sum + e_time
+
+                    if e_time < 1.4 and e_time > 0.4:
                         line[op].append(ax[op].plot(x_vec, y_vec, '-', alpha=0.8)[0])
+                        valid_count = valid_count + 1
+                        e_time_list.append(e_time)
                     else:
                         e_record = e_record + 1
 
 
 
         # update plot label/title
+        if not is_all_p:
+            for i in range(len(ax)):
+                print("     {}: {}".format(OperationEnum.OperationName_LIST_JP.value[i], len(line[i])))
+                ax[i].set_title(OperationEnum.OperationName_LIST_JP.value[i])
+                ax[i].set_ylim(ymax=u_scale, ymin=0)
+                ax[i].set_xlim(xmax=1.4, xmin=0)
+                ax[i].set_xlabel("時間 [s]")
+                ax[i].set_ylabel("手のｙ座標 [mm]")
+            fig.tight_layout()
+            plt.savefig('{}/study1_p{}.png'.format(data_pass, participant))
+    # end 被験者 ------------------------
+    # update plot label/title
+    if is_all_p:
         for i in range(len(ax)):
             print("     {}: {}".format(OperationEnum.OperationName_LIST_JP.value[i], len(line[i])))
-            ax[i].axhspan(0, ACTION_THRESHOLD, facecolor="blue", alpha=0.3)
+            ax[i].axhspan(30, ACTION_THRESHOLD, facecolor="blue", alpha=0.3)
+            ax[i].axhspan(0, 30, facecolor="red", alpha=0.3)
             ax[i].set_title(OperationEnum.OperationName_LIST_JP.value[i])
             ax[i].set_ylim(ymax=u_scale, ymin=0)
             ax[i].set_xlim(xmax=1.4, xmin=0)
             ax[i].set_xlabel("時間 [s]")
             ax[i].set_ylabel("手のｙ座標 [mm]")
         fig.tight_layout()
-
-        plt.savefig('{}/study1_p{}.png'.format(data_pass, participant))
-    # end 被験者 ------------------------
-
+        plt.savefig('{}/study1_all.png'.format(data_pass))
+    print("average time:{}\nmax time: {}\nmin time: {}".format(sum(e_time_list)/len(e_time_list), max(e_time_list), min(e_time_list)))
     print("excepted data count: gesture- {}, record- {}".format(e_gestuer, e_record))
     plt.show()
     # use ggplot style for more sophisticated visuals

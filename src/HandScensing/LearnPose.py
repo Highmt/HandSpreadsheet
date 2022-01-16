@@ -25,8 +25,9 @@ from src.HandScensing.Predictor import convertLearningPS
 ver = "master"
 # network and training
 DROPOUT = 0.2
-data_pass = '../../res/data/train/{}'.format(ver)
+data_pass = '../../res/data/train/saved/{}'.format(ver)
 lr_label = ['left', 'right']
+model_label = ['KNN', 'SVC', 'NN']
 
 # どれかひとつだけTrueにする
 KNN_enable = True
@@ -57,74 +58,78 @@ for i in range(2):
     print("train start")
     print("# Tuning hyper-parameters for accuracy")
 
-    #  KNN------------------------------------------------
-    if KNN_enable:
-        knn_parameters = {'n_neighbors': [7, 11, 19],
-                          'weights': ['uniform', 'distance'],
-                          'metric': ['euclidean', 'manhattan']
-                          }
-        scores = ['precision', 'recall', 'f1']
+    for model_id in range(3):
+        print("------------- {} start ------------\n".format(model_label[model_id]))
 
-        clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
-                           scoring='accuracy', n_jobs=-1, verbose=10)
-        clf.fit(train_data, train_label)
-        model = "KNN"
-    # ------------------------------------------------------
+        #  KNN------------------------------------------------
+        if model_id == 0:
+            knn_parameters = {'n_neighbors': [7, 11, 19],
+                              'weights': ['uniform', 'distance'],
+                              'metric': ['euclidean', 'manhattan']
+                              }
+            scores = ['precision', 'recall', 'f1']
 
-    #   SVC-------------------------------------------------
-    elif SVC_enable:
-        svc_parameters = {'kernel': ['rbf'],
-                            'gamma': [1e-4],
-                             'C': [10]}
-        scores = ['precision', 'recall', 'f1']
-        #  グリッドサーチと交差検証法
-        clf = GridSearchCV(svm.SVC(probability=True), svc_parameters, cv=5,
-                           scoring='accuracy', n_jobs=-1, verbose=10)
-        clf.fit(train_data, train_label)
-        model = "SVC"
-    # ------------------------------------------------------
+            clf = GridSearchCV(KNeighborsClassifier(), knn_parameters, cv=5,
+                               scoring='accuracy', n_jobs=-1, verbose=10)
+            clf.fit(train_data, train_label)
+            model = "KNN"
+        # ------------------------------------------------------
 
-    #   NN-------------------------------------------------
-    elif NN_enable:
-        nn_parameters = [{
-            # 最適化手法
-            "solver": ["adam"],
-            # 隠れ層の層の数と、各層のニューロンの数
-            "hidden_layer_sizes": [(100, 100, 100, 10)],
-            'activation': ["logistic", "relu", "tanh"],
-        }]
-        scores = ['precision', 'recall']
-        clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
-                           scoring='accuracy', n_jobs=-1, verbose=10)
-        clf.fit(train_data, train_label)
-        model = "NN"
-    # ------------------------------------------------------
-    else:
-        sys.exit(1)
-    print(clf.best_estimator_)
-    print(classification_report(test_label, clf.predict(test_data)))
-    pickle.dump(clf, open('../../res/learningModel/{}Model_{}_{}.pkl'.format(lr_label[i], model, ver), 'wb'))
+        #   SVC-------------------------------------------------
+        elif model_id == 1:
+            svc_parameters = {'kernel': ['rbf'],
+                                'gamma': [1e-3, 1e-4],
+                                 'C': [0.1, 1, 10]}
+            scores = ['precision', 'recall', 'f1']
+            #  グリッドサーチと交差検証法
+            clf = GridSearchCV(svm.SVC(probability=True), svc_parameters, cv=5,
+                               scoring='accuracy', n_jobs=-1, verbose=10)
+            clf.fit(train_data, train_label)
+            model = "SVC"
+        # ------------------------------------------------------
 
-    # モデルを読み込む --- (*4)
-    pred = clf.predict(test_data)
-    print(pred)
-    print(clf.predict_proba(test_data))
-    touch_true = test_label.tolist()
-    labels = SSEnum.HandEnum.NAME_LIST.value
+        #   NN-------------------------------------------------
+        elif model_id == 2:
+            nn_parameters = [{
+                # 最適化手法
+                "solver": ['lbfgs', 'sgd', 'adam'],
+                # 隠れ層の層の数と、各層のニューロンの数
+                "hidden_layer_sizes": [(100, 100, 100, 10)],
+                'activation': ["logistic", "relu", "tanh"],
+            }]
+            scores = ['precision', 'recall']
+            clf = GridSearchCV(MLPClassifier(early_stopping=True), param_grid=nn_parameters, cv=5,
+                               scoring='accuracy', n_jobs=-1, verbose=10)
+            clf.fit(train_data, train_label)
+            model = "NN"
+        # ------------------------------------------------------
+        else:
+            sys.exit(1)
+        print(clf.best_estimator_)
+        print(classification_report(test_label, clf.predict(test_data)))
+        pickle.dump(clf, open('../../res/learningModel/{}Model_{}_{}.pkl'.format(lr_label[i], model, ver), 'wb'))
 
-    c_matrix = confusion_matrix(touch_true, pred)
-    print(c_matrix)
-    cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
-    sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
-    fig, ax = plt.subplots(figsize=(8, 7))
-    plt.tick_params(labelsize=10)
-    sns.heatmap(cm_pd / sum * 100, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # パーセントで表示
-    plt.savefig('../../res/learningResult/{}cvCM_{}.png'.format(lr_label[i], model))
-    with open('../../res/learningResult/{}cvCM_{}.csv'.format(lr_label[i], model), 'w') as file:
-        writer = csv.writer(file, lineterminator='\n')
-        writer.writerows(c_matrix)
-    print(classification_report(test_label, pred))
-    print("正答率 = ", metrics.accuracy_score(test_label, pred))
+        # モデルを読み込む --- (*4)
+        pred = clf.predict(test_data)
+        print(pred)
+        print(clf.predict_proba(test_data))
+        touch_true = test_label.tolist()
+        labels = SSEnum.HandEnum.NAME_LIST.value
+
+        c_matrix = confusion_matrix(touch_true, pred)
+        print(c_matrix)
+        cm_pd = pd.DataFrame(c_matrix, columns=labels, index=labels)
+        sum = int(test_data.shape[0]) / int(labels.__len__())  # 各ラベルの数
+        fig, ax = plt.subplots(figsize=(8, 7))
+        plt.tick_params(labelsize=10)
+        sns.heatmap(cm_pd / sum * 100, annot=True, cmap="Blues", fmt='.4g', ax=ax)  # パーセントで表示
+        plt.savefig('../../res/learningResult/{}cvCM_{}.png'.format(lr_label[i], model))
+        with open('../../res/learningResult/{}cvCM_{}.csv'.format(lr_label[i], model), 'w') as file:
+            writer = csv.writer(file, lineterminator='\n')
+            writer.writerows(c_matrix)
+        print(classification_report(test_label, pred))
+        print("正答率 = ", metrics.accuracy_score(test_label, pred))
+        print("------------- {} end ------------\n".format(model_label[model_id]))
 
     print("------------- {} end ------------\n".format(lr_label[i]))
 plt.show()
