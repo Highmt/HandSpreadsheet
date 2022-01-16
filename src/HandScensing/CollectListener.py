@@ -15,7 +15,7 @@ version = "master"
 # 　収集する手形状のラベル（）
 labels = HandEnum.NAME_LIST.value
 streaming_client = NatNetClient()
-collect_data_num = 3000
+collect_data_num = 10000
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 rot_labels = ["pitch", "roll", "yaw"]

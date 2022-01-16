@@ -15,7 +15,7 @@ from src.UDP.NatNetClient import NatNetClient
 finger_labels = ['Thumb', 'Index', 'Pinky']
 pos_labels = ["x", "y", "z"]
 DIS_SIZE = pyautogui.size()
-CALIBRATION_THRESHOLD = 20.0  # マーカーキャリブレーションを行う閾値
+CALIBRATION_THRESHOLD = 30.0  # マーカーキャリブレーションを行う閾値
 ACTION_THRESHOLD = 100.0
 # CALIBRATION_THRESHOLD < y < Y_ACTION_THRESHOLDの間で手を変える
 
@@ -172,10 +172,10 @@ class HandListener:
     # 手の数が2かつ指のマーカーの数が6
     def judgeDataComplete(self, mocap_data: MoCapData):
         try:
-            judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and mocap_data.rigid_body_data.getRigidbody(
-                0).tracking_valid and mocap_data.rigid_body_data.getRigidbody(
-                0).tracking_valid and mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(
-                HandData().fingers_pos) * 2
+            judge = mocap_data.rigid_body_data.get_rigid_body_count() == 2 and \
+                    mocap_data.rigid_body_data.getRigidbody(0).tracking_valid and \
+                    mocap_data.rigid_body_data.getRigidbody(1).tracking_valid and \
+                    mocap_data.marker_set_data.unlabeled_markers.get_num_points() == len(HandData().fingers_pos) * 2
 
             if not judge:
                 # 直前までマーカがロストしておらず，かつロストしているマーカーの数が1つの時，復帰後のマーカーラベルを設定し，マーカーをロストしていないこととする．
