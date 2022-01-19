@@ -10,8 +10,8 @@ finger_labels = ['Thumb', 'Index', 'Pinky']
 
 class Predictor():
     def __init__(self, alg: str, ver: str):
-        self.left_model = pickle.load(open('{}leftModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
-        self.right_model = pickle.load(open('{}rightModel_{}_{}.pkl'.format(model_pass, alg, ver), 'rb'))
+        self.left_model = pickle.load(open('{}/{}/leftModel_{}.pkl'.format(model_pass, ver, alg), 'rb'))
+        self.right_model = pickle.load(open('{}/{}/rightModel_{}.pkl'.format(model_pass, ver, alg), 'rb'))
 
     def handPredict(self, hand: HandData):
         df = pd.DataFrame(columns=FeatureEnum.FEATURE_LIST.value)

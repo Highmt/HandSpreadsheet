@@ -225,28 +225,28 @@ class myTable(QTableWidget):
         if self.selectedItems():
             if act == ActionEnum.INSERT.value:
                 self.insertCell(direction)
-                self.parent().statusBar().showMessage("insert", 1000)
+                self.parent().parent().statusBar().showMessage("insert", 1000)
 
             elif act == ActionEnum.DELETE.value:
                 self.deleteCell(direction)
-                self.parent().statusBar().showMessage("delete", 1000)
+                self.parent().parent().statusBar().showMessage("delete", 1000)
 
             elif act == ActionEnum.SORT.value:
                 self.sortCells(direction)
-                self.parent().statusBar().showMessage("sort", 1000)
+                self.parent().parent().statusBar().showMessage("sort", 1000)
 
             elif act == ActionEnum.COPY.value:
                 self.copyCells()
-                self.parent().statusBar().showMessage("copy", 1000)
+                self.parent().parent().statusBar().showMessage("copy", 1000)
 
             elif act == ActionEnum.CUT.value:
                 self.cutCells()
-                self.parent().statusBar().showMessage("cut", 1000)
+                self.parent().parent().statusBar().showMessage("cut", 1000)
 
             else:
                 if self.clipRanges is not None:
                     self.pasteCells()
-                    self.parent().statusBar().showMessage("paste", 1000)
+                    self.parent().parent().statusBar().showMessage("paste", 1000)
 
     def fixOperated(self, act, direction):
         if self.selectedItems():

@@ -13,7 +13,7 @@ from src.UDP.MoCapData import MoCapData
 
 DIS_SIZE = pyautogui.size()
 memorySize = 20
-ver = "p6"
+ver = "p0"
 
 
 class AppListener(QtCore.QThread, HandListener):

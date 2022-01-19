@@ -15,7 +15,7 @@ class HandEnum(Enum):
     REVERSE = 3
     OPEN = 4
     GRIP = 5
-    NAME_LIST = ["FREE", "PINCH_IN", "PINCH_OUT", "REVERSE", "OPEN", "GRIP"]
+    NAME_LIST = ["Free", "Pinch In", "Pinch Out", "Reverse", "Open", "Grip"]
 
 class OperationEnum(Enum):
     Ir = 0

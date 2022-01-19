@@ -62,8 +62,8 @@ line1['z'], = ax1.plot(x_vec, l_y_vec['z'], '--', alpha=0.8)
 line2['x'], = ax2.plot(x_vec, r_y_vec['x'], '-', alpha=0.8)
 line2['y'], = ax2.plot(x_vec, r_y_vec['y'], '-o', alpha=0.8)
 line2['z'], = ax2.plot(x_vec, r_y_vec['z'], '--', alpha=0.8)
-ax1.set_ylim(ymax=1000, ymin=-1000)
-ax2.set_ylim(ymax=1000, ymin=-1000)
+ax1.set_ylim(ymax=10, ymin=-10)
+ax2.set_ylim(ymax=10, ymin=-10)
 ax1.legend(["x", "y", "z"])
 ax2.legend(["x", "y", "z"])
 # update plot label/title
@@ -97,17 +97,17 @@ try:
             for hand in listener.hands_dict.values():
                 if hand.is_left:
                     # listener.printHandData(hand)
-                    l_y_vec['x'][-1] = hand.fingers_pos[0][0]
-                    l_y_vec['y'][-1] = hand.fingers_pos[1][0]
-                    l_y_vec['z'][-1] = hand.fingers_pos[2][0]
+                    l_y_vec['x'][-1] = hand.rotation[0]
+                    l_y_vec['y'][-1] = hand.rotation[1]
+                    l_y_vec['z'][-1] = hand.rotation[2]
                     line1 = live_plotter(x_vec, l_y_vec, line1)
                     l_y_vec['x'] = np.append(l_y_vec['x'][1:], 0.0)
                     l_y_vec['y'] = np.append(l_y_vec['y'][1:], 0.0)
                     l_y_vec['z'] = np.append(l_y_vec['z'][1:], 0.0)
                 else:
-                    r_y_vec['x'][-1] = hand.fingers_pos[0][0]
-                    r_y_vec['y'][-1] = hand.fingers_pos[1][0]
-                    r_y_vec['z'][-1] = hand.fingers_pos[2][0]
+                    r_y_vec['x'][-1] = hand.rotation[0]
+                    r_y_vec['y'][-1] = hand.rotation[1]
+                    r_y_vec['z'][-1] = hand.rotation[2]
                     line2 = live_plotter(x_vec, r_y_vec, line2)
                     r_y_vec['x'] = np.append(r_y_vec['x'][1:], 0.0)
                     r_y_vec['y'] = np.append(r_y_vec['y'][1:], 0.0)
